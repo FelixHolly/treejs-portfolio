@@ -1,12 +1,11 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {NavItemsComponent} from './nav-items/nav-items.component';
-import {NgClass, NgIf} from '@angular/common';
+import {NgClass} from '@angular/common';
 
 @Component({
   selector: 'app-navbar',
   imports: [
     NavItemsComponent,
-    NgIf,
     NgClass
   ],
   templateUrl: './navbar.component.html',

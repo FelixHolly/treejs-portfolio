@@ -1,0 +1,53 @@
+# Angular build output
+/dist
+/.angular
+/angular
+
+# Compiled TypeScript
+*.js
+*.js.map
+*.d.ts
+
+# Node modules
+/node_modules
+
+# Environment files
+/src/environments/environment*.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and OS
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Output of `ng build`
+/out-tsc
+
+# Package lock
+package-lock.json
+
+# Temporary
+/tmp
+temp/
+*.tmp
+*.bak
+
+# Coverage reports
+/coverage
+/coverage-final.json
+.nyc_output
+
+# Compiled SCSS/CSS if applicable
+*.css
+*.css.map
+
+# misc
+*.log

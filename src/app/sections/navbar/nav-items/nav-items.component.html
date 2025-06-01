@@ -1,0 +1,11 @@
+<ul class="nav-ul">
+  <li *ngFor="let item of navLinks" class="nav-li">
+    <a
+      [href]="item.href"
+      class="nav-li_a"
+      (click)="onClick.emit()"
+    >
+      {{ item.name }}
+    </a>
+  </li>
+</ul>

@@ -1,7 +1,15 @@
-import {AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild,} from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import * as THREE from 'three';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 interface HeroSizes {
   deskScale: number;
@@ -16,13 +24,14 @@ interface HeroSizes {
   styleUrls: ['./hero.component.scss'],
   imports: [],
 })
-export class HeroComponent implements OnInit, AfterViewInit {
+export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
   scene = new THREE.Scene();
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
 
+  private animationId: number = 0;
   mouseX = 0;
   mouseY = 0;
   modelObject?: THREE.Object3D;
@@ -50,7 +59,6 @@ export class HeroComponent implements OnInit, AfterViewInit {
     this.camera.position.set(1, -2, 10);
     this.camera.lookAt(0, 0, 0);
 
-
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(10, 10, 10);
@@ -59,7 +67,7 @@ export class HeroComponent implements OnInit, AfterViewInit {
     this.loadModel();
 
     const animate = () => {
-      requestAnimationFrame(animate);
+      this.animationId = requestAnimationFrame(animate);
 
       if (this.modelObject) {
         const rotationFactor = 0.3;
@@ -83,21 +91,15 @@ export class HeroComponent implements OnInit, AfterViewInit {
         '/assets/models/lowe.glb',
         (gltf) => {
           const model = gltf.scene;
-
-          // Create a wrapper group to center the model
           const group = new THREE.Group();
           group.add(model);
 
-          // Compute bounding box of model inside the group
           const box = new THREE.Box3().setFromObject(model);
           const center = new THREE.Vector3();
           box.getCenter(center);
-
-          // Offset model inside the group so the group is centered
           model.position.sub(center);
 
-          // Now set transforms on the group (not the raw model)
-          group.position.set(this.sizes.deskPosition[0], this.sizes.deskPosition[1] + 3, this.sizes.deskPosition[2]);
+          group.position.set(...this.sizes.deskPosition.map((v, i) => (i === 1 ? v + 3 : v)) as [number, number, number]);
           group.rotation.set(...this.sizes.deskRotation);
           group.scale.setScalar(this.sizes.deskScale);
 
@@ -111,7 +113,6 @@ export class HeroComponent implements OnInit, AfterViewInit {
     );
   }
 
-
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
     this.mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
@@ -124,6 +125,12 @@ export class HeroComponent implements OnInit, AfterViewInit {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.animationId);
+    this.scene.clear();
+    this.renderer.dispose();
   }
 
   protected readonly Math = Math;
@@ -140,4 +147,3 @@ function calculateSizes(
     deskRotation: [0, 0, 0],
   };
 }
-

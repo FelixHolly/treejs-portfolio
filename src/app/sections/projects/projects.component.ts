@@ -1,9 +1,16 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import * as THREE from 'three';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import {NgForOf, NgIf} from '@angular/common';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { NgForOf, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-projects',
@@ -12,7 +19,7 @@ import {NgForOf, NgIf} from '@angular/common';
   styleUrls: ['./projects.component.scss'],
   imports: [NgForOf, NgIf],
 })
-export class ProjectsComponent implements AfterViewInit {
+export class ProjectsComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
   selectedProjectIndex = 0;
@@ -23,6 +30,7 @@ export class ProjectsComponent implements AfterViewInit {
   renderer!: THREE.WebGLRenderer;
   controls!: OrbitControls;
   textureLoader = new THREE.TextureLoader();
+  animationId: number = 0;
 
   myProjects = [
     {
@@ -68,7 +76,7 @@ export class ProjectsComponent implements AfterViewInit {
             ? (this.selectedProjectIndex - 1 + this.myProjects.length) % this.myProjects.length
             : (this.selectedProjectIndex + 1) % this.myProjects.length;
 
-    this.updateTexture(); // Update screen on project switch
+    this.updateTexture();
   }
 
   ngAfterViewInit() {
@@ -92,7 +100,7 @@ export class ProjectsComponent implements AfterViewInit {
   }
 
   private animate = () => {
-    requestAnimationFrame(this.animate);
+    this.animationId = requestAnimationFrame(this.animate);
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   };
@@ -103,17 +111,17 @@ export class ProjectsComponent implements AfterViewInit {
     dracoLoader.setDecoderPath('/assets/draco/');
     loader.setDRACOLoader(dracoLoader);
 
-    loader.load('/assets/models/smartphone.glb', (gltf :any) => {
+    loader.load('/assets/models/smartphone.glb', (gltf: any) => {
       this.model = gltf.scene;
-      this.model?.position.set(0, 0, 0);
-      this.model?.scale.set(20, 20, 20);
-      this.model?.rotation.set(0, 0, 0);
 
       if (!this.model) return;
 
+      this.model.position.set(0, 0, 0);
+      this.model.scale.set(20, 20, 20);
+      this.model.rotation.set(0, 0, 0);
+
       this.scene.add(this.model);
 
-      // Find screen mesh
       this.model.traverse((child) => {
         if ((child as THREE.Mesh).isMesh && child.name === 'Object_4') {
           this.screenMesh = child as THREE.Mesh;
@@ -126,11 +134,14 @@ export class ProjectsComponent implements AfterViewInit {
   private updateTexture(): void {
     if (!this.screenMesh) return;
 
+    const oldMap = (this.screenMesh.material as THREE.MeshBasicMaterial).map;
+    if (oldMap) oldMap.dispose();
+
     const texture = this.textureLoader.load(this.currentProject.texture, () => {
       texture.wrapS = THREE.ClampToEdgeWrapping;
       texture.wrapT = THREE.ClampToEdgeWrapping;
 
-      this.screenMesh!.material = new THREE.MeshBasicMaterial({map: texture});
+      this.screenMesh!.material = new THREE.MeshBasicMaterial({ map: texture });
       this.screenMesh!.material.needsUpdate = true;
     });
   }
@@ -141,5 +152,12 @@ export class ProjectsComponent implements AfterViewInit {
     this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.animationId);
+    this.controls.dispose();
+    this.renderer.dispose();
+    this.scene.clear();
   }
 }

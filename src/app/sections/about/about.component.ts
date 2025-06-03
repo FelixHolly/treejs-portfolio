@@ -1,23 +1,29 @@
-import {AfterViewInit, Component, ElementRef, OnInit, signal, ViewChild} from '@angular/core';
-import * as THREE from 'three';
-import Globe from 'three-globe';
-import {ButtonComponent} from "../../components/button/button.component";
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  signal,
+  ViewChild,
+} from "@angular/core";
+import * as THREE from "three";
+import Globe from "three-globe";
+import { ButtonComponent } from "../../components/button/button.component";
 
 @Component({
-  selector: 'app-about',
+  selector: "app-about",
   standalone: true,
-    imports: [
-        ButtonComponent
-    ],
-  templateUrl: './about.component.html',
-  styleUrls: ['./about.component.scss'],
+  imports: [ButtonComponent],
+  templateUrl: "./about.component.html",
+  styleUrls: ["./about.component.scss"],
 })
 export class AboutComponent implements OnInit, AfterViewInit {
   hasCopied = signal(false);
-  @ViewChild('globeCanvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
+  @ViewChild("globeCanvas", { static: true })
+  canvasRef!: ElementRef<HTMLDivElement>;
 
   copyEmail(): void {
-    navigator.clipboard.writeText('adrian@jsmastery.pro').then(() => {
+    navigator.clipboard.writeText("adrian@jsmastery.pro").then(() => {
       this.hasCopied.set(true);
       setTimeout(() => this.hasCopied.set(false), 2000);
     });
@@ -39,16 +45,27 @@ export class AboutComponent implements OnInit, AfterViewInit {
     camera.position.z = 200;
 
     const globe = new Globe()
-        .globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
-        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-        .showAtmosphere(true)
-        .labelsData([{ lat: 40, lng: -100, text: 'Rjieka, Croatia', color: 'white', size: 15 }]);
+      .globeImageUrl(
+        "//cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg",
+      )
+      .bumpImageUrl(
+        "https://unpkg.com/three-globe/example/img/earth-topology.png",
+      )
+      .showAtmosphere(true)
+      .labelsData([
+        {
+          lat: 40,
+          lng: -100,
+          text: "Rjieka, Croatia",
+          color: "white",
+          size: 15,
+        },
+      ]);
 
     scene.add(globe);
 
     const light = new THREE.AmbientLight(0xffffff, 1);
     scene.add(light);
-
 
     const animate = () => {
       requestAnimationFrame(animate);

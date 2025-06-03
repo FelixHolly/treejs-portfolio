@@ -1,34 +1,34 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import { Component, ElementRef, ViewChild } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 
 @Component({
-  selector: 'app-contact',
+  selector: "app-contact",
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './contact.component.html',
-  styleUrls: ['./contact.component.scss']
+  templateUrl: "./contact.component.html",
+  styleUrls: ["./contact.component.scss"],
 })
 export class ContactComponent {
-  @ViewChild('contactForm', { static: false }) formRef!: ElementRef<HTMLFormElement>;
+  @ViewChild("contactForm", { static: false })
+  formRef!: ElementRef<HTMLFormElement>;
 
   form = {
-    name: '',
-    email: '',
-    message: ''
+    name: "",
+    email: "",
+    message: "",
   };
 
   alert = {
     show: false,
-    text: '',
-    type: '' // 'success' or 'danger'
+    text: "",
+    type: "", // 'success' or 'danger'
   };
 
   loading = false;
 
   handleSubmit() {
     this.loading = true;
-
   }
 
   showAlert(text: string, type: string) {

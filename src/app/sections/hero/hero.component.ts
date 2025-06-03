@@ -1,36 +1,143 @@
-import { Component, OnInit } from '@angular/core';
-import {ButtonComponent} from '../../components/button/button.component';
+import {AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild,} from '@angular/core';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {DRACOLoader} from 'three/examples/jsm/loaders/DRACOLoader.js';
+
+interface HeroSizes {
+  deskScale: number;
+  deskPosition: [number, number, number];
+  deskRotation: [number, number, number];
+}
 
 @Component({
   selector: 'app-hero',
+  standalone: true,
   templateUrl: './hero.component.html',
   styleUrls: ['./hero.component.scss'],
-  imports: [
-    ButtonComponent
-  ]
+  imports: [],
 })
-export class HeroComponent implements OnInit {
+export class HeroComponent implements OnInit, AfterViewInit {
+  @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+
+  scene = new THREE.Scene();
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+
+  mouseX = 0;
+  mouseY = 0;
+  modelObject?: THREE.Object3D;
+
   isSmall = false;
   isMobile = false;
   isTablet = false;
-  sizes: any = {};
+  sizes!: HeroSizes;
 
   ngOnInit(): void {
     this.isSmall = window.matchMedia('(max-width: 440px)').matches;
     this.isMobile = window.matchMedia('(max-width: 768px)').matches;
     this.isTablet = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches;
-
     this.sizes = calculateSizes(this.isSmall, this.isMobile, this.isTablet);
   }
+
+  ngAfterViewInit(): void {
+    const canvas = this.canvasRef.nativeElement;
+
+    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+
+    this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera.position.set(1, -2, 10);
+    this.camera.lookAt(0, 0, 0);
+
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(10, 10, 10);
+    this.scene.add(ambientLight, directionalLight);
+
+    this.loadModel();
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      if (this.modelObject) {
+        const rotationFactor = 0.3;
+        this.modelObject.rotation.y += (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
+        this.modelObject.rotation.x += (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
+      }
+
+      this.renderer.render(this.scene, this.camera);
+    };
+
+    animate();
+  }
+
+  private loadModel(): void {
+    const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/assets/draco/');
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(
+        '/assets/models/lowe.glb',
+        (gltf) => {
+          const model = gltf.scene;
+
+          // Create a wrapper group to center the model
+          const group = new THREE.Group();
+          group.add(model);
+
+          // Compute bounding box of model inside the group
+          const box = new THREE.Box3().setFromObject(model);
+          const center = new THREE.Vector3();
+          box.getCenter(center);
+
+          // Offset model inside the group so the group is centered
+          model.position.sub(center);
+
+          // Now set transforms on the group (not the raw model)
+          group.position.set(this.sizes.deskPosition[0], this.sizes.deskPosition[1] + 3, this.sizes.deskPosition[2]);
+          group.rotation.set(...this.sizes.deskRotation);
+          group.scale.setScalar(this.sizes.deskScale);
+
+          this.modelObject = group;
+          this.scene.add(group);
+        },
+        undefined,
+        (error) => {
+          console.error('Failed to load hacker-room model:', error);
+        }
+    );
+  }
+
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent): void {
+    this.mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
+    this.mouseY = (event.clientY / window.innerHeight - 0.5) * 2;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    const canvas = this.canvasRef.nativeElement;
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  protected readonly Math = Math;
 }
 
-function calculateSizes(isSmall: boolean, isMobile: boolean, isTablet: boolean) {
+function calculateSizes(
+    isSmall: boolean,
+    isMobile: boolean,
+    isTablet: boolean
+): HeroSizes {
   return {
-    deskScale: isSmall ? 0.05 : isMobile ? 0.06 : 0.065,
-    deskPosition: isMobile ? [0.5, -4.5, 0] : [0.25, -5.5, 0],
-    cubePosition: isSmall ? [4, -5, 0] : isMobile ? [5, -5, 0] : isTablet ? [5, -5, 0] : [9, -5.5, 0],
-    reactLogoPosition: isSmall ? [3, 4, 0] : isMobile ? [5, 4, 0] : isTablet ? [5, 4, 0] : [12, 3, 0],
-    ringPosition: isSmall ? [-5, 7, 0] : isMobile ? [-10, 10, 0] : isTablet ? [-12, 10, 0] : [-24, 10, 0],
-    targetPosition: isSmall ? [-5, -10, -10] : isMobile ? [-9, -10, -10] : isTablet ? [-11, -7, -10] : [-13, -13, -10],
+    deskScale: isSmall ? 1.5 : isMobile ? 2 : 2.5,
+    deskPosition: [0, -4, 0],
+    deskRotation: [0, 0, 0],
   };
 }
+

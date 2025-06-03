@@ -1,0 +1,58 @@
+<section class="c-space my-20" id="contact">
+    <div *ngIf="alert.show" class="alert" [ngClass]="alert.type">{{ alert.text }}</div>
+
+    <div class="relative min-h-screen flex items-center justify-center flex-col">
+<!--       todo disable on mobile-->
+        <img src="/assets/terminal.png" alt="terminal-bg" class="absolute inset-0 min-h-screen" />
+
+        <div class="contact-container">
+            <h3 class="head-text">Let's talk</h3>
+            <p class="text-lg text-white-600 mt-3">
+                Whether you’re looking to build a new website, improve your existing platform, or bring a unique project to
+                life, I’m here to help.
+            </p>
+
+            <form #contactForm="ngForm" (ngSubmit)="handleSubmit()" class="mt-12 flex flex-col space-y-7">
+                <label class="space-y-3">
+                    <span class="field-label">Full Name</span>
+                    <input
+                            name="name"
+                            [(ngModel)]="form.name"
+                            required
+                            class="field-input"
+                            placeholder="ex., John Doe"
+                    />
+                </label>
+
+                <label class="space-y-3">
+                    <span class="field-label">Email address</span>
+                    <input
+                            type="email"
+                            name="email"
+                            [(ngModel)]="form.email"
+                            required
+                            class="field-input"
+                            placeholder="ex., johndoe@gmail.com"
+                    />
+                </label>
+
+                <label class="space-y-3">
+                    <span class="field-label">Your message</span>
+                    <textarea
+                            name="message"
+                            [(ngModel)]="form.message"
+                            required
+                            rows="5"
+                            class="field-input"
+                            placeholder="Share your thoughts or inquiries..."
+                    ></textarea>
+                </label>
+
+                <button class="field-btn" type="submit" [disabled]="loading">
+                    {{ loading ? 'Sending...' : 'Send Message' }}
+                    <img src="/assets/arrow-up.png" alt="arrow-up" class="field-btn_arrow" />
+                </button>
+            </form>
+        </div>
+    </div>
+</section>

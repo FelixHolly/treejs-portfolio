@@ -31,9 +31,6 @@ Thumbs.db
 # Output of `ng build`
 /out-tsc
 
-# Package lock
-package-lock.json
-
 # Temporary
 /tmp
 temp/

@@ -1,40 +1,59 @@
-import { Component, ElementRef, ViewChild } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
+import { Component, signal } from '@angular/core';
+import emailjs from '@emailjs/browser';
+import {FormsModule} from "@angular/forms";
+import {NgClass, NgIf} from "@angular/common";
 
 @Component({
-  selector: "app-contact",
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: "./contact.component.html",
-  styleUrls: ["./contact.component.scss"],
+  selector: 'app-contact',
+  templateUrl: './contact.component.html',
+  styleUrls: ['./contact.component.scss'],
+  imports: [
+    FormsModule,
+    NgClass,
+    NgIf
+  ]
 })
 export class ContactComponent {
-  @ViewChild("contactForm", { static: false })
-  formRef!: ElementRef<HTMLFormElement>;
-
   form = {
-    name: "",
-    email: "",
-    message: "",
+    name: '',
+    email: '',
+    message: '',
   };
 
-  alert = {
-    show: false,
-    text: "",
-    type: "", // 'success' or 'danger'
-  };
+  loading = signal(false);
+  alert = signal({ show: false, text: '', type: 'success' });
 
-  loading = false;
+  handleSubmit(): void {
+    this.loading.set(true);
 
-  handleSubmit() {
-    this.loading = true;
-  }
+    emailjs
+        .send(
+            'service_cvyf4pk',
+            'template_1cbxfpl',
+            {
+              from_name: this.form.name,
+              to_name: 'Your Name',
+              from_email: this.form.email,
+              to_email: 'your@email.com',
+              message: this.form.message,
+            },
+            'uxjMVOPJ12-pBwK7L'
+        )
+        .then(
+            () => {
+              this.loading.set(false);
+              this.alert.set({ show: true, text: 'Thank you for your message 😃', type: 'success' });
 
-  showAlert(text: string, type: string) {
-    this.alert = { show: true, text, type };
-    setTimeout(() => {
-      this.alert.show = false;
-    }, 3000);
+              setTimeout(() => {
+                this.alert.set({ show: false, text: '', type: 'success' });
+                this.form = { name: '', email: '', message: '' };
+              }, 3000);
+            },
+            (error) => {
+              console.error(error);
+              this.loading.set(false);
+              this.alert.set({ show: true, text: "I didn't receive your message 😢", type: 'danger' });
+            }
+        );
   }
 }

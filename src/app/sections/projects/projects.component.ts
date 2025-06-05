@@ -45,12 +45,12 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
       title: "GreenWave",
       desc: "GPS traffic light optimizer.",
       subdesc: "Built with Angular + Leaflet + Crowdsourcing.",
-      texture: "/assets/textures/projects/greenwave.png",
+      texture: "assets/textures/projects/greenwave.png",
       tags: [
-        { name: "Angular", path: "/assets/logos/angular.svg" },
-        { name: "Java", path: "/assets/logos/spring.svg" },
-        { name: "SpringBoot", path: "/assets/logos/spring.svg" },
-        { name: "Leaflet", path: "/assets/logos/leaflet.svg" },
+        { name: "Angular", path: "assets/logos/angular.svg" },
+        { name: "Java", path: "assets/logos/spring.svg" },
+        { name: "SpringBoot", path: "assets/logos/spring.svg" },
+        { name: "Leaflet", path: "assets/logos/leaflet.svg" },
       ],
       href: "https://greenwave-webapp.onrender.com",
     },
@@ -58,11 +58,11 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
       title: "WheelWallet",
       desc: "All-in-one car manager.",
       subdesc: "Documents, maintenance, and trips.",
-      texture: "/assets/textures/projects/wheel-wallet.png",
+      texture: "assets/textures/projects/wheel-wallet.png",
       tags: [
-        { name: "Angular", path: "/assets/logos/angular.svg" },
-        { name: "Java", path: "/assets/logos/java.svg" },
-        { name: "SpringBoot", path: "/assets/logos/spring.svg" },
+        { name: "Angular", path: "assets/logos/angular.svg" },
+        { name: "Java", path: "assets/logos/java.svg" },
+        { name: "SpringBoot", path: "assets/logos/spring.svg" },
       ],
       href: "",
     },
@@ -149,10 +149,10 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
   private loadModel(): void {
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("/assets/draco/");
+    dracoLoader.setDecoderPath("assets/draco/");
     loader.setDRACOLoader(dracoLoader);
 
-    loader.load("/assets/models/CyberpunkPhone.glb", (gltf: any) => {
+    loader.load("assets/models/CyberpunkPhone.glb", (gltf: any) => {
       this.model = gltf.scene;
       if (!this.model) return;
 

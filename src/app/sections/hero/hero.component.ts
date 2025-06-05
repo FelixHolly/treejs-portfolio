@@ -36,17 +36,13 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   mouseY = 0;
   modelObject?: THREE.Object3D;
 
-  isSmall = false;
-  isMobile = false;
-  isTablet = false;
   sizes!: HeroSizes;
 
   ngOnInit(): void {
-    this.isSmall = window.matchMedia('(max-width: 440px)').matches;
-    this.isMobile = window.matchMedia('(max-width: 768px)').matches;
-    this.isTablet = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches;
-    this.sizes = calculateSizes(this.isSmall, this.isMobile, this.isTablet);
+    const width = window.innerWidth;
+    this.sizes = calculateSizes(width);
   }
+
 
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
@@ -136,14 +132,35 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   protected readonly Math = Math;
 }
 
-function calculateSizes(
-    isSmall: boolean,
-    isMobile: boolean,
-    isTablet: boolean
-): HeroSizes {
+function calculateSizes(width: number): HeroSizes {
+  if (width < 440) {
+    return {
+      deskScale: 1.2,
+      deskPosition: [0, -3, 0],
+      deskRotation: [0, 0, 0],
+    };
+  }
+
+  if (width < 768) {
+    return {
+      deskScale: 1.8,
+      deskPosition: [0, -4, 0],
+      deskRotation: [0, 0, 0],
+    };
+  }
+
+  if (width < 1024) {
+    return {
+      deskScale: 2.2,
+      deskPosition: [0, -4, 0],
+      deskRotation: [0, 0, 0],
+    };
+  }
+
   return {
-    deskScale: isSmall ? 1.5 : isMobile ? 2 : 2.5,
+    deskScale: 2.7,
     deskPosition: [0, -4, 0],
     deskRotation: [0, 0, 0],
   };
 }
+

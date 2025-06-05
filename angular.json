@@ -50,11 +50,11 @@
                   "maximumError": "8kB"
                 }
               ],
+              "baseHref": "/treejs-portfolio/",
               "outputHashing": "all",
               "optimization": true,
               "sourceMap": false,
               "namedChunks": false
-
             },
             "development": {
               "optimization": false,

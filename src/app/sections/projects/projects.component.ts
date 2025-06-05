@@ -152,7 +152,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     dracoLoader.setDecoderPath("assets/draco/");
     loader.setDRACOLoader(dracoLoader);
 
-    loader.load("assets/models/CyberpunkPhone.glb", (gltf: any) => {
+    loader.load("assets/models/future-phone.glb", (gltf: any) => {
       this.model = gltf.scene;
       if (!this.model) return;
 

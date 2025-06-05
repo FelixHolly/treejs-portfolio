@@ -103,7 +103,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     loader.setDRACOLoader(dracoLoader);
 
     loader.load(
-      "assets/models/lowe.glb",
+      "assets/models/vienna-lowe.glb",
       (gltf) => {
         const model = gltf.scene;
         const group = new THREE.Group();

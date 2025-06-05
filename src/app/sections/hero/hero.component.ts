@@ -6,10 +6,10 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
-} from '@angular/core';
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+} from "@angular/core";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 interface HeroSizes {
   deskScale: number;
@@ -18,14 +18,15 @@ interface HeroSizes {
 }
 
 @Component({
-  selector: 'app-hero',
+  selector: "app-hero",
   standalone: true,
-  templateUrl: './hero.component.html',
-  styleUrls: ['./hero.component.scss'],
+  templateUrl: "./hero.component.html",
+  styleUrls: ["./hero.component.scss"],
   imports: [],
 })
 export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild("canvas", { static: true })
+  canvasRef!: ElementRef<HTMLCanvasElement>;
 
   scene = new THREE.Scene();
   private camera!: THREE.PerspectiveCamera;
@@ -43,16 +44,23 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sizes = calculateSizes(width);
   }
 
-
-
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
 
-    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
 
-    this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(
+      30,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    );
     this.camera.position.set(1, -2, 10);
     this.camera.lookAt(0, 0, 0);
 
@@ -72,8 +80,10 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         if (window.innerWidth < 800) {
           this.modelObject.rotation.y -= 0.002; // idle animation for mobile
         } else {
-          this.modelObject.rotation.y += (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
-          this.modelObject.rotation.x += (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
+          this.modelObject.rotation.y +=
+            (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
+          this.modelObject.rotation.x +=
+            (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
         }
       }
 
@@ -86,42 +96,48 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadModel(): void {
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/assets/draco/');
+    dracoLoader.setDecoderPath("/assets/draco/");
     loader.setDRACOLoader(dracoLoader);
 
     loader.load(
-        '/assets/models/lowe.glb',
-        (gltf) => {
-          const model = gltf.scene;
-          const group = new THREE.Group();
-          group.add(model);
+      "/assets/models/lowe.glb",
+      (gltf) => {
+        const model = gltf.scene;
+        const group = new THREE.Group();
+        group.add(model);
 
-          const box = new THREE.Box3().setFromObject(model);
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-          model.position.sub(center);
+        const box = new THREE.Box3().setFromObject(model);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        model.position.sub(center);
 
-          group.position.set(...this.sizes.deskPosition.map((v, i) => (i === 1 ? v + 3 : v)) as [number, number, number]);
-          group.rotation.set(...this.sizes.deskRotation);
-          group.scale.setScalar(this.sizes.deskScale);
+        group.position.set(
+          ...(this.sizes.deskPosition.map((v, i) => (i === 1 ? v + 3 : v)) as [
+            number,
+            number,
+            number,
+          ]),
+        );
+        group.rotation.set(...this.sizes.deskRotation);
+        group.scale.setScalar(this.sizes.deskScale);
 
-          this.modelObject = group;
-          this.scene.add(group);
-        },
-        undefined,
-        (error) => {
-          console.error('Failed to load hacker-room model:', error);
-        }
+        this.modelObject = group;
+        this.scene.add(group);
+      },
+      undefined,
+      (error) => {
+        console.error("Failed to load hacker-room model:", error);
+      },
     );
   }
 
-  @HostListener('document:mousemove', ['$event'])
+  @HostListener("document:mousemove", ["$event"])
   onMouseMove(event: MouseEvent): void {
     this.mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
     this.mouseY = (event.clientY / window.innerHeight - 0.5) * 2;
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onWindowResize(): void {
     const canvas = this.canvasRef.nativeElement;
     this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -169,4 +185,3 @@ function calculateSizes(width: number): HeroSizes {
     deskRotation: [0, 0, 0],
   };
 }
-

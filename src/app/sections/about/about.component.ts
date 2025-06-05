@@ -6,20 +6,21 @@ import {
   ViewChild,
   signal,
   OnInit,
-} from '@angular/core';
-import * as THREE from 'three';
-import Globe from 'three-globe';
-import { ButtonComponent } from '../../components/button/button.component';
+} from "@angular/core";
+import * as THREE from "three";
+import Globe from "three-globe";
+import { ButtonComponent } from "../../components/button/button.component";
 
 @Component({
-  selector: 'app-about',
+  selector: "app-about",
   standalone: true,
   imports: [ButtonComponent],
-  templateUrl: './about.component.html',
-  styleUrls: ['./about.component.scss'],
+  templateUrl: "./about.component.html",
+  styleUrls: ["./about.component.scss"],
 })
 export class AboutComponent implements OnInit, AfterViewInit {
-  @ViewChild('globeCanvas', { static: true }) canvasRef!: ElementRef<HTMLDivElement>;
+  @ViewChild("globeCanvas", { static: true })
+  canvasRef!: ElementRef<HTMLDivElement>;
   hasCopied = signal(false);
 
   ngOnInit(): void {}
@@ -29,10 +30,12 @@ export class AboutComponent implements OnInit, AfterViewInit {
   }
 
   copyEmail(): void {
-    navigator.clipboard.writeText('25485760c5bc47d29ab00df39676ae84@domainsbyproxy.com').then(() => {
-      this.hasCopied.set(true);
-      setTimeout(() => this.hasCopied.set(false), 2000);
-    });
+    navigator.clipboard
+      .writeText("25485760c5bc47d29ab00df39676ae84@domainsbyproxy.com")
+      .then(() => {
+        this.hasCopied.set(true);
+        setTimeout(() => this.hasCopied.set(false), 2000);
+      });
   }
 
   private init3DGlobe(): void {
@@ -48,18 +51,22 @@ export class AboutComponent implements OnInit, AfterViewInit {
     camera.position.z = 200;
 
     const globe = new Globe()
-        .globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
-        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-        .showAtmosphere(true)
-        .labelsData([
-          {
-            lat: 40,
-            lng: -100,
-            text: 'Rjieka, Croatia',
-            color: 'white',
-            size: 15,
-          },
-        ]);
+      .globeImageUrl(
+        "//cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg",
+      )
+      .bumpImageUrl(
+        "https://unpkg.com/three-globe/example/img/earth-topology.png",
+      )
+      .showAtmosphere(true)
+      .labelsData([
+        {
+          lat: 40,
+          lng: -100,
+          text: "Rjieka, Croatia",
+          color: "white",
+          size: 15,
+        },
+      ]);
 
     scene.add(globe);
     scene.add(new THREE.AmbientLight(0xffffff, 1));

@@ -126,7 +126,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.modelObject = group;
         this.scene.add(group);
-        this.isLoading = false;
+        // this.isLoading = false;
       },
       undefined,
       (error) => {

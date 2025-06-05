@@ -8,7 +8,10 @@
     </div>
 
     <div class="loading-overlay" *ngIf="isLoading">
-        <p>Loading...</p>
+        <div class="flex flex-col justify-center items-center gap-4 ">
+            <p>Loading...</p>
+            <div class="spinner"></div>
+        </div>
     </div>
     <canvas #canvas class="absolute inset-0 w-full h-full z-0 pointer-events-none"></canvas>
 </section>

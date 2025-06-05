@@ -11,28 +11,56 @@
             <div class="terminal-body">
                 <h3 class="head-text">Let's talk</h3>
                 <p class="text-lg text-white-600 mt-3">
-                    Whether you’re looking to build a new website, improve your existing platform, or bring a unique project to life, I’m here to help.
+                    Whether you’re looking to build a new website, improve your existing platform, or bring a unique
+                    project to
+                    life, I’m here to help.
                 </p>
-
-                <form (ngSubmit)="handleSubmit()" class="mt-12 flex flex-col space-y-7">
+                <form #contactForm="ngForm" (ngSubmit)="handleSubmit()" class="mt-12 flex flex-col space-y-7">
                     <label class="space-y-3">
                         <span class="field-label">Full Name</span>
-                        <input name="name" [(ngModel)]="form.name" required class="field-input" placeholder="ex., John Doe" />
+                        <input
+                                name="name"
+                                [(ngModel)]="form.name"
+                                #nameRef="ngModel"
+                                required
+                                class="field-input"
+                                placeholder="ex., John Doe"
+                        />
+                        <span *ngIf="nameRef.invalid && nameRef.touched" class="text-red-500 text-sm">Full name is required</span>
                     </label>
 
                     <label class="space-y-3">
                         <span class="field-label">Email address</span>
-                        <input type="email" name="email" [(ngModel)]="form.email" required class="field-input" placeholder="ex., johndoe@gmail.com" />
+                        <input
+                                type="email"
+                                name="email"
+                                [(ngModel)]="form.email"
+                                #emailRef="ngModel"
+                                required
+                                email
+                                class="field-input"
+                                placeholder="ex., johndoe@gmail.com"
+                        />
+                        <span *ngIf="emailRef.invalid && emailRef.touched" class="text-red-500 text-sm">Enter a valid email</span>
                     </label>
 
                     <label class="space-y-3">
                         <span class="field-label">Your message</span>
-                        <textarea name="message" [(ngModel)]="form.message" required rows="5" class="field-input" placeholder="Share your thoughts or inquiries..."></textarea>
+                        <textarea
+                                name="message"
+                                [(ngModel)]="form.message"
+                                #messageRef="ngModel"
+                                required
+                                rows="5"
+                                class="field-input"
+                                placeholder="Share your thoughts or inquiries..."
+                        ></textarea>
+                        <span *ngIf="messageRef.invalid && messageRef.touched" class="text-red-500 text-sm">Message is required</span>
                     </label>
 
                     <button class="field-btn" type="submit" [disabled]="loading()">
                         {{ loading() ? 'Sending...' : 'Send Message' }}
-                        <img src="/assets/arrow-up.png" alt="arrow-up" class="field-btn_arrow" />
+                        <img src="/assets/arrow-up.png" alt="arrow-up" class="field-btn_arrow"/>
                     </button>
                 </form>
             </div>

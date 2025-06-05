@@ -10,6 +10,7 @@ import {
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import {NgIf} from "@angular/common";
 
 interface HeroSizes {
   deskScale: number;
@@ -22,22 +23,24 @@ interface HeroSizes {
   standalone: true,
   templateUrl: "./hero.component.html",
   styleUrls: ["./hero.component.scss"],
-  imports: [],
+  imports: [
+    NgIf
+  ],
 })
 export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild("canvas", { static: true })
+
   canvasRef!: ElementRef<HTMLCanvasElement>;
-
+  isLoading = true;
   scene = new THREE.Scene();
-  private camera!: THREE.PerspectiveCamera;
-  private renderer!: THREE.WebGLRenderer;
-
-  private animationId: number = 0;
   mouseX = 0;
   mouseY = 0;
   modelObject?: THREE.Object3D;
-
   sizes!: HeroSizes;
+
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+  private animationId: number = 0;
 
   ngOnInit(): void {
     const width = window.innerWidth;
@@ -123,6 +126,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.modelObject = group;
         this.scene.add(group);
+        this.isLoading = false;
       },
       undefined,
       (error) => {

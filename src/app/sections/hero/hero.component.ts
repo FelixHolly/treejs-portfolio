@@ -130,7 +130,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       undefined,
       (error) => {
-        console.error("Failed to load hacker-room model:", error);
+        console.error("Failed to load model:", error);
       },
     );
   }

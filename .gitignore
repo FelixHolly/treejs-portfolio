@@ -4,7 +4,6 @@
 /angular
 
 # Compiled TypeScript
-*.js
 *.js.map
 *.d.ts
 

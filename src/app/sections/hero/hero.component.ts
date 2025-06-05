@@ -44,6 +44,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
 
@@ -67,8 +68,13 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (this.modelObject) {
         const rotationFactor = 0.3;
-        this.modelObject.rotation.y += (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
-        this.modelObject.rotation.x += (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
+
+        if (window.innerWidth < 800) {
+          this.modelObject.rotation.y -= 0.002; // idle animation for mobile
+        } else {
+          this.modelObject.rotation.y += (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
+          this.modelObject.rotation.x += (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
+        }
       }
 
       this.renderer.render(this.scene, this.camera);
@@ -135,8 +141,8 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 function calculateSizes(width: number): HeroSizes {
   if (width < 440) {
     return {
-      deskScale: 1.2,
-      deskPosition: [0, -3, 0],
+      deskScale: 2,
+      deskPosition: [0, -4, 0],
       deskRotation: [0, 0, 0],
     };
   }

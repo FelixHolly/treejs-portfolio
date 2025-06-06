@@ -22,5 +22,4 @@ import { FooterComponent } from "./sections/footer/footer.component";
   styleUrl: "./app.component.scss",
 })
 export class AppComponent {
-  title = "treejs-portfolio";
 }

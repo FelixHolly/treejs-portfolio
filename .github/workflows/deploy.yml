@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: 🛠 Build Angular app
-        run: npm run build -- --configuration production --base-href /treejs-portfolio/
+        run: npm run build -- --configuration production --base-href ./
 
       - name: 🚀 Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

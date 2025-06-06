@@ -1,59 +1,80 @@
-# TreejsPortfolio
+# Felix Hollndonner – 3D Portfolio Website
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.4.
+Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**, and **Three.js**. This site showcases my work and skills through a responsive and animated web experience.
 
-## Development server
+🌐 [Live Site](https://felixhollndonner.com)
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
+## 📦 Tech Stack
+
+- Angular
+- Tailwind CSS
+- Three.js
+- GitHub Pages (for deployment)
+
+---
+
+## 🚀 Getting Started
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/felixholly/treejs-portfolio.git
+   cd treejs-portfolio
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start the dev server**:
+   ```bash
+   ng serve
+   ```
+
+4. **Build for production**:
+   ```bash
+   npm run build -- --configuration production --base-href /treejs-portfolio/
+   ```
+
+---
+
+## 📤 Deployment
+
+This project uses [GitHub Actions](https://github.com/JamesIves/github-pages-deploy-action) to automatically deploy to GitHub Pages from the `main` branch. Output is pushed to the `gh-pages` branch.
+
+Make sure your `angular.json` has:
+
+```json
+"baseHref": "/treejs-portfolio/"
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🎨 3D Assets & Attribution
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+This project includes the following 3D assets:
 
-```bash
-ng generate component component-name
-```
+- **Cyberpunk Phone**  
+  by [Zachey](https://sketchfab.com/3d-models/cyberpunk-phone-e854e1dd79ff47a488aea31a61a60bf1)  
+  Licensed under the [Sketchfab Standard License](https://sketchfab.com/licenses).  
+  **Note**: "NoAI" restriction applies.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- **Löwe (Leopard Tank)**  
+  by [noe-3d.at](https://sketchfab.com/3d-models/lowe-3396c1f61742469ea956b1320d22eb95)  
+  Licensed under [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
-```bash
-ng generate --help
-```
+---
 
-## Building
+## 📄 License
 
-To build the project run:
+This project is for **personal portfolio use**. All code is © Felix Hollndonner.  
+For reuse or questions, please [contact me](mailto:your@email.com).
 
-```bash
-ng build
-```
+---
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 🙌 Contact
 
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [LinkedIn](https://www.linkedin.com/in/felixhollndonner/)
+- [GitHub](https://github.com/felixhollndonner)

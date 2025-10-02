@@ -175,6 +175,9 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             texture.flipY = false;
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
 
             const oldMaterial = this.screenMesh!.material as
                 | THREE.Material
@@ -182,7 +185,10 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             if (Array.isArray(oldMaterial)) oldMaterial.forEach((m) => m.dispose());
             else oldMaterial.dispose();
 
-            this.screenMesh!.material = new THREE.MeshBasicMaterial({map: texture});
+            this.screenMesh!.material = new THREE.MeshBasicMaterial({
+                map: texture,
+                toneMapped: false,
+            });
             this.screenMesh!.material.needsUpdate = true;
         });
     }

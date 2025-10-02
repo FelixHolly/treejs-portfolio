@@ -173,7 +173,9 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
       },
       (xhr) => {
-        this.loadingProgress = (xhr.loaded / xhr.total) * 100;
+        if (xhr.total > 0) {
+          this.loadingProgress = Math.min((xhr.loaded / xhr.total) * 100, 100);
+        }
       },
       (error) => {
         console.error("Failed to load model:", error);

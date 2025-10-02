@@ -1,4 +1,3 @@
-// about.component.ts
 import {
   AfterViewInit,
   Component,

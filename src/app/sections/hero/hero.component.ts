@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -10,7 +11,9 @@ import {
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import {NgIf} from "@angular/common";
+import { NgIf } from "@angular/common";
+import { ThreeSceneService } from "../../services/three-scene.service";
+import { environment } from "../../../environments/environment";
 
 interface HeroSizes {
   deskScale: number;
@@ -28,9 +31,11 @@ interface HeroSizes {
   ],
 })
 export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild("canvas", { static: true })
+  private threeSceneService = inject(ThreeSceneService);
 
+  @ViewChild("canvas", { static: true })
   canvasRef!: ElementRef<HTMLCanvasElement>;
+
   isLoading = true;
   scene = new THREE.Scene();
   mouseX = 0;
@@ -41,6 +46,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private animationId: number = 0;
+  private dracoLoader?: DRACOLoader;
 
   ngOnInit(): void {
     const width = window.innerWidth;
@@ -98,12 +104,12 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private loadModel(): void {
     const loader = new GLTFLoader();
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("assets/draco/");
-    loader.setDRACOLoader(dracoLoader);
+    this.dracoLoader = new DRACOLoader();
+    this.dracoLoader.setDecoderPath(environment.assets.dracoPath);
+    loader.setDRACOLoader(this.dracoLoader);
 
     loader.load(
-      "assets/models/vienna-lowe.glb",
+      environment.assets.models.heroModel,
       (gltf) => {
         const model = gltf.scene;
         const group = new THREE.Group();
@@ -131,6 +137,9 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       undefined,
       (error) => {
         console.error("Failed to load model:", error);
+        this.isLoading = false;
+        // Error will be caught by global error handler
+        throw new Error(`Failed to load 3D model: ${error}`);
       },
     );
   }
@@ -151,8 +160,17 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.animationId);
-    this.scene.clear();
-    this.renderer.dispose();
+
+    // Properly dispose of all Three.js resources
+    this.threeSceneService.disposeScene(this.scene);
+
+    if (this.dracoLoader) {
+      this.dracoLoader.dispose();
+    }
+
+    if (this.renderer) {
+      this.threeSceneService.disposeRenderer(this.renderer);
+    }
   }
 
   protected readonly Math = Math;

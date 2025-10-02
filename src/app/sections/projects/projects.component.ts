@@ -1,9 +1,13 @@
-import {AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild,} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, HostListener, inject, OnDestroy, ViewChild,} from "@angular/core";
 import * as THREE from "three";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import {NgForOf, NgIf} from "@angular/common";
+import { ProjectService } from "../../services/project.service";
+import { Project } from "../../models/project.model";
+import { ThreeSceneService } from "../../services/three-scene.service";
+import { environment } from "../../../environments/environment";
 
 @Component({
     selector: "app-projects",
@@ -13,6 +17,9 @@ import {NgForOf, NgIf} from "@angular/common";
     imports: [NgForOf, NgIf],
 })
 export class ProjectsComponent implements AfterViewInit, OnDestroy {
+    private projectService = inject(ProjectService);
+    private threeSceneService = inject(ThreeSceneService);
+
     @ViewChild("canvas", {static: true})
     canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -32,53 +39,19 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     private readonly rotationDuration = 1.2;
     private readonly rotationStart = 0;
     private readonly rotationEnd = Math.PI / 2;
+    private dracoLoader?: DRACOLoader;
 
-    myProjects = [
-        {
-            title: "WheelWallet",
-            desc: "All-in-one car manager.",
-            subdesc: "Documents, maintenance, and trips.",
-            texture: "assets/textures/projects/wheel-wallet.png",
-            tags: [
-                {name: "Angular", path: "assets/logos/angular.svg"},
-                {name: "Java", path: "assets/logos/java.svg"},
-                {name: "SpringBoot", path: "assets/logos/spring.svg"},
-            ],
-            href: "https://wheelwallet-frontend.onrender.com",
-        },
-        {
-            title: "ReLoo",
-            desc: "Recycling buddy.",
-            subdesc: "Helps users recycle items the correct way based on their location",
-            texture: "assets/textures/projects/reloo.png",
-            tags: [
-                {name: "Angular", path: "assets/logos/angular.svg"},
-                {name: "Java", path: "assets/logos/java.svg"},
-                {name: "SpringBoot", path: "assets/logos/spring.svg"},
-                {name: "Leaflet", path: "assets/logos/leaflet.svg"},
-            ],
-            href: "https://re-loo-nx-frontend.vercel.app",
-        },
-        {
-            title: "GreenWave",
-            desc: "GPS traffic light optimizer.",
-            subdesc: "Built with Angular + Leaflet + Crowdsourcing.",
-            texture: "assets/textures/projects/greenwave.png",
-            tags: [
-                {name: "Angular", path: "assets/logos/angular.svg"},
-                {name: "Java", path: "assets/logos/spring.svg"},
-                {name: "SpringBoot", path: "assets/logos/spring.svg"},
-                {name: "Leaflet", path: "assets/logos/leaflet.svg"},
-            ],
-            href: "https://greenwave-webapp.onrender.com",
-        },
-    ];
+    myProjects: Project[] = [];
 
-    get currentProject() {
+    constructor() {
+        this.myProjects = this.projectService.getProjects();
+    }
+
+    get currentProject(): Project {
         return this.myProjects[this.selectedProjectIndex];
     }
 
-    handleNavigation(direction: "previous" | "next") {
+    handleNavigation(direction: "previous" | "next"): void {
         this.selectedProjectIndex =
             direction === "previous"
                 ? (this.selectedProjectIndex - 1 + this.myProjects.length) %
@@ -154,11 +127,11 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
     private loadModel(): void {
         const loader = new GLTFLoader();
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath("assets/draco/");
-        loader.setDRACOLoader(dracoLoader);
+        this.dracoLoader = new DRACOLoader();
+        this.dracoLoader.setDecoderPath(environment.assets.dracoPath);
+        loader.setDRACOLoader(this.dracoLoader);
 
-        loader.load("assets/models/future-phone.glb", (gltf: any) => {
+        loader.load(environment.assets.models.projectPhone, (gltf: any) => {
             this.model = gltf.scene;
             if (!this.model) return;
 
@@ -233,8 +206,21 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void {
         cancelAnimationFrame(this.animationId);
-        this.controls.dispose();
-        this.renderer.dispose();
-        this.scene.clear();
+
+        // Dispose controls
+        if (this.controls) {
+            this.controls.dispose();
+        }
+
+        // Properly dispose of all Three.js resources
+        this.threeSceneService.disposeScene(this.scene);
+
+        if (this.dracoLoader) {
+            this.dracoLoader.dispose();
+        }
+
+        if (this.renderer) {
+            this.threeSceneService.disposeRenderer(this.renderer);
+        }
     }
 }

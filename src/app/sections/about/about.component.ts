@@ -4,7 +4,6 @@ import {
   Component,
   ElementRef,
   ViewChild,
-  signal,
   OnInit,
 } from "@angular/core";
 import * as THREE from "three";
@@ -21,21 +20,18 @@ import { ButtonComponent } from "../../components/button/button.component";
 export class AboutComponent implements OnInit, AfterViewInit {
   @ViewChild("globeCanvas", { static: true })
   canvasRef!: ElementRef<HTMLDivElement>;
-  hasCopied = signal(false);
+
+  stats = {
+    experience: 3,
+    projects: 5,
+    satisfaction: 100,
+    techStack: 10,
+  };
 
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     this.init3DGlobe();
-  }
-
-  copyEmail(): void {
-    navigator.clipboard
-      .writeText("25485760c5bc47d29ab00df39676ae84@domainsbyproxy.com")
-      .then(() => {
-        this.hasCopied.set(true);
-        setTimeout(() => this.hasCopied.set(false), 2000);
-      });
   }
 
   private init3DGlobe(): void {

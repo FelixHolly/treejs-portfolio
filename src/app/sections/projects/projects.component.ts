@@ -9,6 +9,30 @@ import { Project } from "../../models/project.model";
 import { ThreeSceneService } from "../../services/three-scene.service";
 import { environment } from "../../../environments/environment";
 
+// Animation constants
+const PROJECT_ANIMATION = {
+    ROTATION_DURATION: 1.2,
+    ROTATION_START: 0,
+    ROTATION_END: Math.PI / 2,
+    EASE_POWER: 3,
+} as const;
+
+// Model constants
+const MODEL_CONFIG = {
+    SCALE: 20,
+    BODY_COLOR: 0x555555,
+    BODY_ROUGHNESS: 0.2,
+    BODY_METALNESS: 0.4,
+} as const;
+
+// Camera constants
+const CAMERA_CONFIG = {
+    FOV: 50,
+    NEAR: 0.1,
+    FAR: 1000,
+    POSITION: [0, 0, 5] as const,
+} as const;
+
 @Component({
     selector: "app-projects",
     standalone: true,
@@ -17,6 +41,7 @@ import { environment } from "../../../environments/environment";
     imports: [NgForOf, NgIf],
 })
 export class ProjectsComponent implements AfterViewInit, OnDestroy {
+    protected readonly Math = Math;
     private projectService = inject(ProjectService);
     private threeSceneService = inject(ThreeSceneService);
 
@@ -26,6 +51,8 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     selectedProjectIndex = 0;
     screenMesh?: THREE.Mesh;
     scene = new THREE.Scene();
+    loadingProgress = 0;
+    isLoading = true;
     camera!: THREE.PerspectiveCamera;
     renderer!: THREE.WebGLRenderer;
     controls!: OrbitControls;
@@ -36,9 +63,6 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     private clock = new THREE.Clock();
     private isRotating = true;
     private rotationElapsed = 0;
-    private readonly rotationDuration = 1.2;
-    private readonly rotationStart = 0;
-    private readonly rotationEnd = Math.PI / 2;
     private dracoLoader?: DRACOLoader;
 
     myProjects: Project[] = [];
@@ -85,12 +109,12 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     private setupCamera() {
         const canvas = this.canvasRef.nativeElement;
         this.camera = new THREE.PerspectiveCamera(
-            50,
+            CAMERA_CONFIG.FOV,
             canvas.clientWidth / canvas.clientHeight,
-            0.1,
-            1000,
+            CAMERA_CONFIG.NEAR,
+            CAMERA_CONFIG.FAR,
         );
-        this.camera.position.set(0, 0, 5);
+        this.camera.position.set(...CAMERA_CONFIG.POSITION);
     }
 
     private setupSceneLights() {
@@ -113,10 +137,10 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
         if (this.isRotating && this.model) {
             this.rotationElapsed += delta;
-            const t = Math.min(this.rotationElapsed / this.rotationDuration, 1);
-            const easedT = 1 - Math.pow(1 - t, 3);
+            const t = Math.min(this.rotationElapsed / PROJECT_ANIMATION.ROTATION_DURATION, 1);
+            const easedT = 1 - Math.pow(1 - t, PROJECT_ANIMATION.EASE_POWER);
             this.model.rotation.y =
-                this.rotationStart + (this.rotationEnd - this.rotationStart) * easedT;
+                PROJECT_ANIMATION.ROTATION_START + (PROJECT_ANIMATION.ROTATION_END - PROJECT_ANIMATION.ROTATION_START) * easedT;
 
             if (t >= 1) this.isRotating = false;
         }
@@ -131,13 +155,15 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         this.dracoLoader.setDecoderPath(environment.assets.dracoPath);
         loader.setDRACOLoader(this.dracoLoader);
 
-        loader.load(environment.assets.models.projectPhone, (gltf: any) => {
-            this.model = gltf.scene;
+        loader.load(
+            environment.assets.models.projectPhone,
+            (gltf: any) => {
+                this.model = gltf.scene;
             if (!this.model) return;
 
             this.model.position.set(0, 0, 0);
-            this.model.scale.set(20, 20, 20);
-            this.model.rotation.set(0, this.rotationStart, 0);
+            this.model.scale.set(MODEL_CONFIG.SCALE, MODEL_CONFIG.SCALE, MODEL_CONFIG.SCALE);
+            this.model.rotation.set(0, PROJECT_ANIMATION.ROTATION_START, 0);
             this.scene.add(this.model);
 
             this.resetRotation();
@@ -158,13 +184,21 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
                     if (mesh.name === "body") {
                         mesh.material = new THREE.MeshStandardMaterial({
-                            color: 0x555555,
-                            roughness: 0.2,
-                            metalness: 0.4,
+                            color: MODEL_CONFIG.BODY_COLOR,
+                            roughness: MODEL_CONFIG.BODY_ROUGHNESS,
+                            metalness: MODEL_CONFIG.BODY_METALNESS,
                         });
                     }
                 }
             });
+            this.isLoading = false;
+        },
+        (xhr) => {
+            this.loadingProgress = (xhr.loaded / xhr.total) * 100;
+        },
+        (error) => {
+            console.error("Failed to load 3D model:", error);
+            this.isLoading = false;
         });
     }
 
@@ -182,8 +216,21 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             const oldMaterial = this.screenMesh!.material as
                 | THREE.Material
                 | THREE.Material[];
-            if (Array.isArray(oldMaterial)) oldMaterial.forEach((m) => m.dispose());
-            else oldMaterial.dispose();
+
+            // Dispose old material and its textures
+            if (Array.isArray(oldMaterial)) {
+                oldMaterial.forEach((m) => {
+                    if (m instanceof THREE.MeshBasicMaterial && m.map) {
+                        m.map.dispose();
+                    }
+                    m.dispose();
+                });
+            } else {
+                if (oldMaterial instanceof THREE.MeshBasicMaterial && oldMaterial.map) {
+                    oldMaterial.map.dispose();
+                }
+                oldMaterial.dispose();
+            }
 
             this.screenMesh!.material = new THREE.MeshBasicMaterial({
                 map: texture,
@@ -195,7 +242,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
     private resetRotation(): void {
         if (this.model) {
-            this.model.rotation.y = this.rotationStart;
+            this.model.rotation.y = PROJECT_ANIMATION.ROTATION_START;
             this.rotationElapsed = 0;
             this.clock.start();
             this.isRotating = true;

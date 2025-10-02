@@ -21,6 +21,27 @@ interface HeroSizes {
   deskRotation: [number, number, number];
 }
 
+// Animation constants
+const HERO_ANIMATION = {
+  ROTATION_FACTOR: 0.3,
+  ROTATION_SPEED: 0.1,
+  MOBILE_ROTATION_SPEED: 0.002,
+  MOBILE_BREAKPOINT: 800,
+} as const;
+
+// Renderer constants
+const RENDERER_CONFIG = {
+  MAX_PIXEL_RATIO: 2,
+  TONE_MAPPING_EXPOSURE: 1,
+} as const;
+
+// Shadow constants
+const SHADOW_CONFIG = {
+  MAP_SIZE: 2048,
+  CAMERA_NEAR: 0.5,
+  CAMERA_FAR: 50,
+} as const;
+
 @Component({
   selector: "app-hero",
   standalone: true,
@@ -37,6 +58,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   canvasRef!: ElementRef<HTMLCanvasElement>;
 
   isLoading = true;
+  loadingProgress = 0;
   scene = new THREE.Scene();
   mouseX = 0;
   mouseY = 0;
@@ -62,7 +84,12 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       antialias: true,
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDERER_CONFIG.MAX_PIXEL_RATIO));
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = RENDERER_CONFIG.TONE_MAPPING_EXPOSURE;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.camera = new THREE.PerspectiveCamera(
       30,
@@ -76,6 +103,11 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(10, 10, 10);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
+    directionalLight.shadow.mapSize.height = SHADOW_CONFIG.MAP_SIZE;
+    directionalLight.shadow.camera.near = SHADOW_CONFIG.CAMERA_NEAR;
+    directionalLight.shadow.camera.far = SHADOW_CONFIG.CAMERA_FAR;
     this.scene.add(ambientLight, directionalLight);
 
     this.loadModel();
@@ -84,15 +116,13 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       this.animationId = requestAnimationFrame(animate);
 
       if (this.modelObject) {
-        const rotationFactor = 0.3;
-
-        if (window.innerWidth < 800) {
-          this.modelObject.rotation.y -= 0.002; // idle animation for mobile
+        if (window.innerWidth < HERO_ANIMATION.MOBILE_BREAKPOINT) {
+          this.modelObject.rotation.y -= HERO_ANIMATION.MOBILE_ROTATION_SPEED;
         } else {
           this.modelObject.rotation.y +=
-            (this.mouseX * rotationFactor - this.modelObject.rotation.y) * 0.1;
+            (this.mouseX * HERO_ANIMATION.ROTATION_FACTOR - this.modelObject.rotation.y) * HERO_ANIMATION.ROTATION_SPEED;
           this.modelObject.rotation.x +=
-            (this.mouseY * rotationFactor - this.modelObject.rotation.x) * 0.1;
+            (this.mouseY * HERO_ANIMATION.ROTATION_FACTOR - this.modelObject.rotation.x) * HERO_ANIMATION.ROTATION_SPEED;
         }
       }
 
@@ -130,11 +160,21 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         group.rotation.set(...this.sizes.deskRotation);
         group.scale.setScalar(this.sizes.deskScale);
 
+        // Enable shadows for model meshes
+        model.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
         this.modelObject = group;
         this.scene.add(group);
         this.isLoading = false;
       },
-      undefined,
+      (xhr) => {
+        this.loadingProgress = (xhr.loaded / xhr.total) * 100;
+      },
       (error) => {
         console.error("Failed to load model:", error);
         this.isLoading = false;

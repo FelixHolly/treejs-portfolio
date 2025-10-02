@@ -41,6 +41,10 @@
 
         <!-- 3D Canvas View -->
         <div class="border border-black-300 bg-black-200 rounded-lg h-96 md:h-full relative">
+            <div *ngIf="isLoading" class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-black-200">
+                <p class="text-white">Loading 3D Model... {{ Math.round(loadingProgress) }}%</p>
+                <div class="spinner"></div>
+            </div>
             <canvas #canvas class="absolute top-0 left-0 w-full h-full"></canvas>
         </div>
     </div>

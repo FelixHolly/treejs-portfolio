@@ -1,0 +1,135 @@
+{
+  "configVersion": 1,
+  "timestamp": 1759643983521,
+  "index": "./index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "./chunk-B3UVY3PM.js",
+        "./chunk-FHOWGVN6.js",
+        "./chunk-GQ6DDQZZ.js",
+        "./chunk-MO5OCV5U.js",
+        "./chunk-W52AQ557.js",
+        "./index.html",
+        "./main-V5MEJKP2.js",
+        "./manifest.webmanifest",
+        "./polyfills-B6TNHZQ6.js",
+        "./styles-SSMEWF2E.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "./assets/arrow-up.png",
+        "./assets/close.svg",
+        "./assets/copy.svg",
+        "./assets/favicon/android-chrome-192x192.png",
+        "./assets/favicon/android-chrome-512x512.png",
+        "./assets/favicon/apple-touch-icon.png",
+        "./assets/favicon/favicon-16x16.png",
+        "./assets/favicon/favicon-32x32.png",
+        "./assets/figma.svg",
+        "./assets/github.svg",
+        "./assets/grid2.png",
+        "./assets/grid3.png",
+        "./assets/grid4.png",
+        "./assets/left-arrow.png",
+        "./assets/linkedin.svg",
+        "./assets/me.png",
+        "./assets/menu.svg",
+        "./assets/models/future-phone.glb",
+        "./assets/models/vienna-lowe.glb",
+        "./assets/right-arrow.png",
+        "./assets/textures/projects/greenwave.webp",
+        "./assets/textures/projects/reloo.webp",
+        "./assets/textures/projects/wheel-wallet.webp",
+        "./assets/tick.svg",
+        "./icons/icon-128x128.png",
+        "./icons/icon-144x144.png",
+        "./icons/icon-152x152.png",
+        "./icons/icon-192x192.png",
+        "./icons/icon-384x384.png",
+        "./icons/icon-512x512.png",
+        "./icons/icon-72x72.png",
+        "./icons/icon-96x96.png"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [],
+  "hashTable": {
+    "./assets/arrow-up.png": "1c3cb7322648650bd555385d907ec8540608c001",
+    "./assets/close.svg": "09974638a8bfad1525158acf07fac31f4209c4e3",
+    "./assets/copy.svg": "14fd9896d7ab77cc94ccaca755007d744892c06e",
+    "./assets/favicon/android-chrome-192x192.png": "de87d13c36d8c016f58119b15251715a848f7d57",
+    "./assets/favicon/android-chrome-512x512.png": "be830fa56e0383d0888ffc05dd399fa4ccfbebfa",
+    "./assets/favicon/apple-touch-icon.png": "3d24d8b971c64428edcfa768a296151fc1182028",
+    "./assets/favicon/favicon-16x16.png": "1c15a74602aa8deab6947afefd539d42b5a97732",
+    "./assets/favicon/favicon-32x32.png": "0d105bbebbf4f86bca3b71fb0ee439d22ebbcd8f",
+    "./assets/figma.svg": "6ebd4a290597ba3a01b61d424b348e864e71d677",
+    "./assets/github.svg": "bb1256b454dd8bbfe35784146dbfb17fe02033c1",
+    "./assets/grid2.png": "ab73fcad4a68132ad2c09dbbed87dff88cdee0c2",
+    "./assets/grid3.png": "0f9e0138aec99bf352c119630b8f28a97ba0f13e",
+    "./assets/grid4.png": "bafe7658e843a0ccc4816f416bd3cd9659da91a2",
+    "./assets/left-arrow.png": "8fecd7b94ffc7de657f5cd7f4f50e13aa4a7fef7",
+    "./assets/linkedin.svg": "d2fa62d5f61549d4e16b7df534d72e2785e8a01c",
+    "./assets/me.png": "fecf895c47221ab6fa3d572446ee20e749485eae",
+    "./assets/menu.svg": "e18f0b646f57ee2166975a3c98935f9bd0cfc2eb",
+    "./assets/models/future-phone.glb": "ba7c75c40f70c9524ed8190c21986e80f0e34897",
+    "./assets/models/vienna-lowe.glb": "eb48a133f0368512dd76843ddd0bbbd05a0a77fa",
+    "./assets/right-arrow.png": "013ac7c699653bf4652dabc61f7ecc3046f8ce44",
+    "./assets/textures/projects/greenwave.webp": "9f25ee64228fbb688efd24cec7c627372d5f47cf",
+    "./assets/textures/projects/reloo.webp": "cc1735b80af5665007822ade351990ed994e3d59",
+    "./assets/textures/projects/wheel-wallet.webp": "bf62718b5f466154853fc21f6b15e9af78b2c0cb",
+    "./assets/tick.svg": "88cdc6e2ecd37d9b2633f4ac37ecf8f96856c6f5",
+    "./chunk-B3UVY3PM.js": "3284f1edc48e7269131fc8aa9841d51dbaed01aa",
+    "./chunk-FHOWGVN6.js": "1fe673d4f4ada0d5da80fc08dbf79d9a3bfae8f6",
+    "./chunk-GQ6DDQZZ.js": "750d697ac4b63c912eee5a679e3ceb2576394cb1",
+    "./chunk-MO5OCV5U.js": "1c3a3344e373f4f19e0ef48f4c43cddc568289f8",
+    "./chunk-W52AQ557.js": "6a4a311ffc3bf7fc7f0c68c18f7bfbd1c737e23e",
+    "./icons/icon-128x128.png": "1c0baf4c4ccbe8f28c1139aab542e98a9a18f54b",
+    "./icons/icon-144x144.png": "8889e1827a98419bcdabe0939f6440bd93accb98",
+    "./icons/icon-152x152.png": "26aed701ce73ed9afe38de9cf10739b56e0b1868",
+    "./icons/icon-192x192.png": "f1d0f603571af3b2ee81d6247fe2895f98f6a716",
+    "./icons/icon-384x384.png": "241cf31fb795a87d77ada3d5d4f257301e4e1326",
+    "./icons/icon-512x512.png": "b0fdec273d2fe72ae44724e8ebd2ab5d26c465fe",
+    "./icons/icon-72x72.png": "845eb8b43da7a6ff168a2a66afb0d43521b37c0c",
+    "./icons/icon-96x96.png": "fa535d0c6c3e07d8a42e2be33abe5aa199b215f4",
+    "./index.html": "c477dc34977882842e004faddef77b9221cd563f",
+    "./main-V5MEJKP2.js": "9b9cf7dc128f4fff6655dd4f0b714a2f00438040",
+    "./manifest.webmanifest": "b56171f7170275e5a450c2a6614175e11835d977",
+    "./polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
+    "./styles-SSMEWF2E.css": "4e3ceec004ba0eb88f81b871d8cfdfa25e880819"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}

@@ -10,7 +10,7 @@ export class ProjectService {
       title: "WheelWallet",
       desc: "All-in-one car manager.",
       subdesc: "Documents, maintenance, and trips.",
-      texture: "assets/textures/projects/wheel-wallet.png",
+      texture: "assets/textures/projects/wheel-wallet.webp",
       tags: [
         { name: "Angular", path: "assets/logos/angular.svg" },
         { name: "Java", path: "assets/logos/java.svg" },
@@ -22,7 +22,7 @@ export class ProjectService {
       title: "ReLoo",
       desc: "Recycling buddy.",
       subdesc: "Helps users recycle items the correct way based on their location",
-      texture: "assets/textures/projects/reloo.png",
+      texture: "assets/textures/projects/reloo.webp",
       tags: [
         { name: "Angular", path: "assets/logos/angular.svg" },
         { name: "Java", path: "assets/logos/java.svg" },
@@ -35,7 +35,7 @@ export class ProjectService {
       title: "GreenWave",
       desc: "GPS traffic light optimizer.",
       subdesc: "Built with Angular + Leaflet + Crowdsourcing.",
-      texture: "assets/textures/projects/greenwave.png",
+      texture: "assets/textures/projects/greenwave.webp",
       tags: [
         { name: "Angular", path: "assets/logos/angular.svg" },
         { name: "Java", path: "assets/logos/spring.svg" },

@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy } from "@angular/core";
-import * as THREE from "three";
+import {Injectable} from "@angular/core";
+import {Material, Mesh, Object3D, Scene, WebGLRenderer} from "three";
 
 /**
  * Service to help manage Three.js resources and prevent memory leaks
@@ -7,25 +7,25 @@ import * as THREE from "three";
 @Injectable({
   providedIn: "root",
 })
-export class ThreeSceneService implements OnDestroy {
+export class ThreeSceneService {
   /**
    * Properly dispose of Three.js scene and all its resources
    */
-  disposeScene(scene: THREE.Scene): void {
-    scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
+  disposeScene(scene: Scene): void {
+    scene.traverse((object: Object3D) => {
+      if (!(object as Mesh).isMesh) return;
 
-      // Dispose geometry
-      if (object.geometry) {
-        object.geometry.dispose();
+      const mesh = object as Mesh;
+
+      if (mesh.geometry) {
+        mesh.geometry.dispose();
       }
 
-      // Dispose material(s)
-      if (object.material) {
-        if (Array.isArray(object.material)) {
-          object.material.forEach((material) => this.disposeMaterial(material));
+      if (mesh.material) {
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach((material) => this.disposeMaterial(material));
         } else {
-          this.disposeMaterial(object.material);
+          this.disposeMaterial(mesh.material);
         }
       }
     });
@@ -36,8 +36,7 @@ export class ThreeSceneService implements OnDestroy {
   /**
    * Dispose of a material and its associated textures
    */
-  private disposeMaterial(material: THREE.Material): void {
-    // Dispose textures
+  private disposeMaterial(material: Material): void {
     Object.keys(material).forEach((key) => {
       const value = (material as any)[key];
       if (value && typeof value === "object" && "minFilter" in value) {
@@ -51,12 +50,8 @@ export class ThreeSceneService implements OnDestroy {
   /**
    * Dispose of renderer
    */
-  disposeRenderer(renderer: THREE.WebGLRenderer): void {
+  disposeRenderer(renderer: WebGLRenderer): void {
     renderer.dispose();
     renderer.forceContextLoss();
-  }
-
-  ngOnDestroy(): void {
-    // Service cleanup if needed
   }
 }

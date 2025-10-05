@@ -8,7 +8,21 @@ import {
   OnInit,
   ViewChild,
 } from "@angular/core";
-import * as THREE from "three";
+import {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  AmbientLight,
+  DirectionalLight,
+  Object3D,
+  Mesh,
+  Box3,
+  Vector3,
+  Group,
+  SRGBColorSpace,
+  ACESFilmicToneMapping,
+  PCFSoftShadowMap,
+} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { NgIf } from "@angular/common";
@@ -59,14 +73,14 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isLoading = true;
   loadingProgress = 0;
-  scene = new THREE.Scene();
+  scene = new Scene();
   mouseX = 0;
   mouseY = 0;
-  modelObject?: THREE.Object3D;
+  modelObject?: Object3D;
   sizes!: HeroSizes;
 
-  private camera!: THREE.PerspectiveCamera;
-  private renderer!: THREE.WebGLRenderer;
+  private camera!: PerspectiveCamera;
+  private renderer!: WebGLRenderer;
   private animationId: number = 0;
   private dracoLoader?: DRACOLoader;
 
@@ -78,20 +92,20 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
 
-    this.renderer = new THREE.WebGLRenderer({
+    this.renderer = new WebGLRenderer({
       canvas,
       alpha: true,
       antialias: true,
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDERER_CONFIG.MAX_PIXEL_RATIO));
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.outputColorSpace = SRGBColorSpace;
+    this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = RENDERER_CONFIG.TONE_MAPPING_EXPOSURE;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = PCFSoftShadowMap;
 
-    this.camera = new THREE.PerspectiveCamera(
+    this.camera = new PerspectiveCamera(
       30,
       window.innerWidth / window.innerHeight,
       0.1,
@@ -100,8 +114,8 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.camera.position.set(1, -2, 10);
     this.camera.lookAt(0, 0, 0);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const ambientLight = new AmbientLight(0xffffff, 1.5);
+    const directionalLight = new DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(10, 10, 10);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
@@ -142,11 +156,11 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       environment.assets.models.heroModel,
       (gltf) => {
         const model = gltf.scene;
-        const group = new THREE.Group();
+        const group = new Group();
         group.add(model);
 
-        const box = new THREE.Box3().setFromObject(model);
-        const center = new THREE.Vector3();
+        const box = new Box3().setFromObject(model);
+        const center = new Vector3();
         box.getCenter(center);
         model.position.sub(center);
 
@@ -160,9 +174,8 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         group.rotation.set(...this.sizes.deskRotation);
         group.scale.setScalar(this.sizes.deskScale);
 
-        // Enable shadows for model meshes
         model.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
+          if ((child as Mesh).isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
           }
@@ -194,7 +207,6 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener("window:resize")
   onWindowResize(): void {
-    const canvas = this.canvasRef.nativeElement;
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -203,7 +215,6 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     cancelAnimationFrame(this.animationId);
 
-    // Properly dispose of all Three.js resources
     this.threeSceneService.disposeScene(this.scene);
 
     if (this.dracoLoader) {

@@ -1,5 +1,22 @@
 import {AfterViewInit, Component, ElementRef, HostListener, inject, OnDestroy, ViewChild,} from "@angular/core";
-import * as THREE from "three";
+import {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  AmbientLight,
+  DirectionalLight,
+  Mesh,
+  MeshStandardMaterial,
+  MeshBasicMaterial,
+  TextureLoader,
+  Clock,
+  ClampToEdgeWrapping,
+  SRGBColorSpace,
+  LinearFilter,
+  Material,
+  BufferGeometry,
+  Object3D,
+} from "three";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
@@ -49,18 +66,18 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     canvasRef!: ElementRef<HTMLCanvasElement>;
 
     selectedProjectIndex = 0;
-    screenMesh?: THREE.Mesh;
-    scene = new THREE.Scene();
+    screenMesh?: Mesh;
+    scene = new Scene();
     loadingProgress = 0;
     isLoading = true;
-    camera!: THREE.PerspectiveCamera;
-    renderer!: THREE.WebGLRenderer;
+    camera!: PerspectiveCamera;
+    renderer!: WebGLRenderer;
     controls!: OrbitControls;
-    textureLoader = new THREE.TextureLoader();
+    textureLoader = new TextureLoader();
     animationId: number = 0;
 
-    private model?: THREE.Object3D;
-    private clock = new THREE.Clock();
+    private model?: Object3D;
+    private clock = new Clock();
     private isRotating = true;
     private rotationElapsed = 0;
     private dracoLoader?: DRACOLoader;
@@ -97,7 +114,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
     private setupRenderer() {
         const canvas = this.canvasRef.nativeElement;
-        this.renderer = new THREE.WebGLRenderer({
+        this.renderer = new WebGLRenderer({
             canvas,
             alpha: true,
             antialias: true,
@@ -108,7 +125,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
     private setupCamera() {
         const canvas = this.canvasRef.nativeElement;
-        this.camera = new THREE.PerspectiveCamera(
+        this.camera = new PerspectiveCamera(
             CAMERA_CONFIG.FOV,
             canvas.clientWidth / canvas.clientHeight,
             CAMERA_CONFIG.NEAR,
@@ -118,8 +135,8 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     }
 
     private setupSceneLights() {
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const light = new THREE.DirectionalLight(0xffffff, 1);
+        this.scene.add(new AmbientLight(0xffffff, 0.5));
+        const light = new DirectionalLight(0xffffff, 1);
         light.position.set(5, 10, 7.5);
         this.scene.add(light);
     }
@@ -169,11 +186,11 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             this.resetRotation();
 
             this.model.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
+                if ((child as Mesh).isMesh) {
+                    const mesh = child as Mesh;
 
                     if (mesh.name === "screen") {
-                        const uv = (mesh.geometry as THREE.BufferGeometry).attributes["uv"];
+                        const uv = (mesh.geometry as BufferGeometry).attributes["uv"];
                         for (let i = 0; i < uv.count; i++) {
                             uv.setXY(i, uv.getX(i) + 2, uv.getY(i));
                         }
@@ -183,7 +200,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
                     }
 
                     if (mesh.name === "body") {
-                        mesh.material = new THREE.MeshStandardMaterial({
+                        mesh.material = new MeshStandardMaterial({
                             color: MODEL_CONFIG.BODY_COLOR,
                             roughness: MODEL_CONFIG.BODY_ROUGHNESS,
                             metalness: MODEL_CONFIG.BODY_METALNESS,
@@ -209,32 +226,31 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
 
         const texture = this.textureLoader.load(this.currentProject.texture, () => {
             texture.flipY = false;
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
+            texture.wrapS = ClampToEdgeWrapping;
+            texture.wrapT = ClampToEdgeWrapping;
+            texture.colorSpace = SRGBColorSpace;
+            texture.minFilter = LinearFilter;
+            texture.magFilter = LinearFilter;
 
             const oldMaterial = this.screenMesh!.material as
-                | THREE.Material
-                | THREE.Material[];
+                | Material
+                | Material[];
 
-            // Dispose old material and its textures
             if (Array.isArray(oldMaterial)) {
                 oldMaterial.forEach((m) => {
-                    if (m instanceof THREE.MeshBasicMaterial && m.map) {
+                    if (m instanceof MeshBasicMaterial && m.map) {
                         m.map.dispose();
                     }
                     m.dispose();
                 });
             } else {
-                if (oldMaterial instanceof THREE.MeshBasicMaterial && oldMaterial.map) {
+                if (oldMaterial instanceof MeshBasicMaterial && oldMaterial.map) {
                     oldMaterial.map.dispose();
                 }
                 oldMaterial.dispose();
             }
 
-            this.screenMesh!.material = new THREE.MeshBasicMaterial({
+            this.screenMesh!.material = new MeshBasicMaterial({
                 map: texture,
                 toneMapped: false,
             });
@@ -262,12 +278,10 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy(): void {
         cancelAnimationFrame(this.animationId);
 
-        // Dispose controls
         if (this.controls) {
             this.controls.dispose();
         }
 
-        // Properly dispose of all Three.js resources
         this.threeSceneService.disposeScene(this.scene);
 
         if (this.dracoLoader) {

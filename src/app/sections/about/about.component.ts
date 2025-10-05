@@ -6,7 +6,15 @@ import {
   OnInit,
   OnDestroy,
 } from "@angular/core";
-import * as THREE from "three";
+import {
+  WebGLRenderer,
+  Scene,
+  PerspectiveCamera,
+  AmbientLight,
+  DirectionalLight,
+  SRGBColorSpace,
+  Mesh,
+} from "three";
 import Globe from "three-globe";
 import { ButtonComponent } from "../../components/button/button.component";
 
@@ -48,8 +56,8 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private animationId: number = 0;
-  private renderer?: THREE.WebGLRenderer;
-  private scene?: THREE.Scene;
+  private renderer?: WebGLRenderer;
+  private scene?: Scene;
   private globe?: Globe;
 
   ngOnInit(): void {}
@@ -59,21 +67,18 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Cancel animation
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
     }
 
-    // Dispose globe
     if (this.globe) {
       this.scene?.remove(this.globe as any);
     }
 
-    // Dispose scene
     if (this.scene) {
       this.scene.traverse((object) => {
-        if ((object as THREE.Mesh).isMesh) {
-          const mesh = object as THREE.Mesh;
+        if ((object as Mesh).isMesh) {
+          const mesh = object as Mesh;
           mesh.geometry?.dispose();
           if (mesh.material) {
             if (Array.isArray(mesh.material)) {
@@ -87,7 +92,6 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
       this.scene.clear();
     }
 
-    // Dispose renderer
     if (this.renderer) {
       this.renderer.dispose();
       this.renderer.forceContextLoss();
@@ -97,18 +101,18 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private init3DGlobe(): void {
-    this.renderer = new THREE.WebGLRenderer({
+    this.renderer = new WebGLRenderer({
       alpha: true,
       antialias: true,
     });
 
     this.renderer.setSize(GLOBE_CONFIG.SIZE, GLOBE_CONFIG.SIZE);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, GLOBE_CONFIG.MAX_PIXEL_RATIO));
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.outputColorSpace = SRGBColorSpace;
     this.canvasRef.nativeElement.appendChild(this.renderer.domElement);
 
-    this.scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
+    this.scene = new Scene();
+    const camera = new PerspectiveCamera(
       GLOBE_CONFIG.CAMERA_FOV,
       GLOBE_CONFIG.SIZE / GLOBE_CONFIG.SIZE,
       GLOBE_CONFIG.CAMERA_NEAR,
@@ -129,8 +133,8 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
       .labelsData(LOCATIONS as any);
 
     this.scene.add(this.globe as any);
-    this.scene.add(new THREE.AmbientLight(0xffffff, 1));
-    this.scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
+    this.scene.add(new AmbientLight(0xffffff, 1));
+    this.scene.add(new DirectionalLight(0xffffff, 0.6));
 
     const animate = () => {
       this.animationId = requestAnimationFrame(animate);

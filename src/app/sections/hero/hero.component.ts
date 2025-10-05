@@ -25,7 +25,6 @@ import {
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { NgIf } from "@angular/common";
 import { ThreeSceneService } from "../../services/three-scene.service";
 import { environment } from "../../../environments/environment";
 
@@ -61,9 +60,6 @@ const SHADOW_CONFIG = {
   standalone: true,
   templateUrl: "./hero.component.html",
   styleUrls: ["./hero.component.scss"],
-  imports: [
-    NgIf
-  ],
 })
 export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   private threeSceneService = inject(ThreeSceneService);

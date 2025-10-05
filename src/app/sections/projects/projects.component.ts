@@ -20,7 +20,6 @@ import {
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
-import {NgForOf, NgIf} from "@angular/common";
 import { ProjectService } from "../../services/project.service";
 import { Project } from "../../models/project.model";
 import { ThreeSceneService } from "../../services/three-scene.service";
@@ -55,7 +54,6 @@ const CAMERA_CONFIG = {
     standalone: true,
     templateUrl: "./projects.component.html",
     styleUrls: ["./projects.component.scss"],
-    imports: [NgForOf, NgIf],
 })
 export class ProjectsComponent implements AfterViewInit, OnDestroy {
     protected readonly Math = Math;

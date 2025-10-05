@@ -1,6 +1,5 @@
 import { Component, inject, signal, ViewChild } from "@angular/core";
 import { FormsModule, NgForm } from "@angular/forms";
-import { NgIf } from "@angular/common";
 import { EmailService } from "../../services/email.service";
 import { ContactForm } from "../../models/contact.model";
 import { NotificationService } from "../../services/notification.service";
@@ -9,7 +8,7 @@ import { NotificationService } from "../../services/notification.service";
   selector: "app-contact",
   templateUrl: "./contact.component.html",
   styleUrls: ["./contact.component.scss"],
-  imports: [FormsModule, NgIf],
+  imports: [FormsModule],
 })
 export class ContactComponent {
   private emailService = inject(EmailService);

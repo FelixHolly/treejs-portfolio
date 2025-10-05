@@ -24,7 +24,9 @@
                                 class="field-input"
                                 placeholder="ex., John Doe"
                         />
-                        <span *ngIf="nameRef.invalid && nameRef.touched" class="text-red-500 text-sm">Full name is required</span>
+                        @if (nameRef.invalid && nameRef.touched) {
+                            <span class="text-red-500 text-sm">Full name is required</span>
+                        }
                     </label>
 
                     <label class="space-y-3">
@@ -39,7 +41,9 @@
                                 class="field-input"
                                 placeholder="ex., johndoe@gmail.com"
                         />
-                        <span *ngIf="emailRef.invalid && emailRef.touched" class="text-red-500 text-sm">Enter a valid email</span>
+                        @if (emailRef.invalid && emailRef.touched) {
+                            <span class="text-red-500 text-sm">Enter a valid email</span>
+                        }
                     </label>
 
                     <label class="space-y-3">
@@ -53,7 +57,9 @@
                                 class="field-input"
                                 placeholder="Share your thoughts or inquiries..."
                         ></textarea>
-                        <span *ngIf="messageRef.invalid && messageRef.touched" class="text-red-500 text-sm">Message is required</span>
+                        @if (messageRef.invalid && messageRef.touched) {
+                            <span class="text-red-500 text-sm">Message is required</span>
+                        }
                     </label>
 
                     <button class="field-btn" type="submit" [disabled]="loading()">

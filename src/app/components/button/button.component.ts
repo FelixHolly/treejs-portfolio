@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-button',
   templateUrl: './button.component.html',
-  imports: [NgClass, NgIf],
+  imports: [NgClass],
   standalone: true,
 })
 export class ButtonComponent {

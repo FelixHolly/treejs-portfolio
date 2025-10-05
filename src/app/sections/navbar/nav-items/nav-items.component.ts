@@ -1,9 +1,7 @@
 import { Component, EventEmitter, Output } from "@angular/core";
-import { NgForOf } from "@angular/common";
 
 @Component({
   selector: "app-nav-items",
-  imports: [NgForOf],
   templateUrl: "./nav-items.component.html",
   styleUrl: "./nav-items.component.scss",
 })

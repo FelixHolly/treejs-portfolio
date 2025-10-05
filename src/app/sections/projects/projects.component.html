@@ -25,19 +25,20 @@
                             [href]="currentProject.href"
                             target="_blank"
                             rel="noreferrer"
+                            [attr.aria-label]="'Visit ' + currentProject.title + ' live site'"
                     >
                         <p>Check Live Site</p>
-                        <img src="assets/arrow-up.png" alt="arrow" class="w-3 h-3"/>
+                        <img src="assets/arrow-up.png" alt="" class="w-3 h-3" aria-hidden="true"/>
                     </a>
                 }
             </div>
 
             <div class="flex justify-between items-center mt-7">
-                <button class="arrow-btn" (click)="handleNavigation('previous')">
-                    <img src="assets/left-arrow.png" alt="left arrow"/>
+                <button class="arrow-btn" (click)="handleNavigation('previous')" aria-label="View previous project">
+                    <img src="assets/left-arrow.png" alt="" aria-hidden="true"/>
                 </button>
-                <button class="arrow-btn" (click)="handleNavigation('next')">
-                    <img src="assets/right-arrow.png" alt="right arrow" class="w-4 h-4"/>
+                <button class="arrow-btn" (click)="handleNavigation('next')" aria-label="View next project">
+                    <img src="assets/right-arrow.png" alt="" class="w-4 h-4" aria-hidden="true"/>
                 </button>
             </div>
         </div>
@@ -50,7 +51,7 @@
                     <div class="spinner"></div>
                 </div>
             }
-            <canvas #canvas class="absolute top-0 left-0 w-full h-full"></canvas>
+            <canvas #canvas class="absolute top-0 left-0 w-full h-full" role="img" [attr.aria-label]="'3D project preview phone displaying ' + currentProject.title"></canvas>
         </div>
     </div>
 </section>

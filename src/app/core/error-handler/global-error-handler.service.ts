@@ -9,10 +9,8 @@ export class GlobalErrorHandler implements ErrorHandler {
   private notificationService = inject(NotificationService);
 
   handleError(error: Error): void {
-    // Log to console for debugging
     console.error("Global error caught:", error);
 
-    // Determine error type and show appropriate notification
     if (this.isThreeJsError(error)) {
       this.notificationService.showError(
         "3D Graphics Error",

@@ -64,7 +64,7 @@
 
                     <button class="field-btn" type="submit" [disabled]="loading()" [attr.aria-label]="loading() ? 'Sending message...' : 'Send message'">
                         {{ loading() ? 'Sending...' : 'Send Message' }}
-                        <img src="assets/arrow-up.png" alt="" class="field-btn_arrow" aria-hidden="true"/>
+                        <img src="assets/arrow-up.png" alt="" class="field-btn_arrow" aria-hidden="true" loading="lazy"/>
                     </button>
                 </form>
             </div>

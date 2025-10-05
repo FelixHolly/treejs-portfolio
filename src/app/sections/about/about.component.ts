@@ -6,6 +6,7 @@ import {
   OnInit,
   OnDestroy,
 } from "@angular/core";
+import { NgOptimizedImage } from "@angular/common";
 import {
   WebGLRenderer,
   Scene,
@@ -40,7 +41,7 @@ const LOCATIONS = [
 @Component({
   selector: "app-about",
   standalone: true,
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, NgOptimizedImage],
   templateUrl: "./about.component.html",
   styleUrls: ["./about.component.scss"],
 })
@@ -59,14 +60,20 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
   private renderer?: WebGLRenderer;
   private scene?: Scene;
   private globe?: Globe;
+  private observer?: IntersectionObserver;
+  private isGlobeInitialized = false;
 
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
-    this.init3DGlobe();
+    this.setupIntersectionObserver();
   }
 
   ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
     }
@@ -98,6 +105,26 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
       const canvas = this.renderer.domElement;
       canvas.remove();
     }
+  }
+
+  private setupIntersectionObserver(): void {
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !this.isGlobeInitialized) {
+            this.isGlobeInitialized = true;
+            this.init3DGlobe();
+            this.observer?.disconnect();
+          }
+        });
+      },
+      {
+        rootMargin: '50px',
+        threshold: 0.1,
+      }
+    );
+
+    this.observer.observe(this.canvasRef.nativeElement);
   }
 
   private init3DGlobe(): void {

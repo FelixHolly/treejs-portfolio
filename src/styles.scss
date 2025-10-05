@@ -1,4 +1,4 @@
-@import url('https://fonts.cdnfonts.com/css/general-sans');
+@import url('https://fonts.cdnfonts.com/css/general-sans?display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -175,7 +175,7 @@ select:focus-visible,
   }
 
   .field-input {
-    @apply w-full bg-black-300 px-5 py-2 min-h-14 rounded-lg placeholder:text-white-500 text-lg text-white-800 shadow-black-200 shadow-2xl;
+    @apply w-full bg-black-300 px-5 py-2 min-h-14 rounded-lg placeholder:text-white-600 text-lg text-white-800 shadow-black-200 shadow-2xl;
   }
 
   .field-btn {

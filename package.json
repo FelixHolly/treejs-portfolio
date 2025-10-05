@@ -28,7 +28,7 @@
     "three": "^0.177.0",
     "three-globe": "^2.42.8",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "^0.15.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.4",

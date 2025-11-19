@@ -1,14 +1,36 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
-
+/**
+ * Development environment configuration.
+ *
+ * This file is replaced with environment.prod.ts during production builds
+ * via the fileReplacements array in angular.json.
+ *
+ * Environment-specific values:
+ * - EmailJS credentials: Development instance for testing contact form
+ * - Asset paths: Relative paths to 3D models and decoder libraries
+ *
+ * Security note:
+ * EmailJS public keys are safe to commit as they are rate-limited and
+ * require domain verification in the EmailJS dashboard.
+ */
 export const environment = {
   production: false,
+
+  /**
+   * EmailJS service configuration for contact form submissions.
+   * Credentials are obtained from EmailJS dashboard.
+   */
   emailJs: {
     serviceId: "service_cvyf4pk",
     templateId: "template_1cbxfpl",
     publicKey: "uxjMVOPJ12-pBwK7L",
   },
+
+  /**
+   * Asset path configuration for 3D resources.
+   *
+   * dracoPath: DRACO decoder WebAssembly files for GLTF compression
+   * models: 3D model file paths (GLB format with DRACO compression)
+   */
   assets: {
     dracoPath: "assets/draco/",
     models: {

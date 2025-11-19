@@ -2,7 +2,7 @@
 
 Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**, and **Three.js**. This site showcases my work and skills through a responsive and animated web experience.
 
-🌐 [Live Site](https://felixhollndonner.com)
+[Live Site](https://felixhollndonner.com)
 
 ---
 

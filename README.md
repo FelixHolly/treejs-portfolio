@@ -6,7 +6,7 @@ Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**,
 
 ---
 
-## 📦 Tech Stack
+## Tech Stack
 
 - Angular
 - Tailwind CSS
@@ -15,7 +15,7 @@ Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**,
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Clone the repository**:
    ```bash
@@ -40,7 +40,7 @@ Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**,
 
 ---
 
-## 📤 Deployment
+## Deployment
 
 This project uses [GitHub Actions](https://github.com/JamesIves/github-pages-deploy-action) to automatically deploy to GitHub Pages from the `main` branch. Output is pushed to the `gh-pages` branch.
 
@@ -52,7 +52,7 @@ Make sure your `angular.json` has:
 
 ---
 
-## 🎨 3D Assets & Attribution
+## 3D Assets & Attribution
 
 This project includes the following 3D assets:
 
@@ -67,14 +67,14 @@ This project includes the following 3D assets:
 
 ---
 
-## 📄 License
+## License
 
 This project is for **personal portfolio use**. All code is © Felix Hollndonner.  
 For reuse or questions, please [contact me](mailto:your@email.com).
 
 ---
 
-## 🙌 Contact
+## Contact
 
 - [LinkedIn](https://www.linkedin.com/in/felixhollndonner/)
 - [GitHub](https://github.com/felixhollndonner)

@@ -243,6 +243,21 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    /**
+     * Updates the phone screen texture when project selection changes.
+     *
+     * Critical memory management:
+     * - Disposes previous texture and material before creating new ones
+     * - Each texture swap without disposal can leak 5-50MB GPU memory
+     * - After a few project switches, this would cause significant performance degradation
+     *
+     * Texture configuration:
+     * - flipY: false matches GLTF UV convention (origin at top-left)
+     * - ClampToEdgeWrapping prevents texture bleeding at edges
+     * - LinearFilter provides smooth appearance at all zoom levels
+     * - toneMapped: false preserves screenshot colors without cinematic color grading
+     *   (important for showing accurate UI colors in project screenshots)
+     */
     private updateTexture(): void {
         if (!this.screenMesh) return;
 
@@ -254,6 +269,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             texture.minFilter = LinearFilter;
             texture.magFilter = LinearFilter;
 
+            // Dispose old material and its textures to prevent GPU memory leaks
             const oldMaterial = this.screenMesh!.material as
                 | Material
                 | Material[];

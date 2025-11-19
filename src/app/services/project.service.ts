@@ -1,10 +1,27 @@
 import { Injectable } from "@angular/core";
 import { Project } from "../models/project.model";
 
+/**
+ * Service managing the portfolio project data.
+ *
+ * Currently uses in-memory data storage. For larger portfolios, consider:
+ * - Moving to a CMS (Contentful, Strapi) for non-technical content updates
+ * - Loading from JSON file for easier maintenance
+ * - Adding filtering/sorting capabilities as project count grows
+ *
+ * The service provides a single source of truth for project data,
+ * allowing for easy future expansion (e.g., featured projects, filtering by tech stack).
+ */
 @Injectable({
   providedIn: "root",
 })
 export class ProjectService {
+  /**
+   * Portfolio project collection.
+   *
+   * Projects are displayed in the order defined here.
+   * Each project requires a corresponding screenshot texture in assets/textures/projects/
+   */
   private projects: Project[] = [
     {
       title: "WheelWallet",

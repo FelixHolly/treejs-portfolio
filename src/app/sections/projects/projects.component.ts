@@ -1,3 +1,16 @@
+/**
+ * Projects showcase component featuring a 3D phone model with dynamic screen textures.
+ *
+ * Architecture:
+ * - Loads a cyberpunk phone 3D model and dynamically swaps screen textures for each project
+ * - Uses OrbitControls for user interaction and programmatic rotation animations
+ * - Implements proper texture disposal to prevent memory leaks during texture swaps
+ *
+ * Performance optimizations:
+ * - Screen material uses toneMapped: false to preserve original texture colors
+ * - DRACO compression for model loading
+ * - UV coordinate manipulation to correctly align screen textures
+ */
 import {AfterViewInit, Component, ElementRef, HostListener, inject, OnDestroy, ViewChild,} from "@angular/core";
 import {
   Scene,
@@ -25,7 +38,12 @@ import { Project } from "../../models/project.model";
 import { ThreeSceneService } from "../../services/three-scene.service";
 import { environment } from "../../../environments/environment";
 
-// Animation constants
+/**
+ * Animation timing and easing configuration.
+ *
+ * Uses cubic ease-out (power 3) for natural deceleration.
+ * 90-degree rotation (PI/2) reveals phone screen to user on project change.
+ */
 const PROJECT_ANIMATION = {
     ROTATION_DURATION: 1.2,
     ROTATION_START: 0,
@@ -188,6 +206,11 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
                     const mesh = child as Mesh;
 
                     if (mesh.name === "screen") {
+                        // UV coordinate transformation to align texture with model's screen geometry
+                        // The +2 X-offset compensates for the model's UV layout where screen UVs
+                        // are offset in the texture atlas. Without this, textures would appear
+                        // on the wrong part of the phone or be completely misaligned.
+                        // This is model-specific and should be adjusted if using a different phone model.
                         const uv = (mesh.geometry as BufferGeometry).attributes["uv"];
                         for (let i = 0; i < uv.count; i++) {
                             uv.setXY(i, uv.getX(i) + 2, uv.getY(i));
@@ -198,6 +221,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
                     }
 
                     if (mesh.name === "body") {
+                        // Replace default material with custom PBR material for realistic phone body
                         mesh.material = new MeshStandardMaterial({
                             color: MODEL_CONFIG.BODY_COLOR,
                             roughness: MODEL_CONFIG.BODY_ROUGHNESS,

@@ -1,3 +1,14 @@
+/**
+ * Hero section component featuring an interactive 3D model.
+ *
+ * Implements mouse-following rotation on desktop and auto-rotation on mobile.
+ * Uses DRACO compression for optimized model loading and proper WebGL resource cleanup.
+ *
+ * Performance considerations:
+ * - Pixel ratio capped at 2x to prevent excessive rendering on high-DPI displays
+ * - ACES tone mapping for photorealistic color grading
+ * - Progressive loading with visual feedback via loadingProgress
+ */
 import {
   AfterViewInit,
   Component,
@@ -28,13 +39,23 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { ThreeSceneService } from "../../services/three-scene.service";
 import { environment } from "../../../environments/environment";
 
+/**
+ * Responsive sizing configuration for the 3D model across different breakpoints.
+ */
 interface HeroSizes {
   deskScale: number;
   deskPosition: [number, number, number];
   deskRotation: [number, number, number];
 }
 
-// Animation constants
+/**
+ * Animation configuration constants.
+ *
+ * ROTATION_FACTOR: Multiplier for mouse position to rotation angle - keeps movement subtle
+ * ROTATION_SPEED: Interpolation factor for smooth rotation (0-1 range, lower = smoother)
+ * MOBILE_ROTATION_SPEED: Constant rotation speed for mobile auto-rotation
+ * MOBILE_BREAKPOINT: Width threshold for switching between interactive and auto-rotation modes
+ */
 const HERO_ANIMATION = {
   ROTATION_FACTOR: 0.3,
   ROTATION_SPEED: 0.1,
@@ -42,13 +63,23 @@ const HERO_ANIMATION = {
   MOBILE_BREAKPOINT: 800,
 } as const;
 
-// Renderer constants
+/**
+ * Renderer performance configuration.
+ *
+ * MAX_PIXEL_RATIO: Capped at 2 to balance quality and performance on high-DPI displays (e.g., Retina)
+ * Prevents unnecessary GPU load on 3x or 4x pixel ratio devices
+ */
 const RENDERER_CONFIG = {
   MAX_PIXEL_RATIO: 2,
   TONE_MAPPING_EXPOSURE: 1,
 } as const;
 
-// Shadow constants
+/**
+ * Shadow quality configuration.
+ *
+ * MAP_SIZE: 2048x2048 shadow map provides good quality without excessive memory usage
+ * Higher values (4096) offer diminishing returns for the file size cost
+ */
 const SHADOW_CONFIG = {
   MAP_SIZE: 2048,
   CAMERA_NEAR: 0.5,
@@ -142,6 +173,17 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     animate();
   }
 
+  /**
+   * Loads and configures the 3D GLTF model with DRACO compression.
+   *
+   * Key operations:
+   * 1. Centers the model geometry at its bounding box center for consistent rotation
+   * 2. Wraps model in a Group to separate local centering from world positioning
+   * 3. Applies responsive sizing based on viewport width
+   * 4. Enables shadow casting/receiving for all meshes
+   *
+   * DRACO compression reduces model file size by ~60-80% with minimal quality loss.
+   */
   private loadModel(): void {
     const loader = new GLTFLoader();
     this.dracoLoader = new DRACOLoader();
@@ -155,11 +197,15 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         const group = new Group();
         group.add(model);
 
+        // Center the model at its geometric center for balanced rotation
+        // This prevents off-axis rotation artifacts
         const box = new Box3().setFromObject(model);
         const center = new Vector3();
         box.getCenter(center);
         model.position.sub(center);
 
+        // Adjust Y position (+3 offset) to account for model centering
+        // Without this, centering would shift the model down unexpectedly
         group.position.set(
           ...(this.sizes.deskPosition.map((v, i) => (i === 1 ? v + 3 : v)) as [
             number,
@@ -170,6 +216,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         group.rotation.set(...this.sizes.deskRotation);
         group.scale.setScalar(this.sizes.deskScale);
 
+        // Enable shadows on all mesh children for realistic lighting
         model.traverse((child) => {
           if ((child as Mesh).isMesh) {
             child.castShadow = true;
@@ -189,12 +236,20 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       (error) => {
         console.error("Failed to load model:", error);
         this.isLoading = false;
-        // Error will be caught by global error handler
+        // Propagate error to global handler for user-facing notification
         throw new Error(`Failed to load 3D model: ${error}`);
       },
     );
   }
 
+  /**
+   * Normalizes mouse position to range [-1, 1] for smooth model rotation.
+   *
+   * Normalization formula: ((position / viewport_size) - 0.5) * 2
+   * - Centers origin at viewport center (0,0)
+   * - Maps edges to -1 and 1
+   * - Provides consistent rotation behavior across all screen sizes
+   */
   @HostListener("document:mousemove", ["$event"])
   onMouseMove(event: MouseEvent): void {
     this.mouseX = (event.clientX / window.innerWidth - 0.5) * 2;
@@ -208,6 +263,19 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  /**
+   * Critical cleanup to prevent memory leaks in Three.js.
+   *
+   * WebGL contexts are not garbage collected automatically.
+   * Without proper disposal, each component mount/unmount cycle leaks GPU memory,
+   * eventually causing browser crashes or severe performance degradation.
+   *
+   * Cleanup order:
+   * 1. Stop animation frame to prevent render loop accessing disposed resources
+   * 2. Dispose scene materials, geometries, and textures
+   * 3. Dispose loaders (DRACO decoder uses WebAssembly memory)
+   * 4. Force WebGL context loss to free GPU memory immediately
+   */
   ngOnDestroy(): void {
     cancelAnimationFrame(this.animationId);
 
@@ -225,6 +293,20 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   protected readonly Math = Math;
 }
 
+/**
+ * Calculates responsive sizing for the 3D model based on viewport width.
+ *
+ * Breakpoints follow common device classifications:
+ * - < 440px: Small mobile (iPhone SE, older Android)
+ * - < 768px: Standard mobile (iPhone, most Android phones)
+ * - < 1024px: Tablets and large phones
+ * - >= 1024px: Desktop and landscape tablets
+ *
+ * Scale values are empirically tuned to maintain visual balance across devices.
+ * Smaller screens use smaller scales to prevent model overflow.
+ *
+ * TODO: Consider extracting to a responsive utility service for reuse across 3D components.
+ */
 function calculateSizes(width: number): HeroSizes {
   if (width < 440) {
     return {

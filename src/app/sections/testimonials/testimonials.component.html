@@ -5,13 +5,15 @@
         @for (item of clientReviews; track item.name) {
             <div class="client-review">
                 <div>
-                    <p class="text-white-800 font-light">{{ item.review }}</p>
+                    <span class="font-display text-gold text-5xl leading-none block mb-2" aria-hidden="true">&ldquo;</span>
+                    <p class="text-bone font-light">{{ item.review }}</p>
 
                     <div class="client-content">
-                        <div class="flex gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="h-px w-6 bg-gold" aria-hidden="true"></span>
                             <div class="flex flex-col">
-                                <p class="font-semibold text-white-800">{{ item.name }}</p>
-                                <p class="text-white-600 md:text-base text-sm font-light">{{ item.position }}</p>
+                                <p class="font-semibold text-bone">{{ item.name }}</p>
+                                <p class="text-stone md:text-base text-sm font-mono uppercase tracking-wider">{{ item.position }}</p>
                             </div>
                         </div>
 

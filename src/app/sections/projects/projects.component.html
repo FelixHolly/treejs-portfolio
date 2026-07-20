@@ -3,25 +3,25 @@
 
     <div class="grid lg:grid-cols-2 grid-cols-1 mt-12 gap-5 w-full">
         <!-- Project Details -->
-        <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5 shadow-2xl shadow-black-200">
-            <div class="flex flex-col gap-5 text-white-600 my-5">
-                <p class="text-white text-2xl font-semibold animatedText">{{ currentProject.title }}</p>
+        <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5">
+            <div class="flex flex-col gap-5 text-stone my-5">
+                <p class="text-bone text-2xl font-semibold animatedText">{{ currentProject.title }}</p>
                 <p class="animatedText">{{ currentProject.desc }}</p>
                 <p class="animatedText">{{ currentProject.subdesc }}</p>
             </div>
 
             <div class="flex items-center justify-between flex-wrap gap-5">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     @for (tag of currentProject.tags; track tag.name) {
                         <div class="tech-logo">
-                            <span class="text-white text-sm font-medium">{{ tag.name }}</span>
+                            <span class="text-stone text-xs font-mono uppercase tracking-wider">{{ tag.name }}</span>
                         </div>
                     }
                 </div>
 
                 @if (currentProject.href) {
                     <a
-                            class="flex items-center gap-2 cursor-pointer text-white-600"
+                            class="flex items-center gap-2 cursor-pointer text-gold hover:text-bone transition-colors font-mono text-sm"
                             [href]="currentProject.href"
                             target="_blank"
                             rel="noreferrer"
@@ -44,10 +44,10 @@
         </div>
 
         <!-- 3D Canvas View -->
-        <div class="border border-black-300 bg-black-200 rounded-lg h-96 md:h-full relative">
+        <div class="border border-graphite-700 bg-graphite-800 rounded-lg h-96 md:h-full relative">
             @if (isLoading) {
-                <div class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-black-200">
-                    <p class="text-white">Loading 3D Model... {{ Math.round(loadingProgress) }}%</p>
+                <div class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-graphite-800 font-mono">
+                    <p class="text-stone">Loading 3D Model... {{ Math.round(loadingProgress) }}%</p>
                     <div class="spinner"></div>
                 </div>
             }

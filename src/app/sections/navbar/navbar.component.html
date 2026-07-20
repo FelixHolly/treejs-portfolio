@@ -1,15 +1,15 @@
 <a href="#home" class="skip-link">Skip to main content</a>
-<header class="fixed top-0 left-0 right-0 z-50 bg-black/90">
+<header class="fixed top-0 left-0 right-0 z-50 bg-graphite/90 backdrop-blur-sm border-b border-graphite-700/60">
   <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center py-5 mx-auto c-space">
-      <a href="/#home" class="text-neutral-400 font-bold text-xl hover:text-white transition-colors">
-        Felix
+      <a href="/#home" class="font-display text-bone text-2xl tracking-wide hover:text-gold transition-colors">
+        Felix Hollndonner
       </a>
 
       <!-- Mobile Toggle -->
       <button
         (click)="isOpen = !isOpen"
-        class="text-neutral-400 hover:text-white sm:hidden flex"
+        class="text-stone hover:text-bone sm:hidden flex"
         [attr.aria-label]="isOpen ? 'Close navigation menu' : 'Open navigation menu'"
         [attr.aria-expanded]="isOpen">
         <img

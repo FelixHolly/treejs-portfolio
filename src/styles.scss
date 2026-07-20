@@ -93,28 +93,28 @@ select:focus-visible,
 
   /* button component */
   .btn {
-    @apply flex gap-4 items-center justify-center cursor-pointer p-3 rounded-md bg-black-300  transition-all active:scale-95 text-white mx-auto;
+    @apply flex gap-4 items-center justify-center cursor-pointer p-3 rounded-md bg-graphite-800 border border-graphite-700 transition-all active:scale-95 text-bone hover:border-gold/50 mx-auto;
   }
 
   .btn-ping {
-    @apply animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75;
+    @apply animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75;
   }
 
   .btn-ping_dot {
-    @apply relative inline-flex rounded-full h-3 w-3 bg-green-500;
+    @apply relative inline-flex rounded-full h-3 w-3 bg-gold;
   }
 
   /* about section */
   .grid-container {
-    @apply w-full h-full border border-black-300 bg-black-200 rounded-lg sm:p-7 p-4 flex flex-col gap-5 justify-center;
+    @apply w-full h-full border border-graphite-700 bg-graphite-800 rounded-lg sm:p-7 p-4 flex flex-col gap-5 justify-center;
   }
 
   .grid-headtext {
-    @apply text-xl font-semibold mb-2 text-white font-generalsans;
+    @apply text-xl font-semibold mb-2 text-bone font-generalsans;
   }
 
   .grid-subtext {
-    @apply text-[#afb0b6] text-base font-generalsans;
+    @apply text-stone text-base font-generalsans;
   }
 
   .copy-container {
@@ -123,11 +123,11 @@ select:focus-visible,
 
   /* projects section  */
   .arrow-btn {
-    @apply w-10 h-10 p-3 cursor-pointer active:scale-95 transition-all rounded-full arrow-gradient;
+    @apply w-10 h-10 p-3 cursor-pointer active:scale-95 transition-all rounded-full border border-graphite-700 hover:border-gold arrow-gradient;
   }
 
   .tech-logo {
-    @apply h-10 rounded-md p-2 bg-neutral-100 bg-opacity-10 backdrop-filter backdrop-blur-lg flex justify-center items-center;
+    @apply h-10 rounded-md px-3 bg-graphite-800 border border-graphite-700 flex justify-center items-center;
   }
 
   /* clients section */
@@ -136,7 +136,7 @@ select:focus-visible,
   }
 
   .client-review {
-    @apply rounded-lg md:p-10 p-5 col-span-1 bg-black-300 bg-opacity-50;
+    @apply rounded-lg md:p-10 p-5 col-span-1 bg-graphite-800 border border-graphite-700;
   }
 
   .client-content {
@@ -174,33 +174,32 @@ select:focus-visible,
   }
 
   .field-label {
-    @apply text-lg text-white-600;
+    @apply text-sm font-mono uppercase tracking-[0.15em] text-stone;
   }
 
   .field-input {
-    @apply w-full bg-black-300 px-5 py-2 min-h-14 rounded-lg placeholder:text-white-600 text-lg text-white-800 shadow-black-200 shadow-2xl;
+    @apply w-full bg-graphite border border-graphite-700 px-5 py-3 min-h-14 rounded-lg font-mono placeholder:text-stone text-base text-bone transition-colors focus:border-gold;
   }
 
   .field-btn {
-    @apply bg-black-500 px-5 py-2 min-h-12 rounded-lg shadow-black-200 shadow-2xl flex justify-center items-center text-lg text-white gap-3;
+    @apply bg-gold px-5 py-3 min-h-12 rounded-lg font-mono uppercase tracking-[0.15em] text-sm flex justify-center items-center text-graphite gap-3 transition-colors hover:bg-gold-dim active:scale-[0.99];
   }
 
   .field-btn_arrow {
-    @apply w-2.5 h-2.5 object-contain invert brightness-0;
+    @apply w-2.5 h-2.5 object-contain brightness-0;
   }
 
   /*  footer */
   .social-icon {
-    @apply w-12 h-12 rounded-full flex justify-center items-center bg-black-300 border border-black-200;
+    @apply w-12 h-12 rounded-full flex justify-center items-center bg-graphite-800 border border-graphite-700 transition-colors hover:border-gold;
   }
 }
 
 .arrow-gradient {
   background-image: linear-gradient(
       to right,
-      rgba(255, 255, 255, 0.1) 10%,
-      rgba(255, 255, 255, 0.000025) 50%,
-      rgba(255, 255, 255, 0.000025) 50%,
-      rgba(255, 255, 255, 0.025) 100%
+      rgba(199, 164, 74, 0.08) 0%,
+      rgba(27, 27, 31, 0.85) 55%,
+      rgba(27, 27, 31, 0.85) 100%
   );
 }

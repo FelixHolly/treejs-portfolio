@@ -3,13 +3,15 @@ export default {
   content: ['./src/**/*.{html,ts}'],
   safelist: [
     {
-      pattern: /^(btn|hero_tag|nav-li|text-gray_gradient|grid-container|field-input|social-icon).*$/,
+      pattern: /^(btn|hero_tag|nav-li|text-gray_gradient|grid-container|field-input|social-icon|eyebrow|plinth-rule).*$/,
     }
   ],
   theme: {
     extend: {
       fontFamily: {
         generalsans: ['General Sans', 'sans-serif'],
+        display: ['Boska', 'Georgia', 'serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         black: {
@@ -26,6 +28,17 @@ export default {
           700: '#D6D9E9',
           600: '#AFB0B6',
           500: '#62646C',
+        },
+        graphite: {
+          DEFAULT: '#141417',
+          800: '#1B1B1F',
+          700: '#26262C',
+        },
+        stone: '#8E8B84',
+        bone: '#E8E5DE',
+        gold: {
+          DEFAULT: '#C7A44A',
+          dim: '#8F7534',
         },
       },
     },

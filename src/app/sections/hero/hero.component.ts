@@ -141,15 +141,22 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.camera.position.set(1, -2, 10);
     this.camera.lookAt(0, 0, 0);
 
-    const ambientLight = new AmbientLight(0xffffff, 1.5);
-    const directionalLight = new DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(10, 10, 10);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
-    directionalLight.shadow.mapSize.height = SHADOW_CONFIG.MAP_SIZE;
-    directionalLight.shadow.camera.near = SHADOW_CONFIG.CAMERA_NEAR;
-    directionalLight.shadow.camera.far = SHADOW_CONFIG.CAMERA_FAR;
-    this.scene.add(ambientLight, directionalLight);
+    // Museum lighting: dim neutral ambient, warm key light (gallery spot),
+    // cool rim light to separate the stone from the dark background
+    const ambientLight = new AmbientLight(0xe8e5de, 0.5);
+
+    const keyLight = new DirectionalLight(0xffd9a0, 2.4);
+    keyLight.position.set(4, 8, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
+    keyLight.shadow.mapSize.height = SHADOW_CONFIG.MAP_SIZE;
+    keyLight.shadow.camera.near = SHADOW_CONFIG.CAMERA_NEAR;
+    keyLight.shadow.camera.far = SHADOW_CONFIG.CAMERA_FAR;
+
+    const rimLight = new DirectionalLight(0x8fa3bf, 0.9);
+    rimLight.position.set(-6, 3, -4);
+
+    this.scene.add(ambientLight, keyLight, rimLight);
 
     this.loadModel();
 
@@ -333,8 +340,8 @@ function calculateSizes(width: number): HeroSizes {
   }
 
   return {
-    deskScale: 2.7,
-    deskPosition: [0, -4, 0],
+    deskScale: 2.4,
+    deskPosition: [0, -4.5, 0],
     deskRotation: [0, 0, 0],
   };
 }

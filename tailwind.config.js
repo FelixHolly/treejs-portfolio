@@ -3,7 +3,7 @@ export default {
   content: ['./src/**/*.{html,ts}'],
   safelist: [
     {
-      pattern: /^(btn|hero_tag|nav-li|text-gray_gradient|grid-container|field-input|social-icon|eyebrow|plinth-rule).*$/,
+      pattern: /^(btn|nav-li|text-gray_gradient|grid-container|field-input|social-icon|eyebrow|plinth-rule).*$/,
     }
   ],
   theme: {

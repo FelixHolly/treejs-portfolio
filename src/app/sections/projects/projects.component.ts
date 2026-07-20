@@ -90,7 +90,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     renderer!: WebGLRenderer;
     controls!: OrbitControls;
     textureLoader = new TextureLoader();
-    animationId: number = 0;
+    animationId = 0;
 
     private model?: Object3D;
     private clock = new Clock();

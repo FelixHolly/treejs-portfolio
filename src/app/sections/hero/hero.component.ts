@@ -108,7 +108,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private camera!: PerspectiveCamera;
   private renderer!: WebGLRenderer;
-  private animationId: number = 0;
+  private animationId = 0;
   private dracoLoader?: DRACOLoader;
 
   ngOnInit(): void {

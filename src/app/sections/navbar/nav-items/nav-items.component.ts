@@ -6,7 +6,7 @@ import { Component, EventEmitter, Output } from "@angular/core";
   styleUrl: "./nav-items.component.scss",
 })
 export class NavItemsComponent {
-  @Output() onClick = new EventEmitter<void>();
+  @Output() linkClick = new EventEmitter<void>();
 
   navLinks = [
     { id: "home", name: "Home", href: "#home" },

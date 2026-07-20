@@ -30,7 +30,7 @@
   <!-- Mobile Nav -->
   <div [ngClass]="{ 'max-h-screen': isOpen, 'max-h-0 overflow-hidden': !isOpen }" class="transition-all duration-300 sm:hidden">
     <nav class="p-5">
-      <app-nav-items (onClick)="isOpen = false"></app-nav-items>
+      <app-nav-items (linkClick)="isOpen = false"></app-nav-items>
     </nav>
   </div>
 </header>

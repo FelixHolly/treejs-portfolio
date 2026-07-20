@@ -14,7 +14,6 @@ import {
   Component,
   ElementRef,
   ViewChild,
-  OnInit,
   OnDestroy,
 } from "@angular/core";
 import { NgOptimizedImage } from "@angular/common";
@@ -63,7 +62,7 @@ const LOCATIONS = [
   templateUrl: "./about.component.html",
   styleUrls: ["./about.component.scss"],
 })
-export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AboutComponent implements AfterViewInit, OnDestroy {
   @ViewChild("globeCanvas", { static: true })
   canvasRef!: ElementRef<HTMLDivElement>;
 
@@ -74,14 +73,12 @@ export class AboutComponent implements OnInit, AfterViewInit, OnDestroy {
     techStack: 10,
   };
 
-  private animationId: number = 0;
+  private animationId = 0;
   private renderer?: WebGLRenderer;
   private scene?: Scene;
   private globe?: Globe;
   private observer?: IntersectionObserver;
   private isGlobeInitialized = false;
-
-  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     this.setupIntersectionObserver();

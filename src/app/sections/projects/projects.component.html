@@ -10,8 +10,8 @@
         <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5">
             <div class="flex flex-col gap-4 text-stone my-5">
                 <p class="font-display text-3xl sm:text-4xl text-bone animatedText">{{ currentProject.title }}</p>
-                <p class="font-mono text-xs uppercase tracking-[0.2em] text-stone animatedText">
-                    @for (tag of currentProject.tags; track tag.name) {<span>{{ tag.name }}</span>@if (!$last) {<span class="text-gold px-2">·</span>}}
+                <p class="max-w-full font-mono text-xs uppercase tracking-[0.2em] text-stone animatedText">
+                    @for (tag of currentProject.tags; track tag.name) {<span class="whitespace-nowrap">{{ tag.name }}</span>@if (!$last) {<span class="text-gold px-1"> · </span>}}
                 </p>
                 <p class="animatedText mt-2">{{ currentProject.desc }}</p>
                 <p class="animatedText">{{ currentProject.subdesc }}</p>

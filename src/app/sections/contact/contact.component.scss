@@ -30,6 +30,10 @@
     color: #141417;
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
+    @media (max-width: 640px) {
+      padding: 2rem 1.25rem;
+    }
+
     /* Ink overrides: shared utilities assume the dark wall */
     .head-text {
       color: #141417;

@@ -12,6 +12,10 @@ canvas {
   top: 0;
   left: 0;
   z-index: 0;
+  /* Spotlight falloff: the statue recedes into shadow at the canvas edge
+     instead of hard-clipping against the next section */
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 98%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 98%);
 }
 
 /* three-scene.component.scss */

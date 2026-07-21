@@ -340,8 +340,8 @@ function calculateSizes(width: number): HeroSizes {
   }
 
   return {
-    deskScale: 2.4,
-    deskPosition: [0, -4.5, 0],
+    deskScale: 3.5,
+    deskPosition: [0, -4.2, 0],
     deskRotation: [0, 0, 0],
   };
 }

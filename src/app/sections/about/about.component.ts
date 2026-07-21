@@ -16,7 +16,6 @@ import {
   ViewChild,
   OnDestroy,
 } from "@angular/core";
-import { NgOptimizedImage } from "@angular/common";
 import {
   WebGLRenderer,
   Scene,
@@ -58,7 +57,7 @@ const LOCATIONS = [
 @Component({
   selector: "app-about",
   standalone: true,
-  imports: [ButtonComponent, NgOptimizedImage],
+  imports: [ButtonComponent],
   templateUrl: "./about.component.html",
   styleUrls: ["./about.component.scss"],
 })

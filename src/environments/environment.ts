@@ -35,7 +35,6 @@ export const environment = {
     dracoPath: "assets/draco/",
     models: {
       heroModel: "assets/models/vienna-lowe.glb",
-      projectPhone: "assets/models/future-phone.glb",
     },
   },
 };

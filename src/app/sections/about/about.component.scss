@@ -1,0 +1,19 @@
+/* Engraved monogram medallion: double gold ring, like a wax seal */
+.medallion {
+  width: 11rem;
+  height: 11rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(199, 164, 74, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.medallion::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 9999px;
+  border: 1px solid rgba(199, 164, 74, 0.25);
+}

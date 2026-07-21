@@ -1,15 +1,12 @@
 /**
- * Projects showcase component featuring a 3D phone model with dynamic screen textures.
+ * Projects showcase component: each project hangs as a painting in a gilded frame.
  *
- * Architecture:
- * - Loads a cyberpunk phone 3D model and dynamically swaps screen textures for each project
- * - Uses OrbitControls for user interaction and programmatic rotation animations
- * - Implements proper texture disposal to prevent memory leaks during texture swaps
+ * The frame is built procedurally (no model file): gold frame bars, a bone
+ * matting board, and a canvas plane textured with the project screenshot.
+ * Museum lighting (warm key, cool rim) matches the hero scene.
  *
- * Performance optimizations:
- * - Screen material uses toneMapped: false to preserve original texture colors
- * - DRACO compression for model loading
- * - UV coordinate manipulation to correctly align screen textures
+ * On project change the painting swings from profile to face the visitor,
+ * and the canvas texture is swapped with proper GPU disposal.
  */
 import {AfterViewInit, Component, ElementRef, HostListener, inject, OnDestroy, ViewChild,} from "@angular/core";
 import {
@@ -23,40 +20,24 @@ import {
   MeshBasicMaterial,
   TextureLoader,
   Clock,
-  ClampToEdgeWrapping,
   SRGBColorSpace,
-  LinearFilter,
   Material,
-  BufferGeometry,
-  Object3D,
+  Group,
+  PlaneGeometry,
+  BoxGeometry,
 } from "three";
-import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
-import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import { ProjectService } from "../../services/project.service";
 import { Project } from "../../models/project.model";
 import { ThreeSceneService } from "../../services/three-scene.service";
-import { environment } from "../../../environments/environment";
 
 /**
- * Animation timing and easing configuration.
- *
- * Uses cubic ease-out (power 3) for natural deceleration.
- * 90-degree rotation (PI/2) reveals phone screen to user on project change.
+ * Swing animation: the framed piece starts turned away and eases to face
+ * the viewer (cubic ease-out), like a panel being hung.
  */
 const PROJECT_ANIMATION = {
-    ROTATION_DURATION: 1.2,
-    ROTATION_START: 0,
-    ROTATION_END: Math.PI / 2,
+    SWING_DURATION: 1.2,
+    SWING_START: -Math.PI / 3,
     EASE_POWER: 3,
-} as const;
-
-// Model constants
-const MODEL_CONFIG = {
-    SCALE: 20,
-    BODY_COLOR: 0x555555,
-    BODY_ROUGHNESS: 0.2,
-    BODY_METALNESS: 0.4,
 } as const;
 
 /** Roman numerals for exhibit labels; portfolios stay well under 40 entries. */
@@ -74,6 +55,20 @@ function toRoman(n: number): string {
     return out;
 }
 
+/**
+ * Frame proportions in world units. Canvas aspect (~0.47) matches the
+ * portrait project screenshots; matting and bars wrap around it.
+ */
+const FRAME_CONFIG = {
+    CANVAS_WIDTH: 1.47,
+    CANVAS_HEIGHT: 3.1,
+    MAT_BORDER: 0.2,
+    BAR_THICKNESS: 0.16,
+    BAR_DEPTH: 0.14,
+    GOLD: 0xc7a44a,
+    MAT_COLOR: 0xe8e5de,
+} as const;
+
 // Camera constants
 const CAMERA_CONFIG = {
     FOV: 50,
@@ -89,7 +84,6 @@ const CAMERA_CONFIG = {
     styleUrls: ["./projects.component.scss"],
 })
 export class ProjectsComponent implements AfterViewInit, OnDestroy {
-    protected readonly Math = Math;
     private projectService = inject(ProjectService);
     private threeSceneService = inject(ThreeSceneService);
 
@@ -97,21 +91,18 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     canvasRef!: ElementRef<HTMLCanvasElement>;
 
     selectedProjectIndex = 0;
-    screenMesh?: Mesh;
     scene = new Scene();
-    loadingProgress = 0;
     isLoading = true;
     camera!: PerspectiveCamera;
     renderer!: WebGLRenderer;
-    controls!: OrbitControls;
     textureLoader = new TextureLoader();
     animationId = 0;
 
-    private model?: Object3D;
+    private frameGroup?: Group;
+    private canvasMesh?: Mesh;
     private clock = new Clock();
     private isRotating = true;
     private rotationElapsed = 0;
-    private dracoLoader?: DRACOLoader;
 
     myProjects: Project[] = [];
 
@@ -143,8 +134,8 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         this.setupRenderer();
         this.setupCamera();
         this.setupSceneLights();
-        this.setupControls();
-        this.loadModel();
+        this.buildFrame();
+        this.updateTexture();
         this.animate();
     }
 
@@ -157,6 +148,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         });
         this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.outputColorSpace = SRGBColorSpace;
     }
 
     private setupCamera() {
@@ -170,155 +162,119 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         this.camera.position.set(...CAMERA_CONFIG.POSITION);
     }
 
+    /** Museum lighting to match the hero: warm key, dim ambient, cool rim. */
     private setupSceneLights() {
-        this.scene.add(new AmbientLight(0xffffff, 0.5));
-        const light = new DirectionalLight(0xffffff, 1);
-        light.position.set(5, 10, 7.5);
-        this.scene.add(light);
+        this.scene.add(new AmbientLight(0xe8e5de, 0.6));
+
+        const keyLight = new DirectionalLight(0xffd9a0, 2.0);
+        keyLight.position.set(4, 6, 6);
+        this.scene.add(keyLight);
+
+        const rimLight = new DirectionalLight(0x8fa3bf, 0.7);
+        rimLight.position.set(-6, 2, -4);
+        this.scene.add(rimLight);
     }
 
-    private setupControls() {
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableZoom = false;
-        this.controls.maxPolarAngle = Math.PI / 2;
-        this.controls.minPolarAngle = Math.PI / 3;
+    /**
+     * Builds the gilded frame: canvas plane front and center, bone matting
+     * board behind it, and four gold bars around the matting's edge.
+     */
+    private buildFrame(): void {
+        const {CANVAS_WIDTH: w, CANVAS_HEIGHT: h, MAT_BORDER: m, BAR_THICKNESS: t, BAR_DEPTH: d} = FRAME_CONFIG;
+
+        const group = new Group();
+
+        const goldMaterial = new MeshStandardMaterial({
+            color: FRAME_CONFIG.GOLD,
+            metalness: 0.85,
+            roughness: 0.35,
+        });
+        const matMaterial = new MeshStandardMaterial({
+            color: FRAME_CONFIG.MAT_COLOR,
+            roughness: 0.9,
+        });
+
+        // Matting board behind the canvas
+        const mat = new Mesh(new PlaneGeometry(w + 2 * m, h + 2 * m), matMaterial);
+        mat.position.z = -0.01;
+        group.add(mat);
+
+        // Canvas plane; texture is applied in updateTexture()
+        this.canvasMesh = new Mesh(
+            new PlaneGeometry(w, h),
+            new MeshBasicMaterial({color: 0x1b1b1f, toneMapped: false}),
+        );
+        this.canvasMesh.position.z = 0.001;
+        group.add(this.canvasMesh);
+
+        // Gold bars wrap the matting: horizontal bars span the full outer width
+        const outerW = w + 2 * m + 2 * t;
+        const horizontal = new BoxGeometry(outerW, t, d);
+        const vertical = new BoxGeometry(t, h + 2 * m, d);
+
+        const top = new Mesh(horizontal, goldMaterial);
+        top.position.y = (h + 2 * m + t) / 2;
+        const bottom = new Mesh(horizontal, goldMaterial);
+        bottom.position.y = -(h + 2 * m + t) / 2;
+        const left = new Mesh(vertical, goldMaterial);
+        left.position.x = -(w + 2 * m + t) / 2;
+        const right = new Mesh(vertical, goldMaterial);
+        right.position.x = (w + 2 * m + t) / 2;
+        group.add(top, bottom, left, right);
+
+        group.rotation.y = PROJECT_ANIMATION.SWING_START;
+        this.frameGroup = group;
+        this.scene.add(group);
     }
 
     private animate = () => {
         this.animationId = requestAnimationFrame(this.animate);
         const delta = this.clock.getDelta();
 
-        if (this.isRotating && this.model) {
+        if (this.isRotating && this.frameGroup) {
             this.rotationElapsed += delta;
-            const t = Math.min(this.rotationElapsed / PROJECT_ANIMATION.ROTATION_DURATION, 1);
+            const t = Math.min(this.rotationElapsed / PROJECT_ANIMATION.SWING_DURATION, 1);
             const easedT = 1 - Math.pow(1 - t, PROJECT_ANIMATION.EASE_POWER);
-            this.model.rotation.y =
-                PROJECT_ANIMATION.ROTATION_START + (PROJECT_ANIMATION.ROTATION_END - PROJECT_ANIMATION.ROTATION_START) * easedT;
+            this.frameGroup.rotation.y = PROJECT_ANIMATION.SWING_START * (1 - easedT);
 
             if (t >= 1) this.isRotating = false;
         }
 
-        this.controls.update();
         this.renderer.render(this.scene, this.camera);
     };
 
-    private loadModel(): void {
-        const loader = new GLTFLoader();
-        this.dracoLoader = new DRACOLoader();
-        this.dracoLoader.setDecoderPath(environment.assets.dracoPath);
-        loader.setDRACOLoader(this.dracoLoader);
-
-        loader.load(
-            environment.assets.models.projectPhone,
-            (gltf: any) => {
-                this.model = gltf.scene;
-            if (!this.model) return;
-
-            this.model.position.set(0, 0, 0);
-            this.model.scale.set(MODEL_CONFIG.SCALE, MODEL_CONFIG.SCALE, MODEL_CONFIG.SCALE);
-            this.model.rotation.set(0, PROJECT_ANIMATION.ROTATION_START, 0);
-            this.scene.add(this.model);
-
-            this.resetRotation();
-
-            this.model.traverse((child) => {
-                if ((child as Mesh).isMesh) {
-                    const mesh = child as Mesh;
-
-                    if (mesh.name === "screen") {
-                        // UV coordinate transformation to align texture with model's screen geometry
-                        // The +2 X-offset compensates for the model's UV layout where screen UVs
-                        // are offset in the texture atlas. Without this, textures would appear
-                        // on the wrong part of the phone or be completely misaligned.
-                        // This is model-specific and should be adjusted if using a different phone model.
-                        const uv = (mesh.geometry as BufferGeometry).attributes["uv"];
-                        for (let i = 0; i < uv.count; i++) {
-                            uv.setXY(i, uv.getX(i) + 2, uv.getY(i));
-                        }
-                        uv.needsUpdate = true;
-                        this.screenMesh = mesh;
-                        this.updateTexture();
-                    }
-
-                    if (mesh.name === "body") {
-                        // Replace default material with custom PBR material for realistic phone body
-                        mesh.material = new MeshStandardMaterial({
-                            color: MODEL_CONFIG.BODY_COLOR,
-                            roughness: MODEL_CONFIG.BODY_ROUGHNESS,
-                            metalness: MODEL_CONFIG.BODY_METALNESS,
-                        });
-                    }
-                }
-            });
-            this.isLoading = false;
-        },
-        (xhr) => {
-            if (xhr.total > 0) {
-                this.loadingProgress = Math.min((xhr.loaded / xhr.total) * 100, 100);
-            }
-        },
-        (error) => {
-            console.error("Failed to load 3D model:", error);
-            this.isLoading = false;
-        });
-    }
-
     /**
-     * Updates the phone screen texture when project selection changes.
+     * Swaps the canvas texture for the selected project.
      *
-     * Critical memory management:
-     * - Disposes previous texture and material before creating new ones
-     * - Each texture swap without disposal can leak 5-50MB GPU memory
-     * - After a few project switches, this would cause significant performance degradation
-     *
-     * Texture configuration:
-     * - flipY: false matches GLTF UV convention (origin at top-left)
-     * - ClampToEdgeWrapping prevents texture bleeding at edges
-     * - LinearFilter provides smooth appearance at all zoom levels
-     * - toneMapped: false preserves screenshot colors without cinematic color grading
-     *   (important for showing accurate UI colors in project screenshots)
+     * Disposes the previous material and its texture before assigning the new
+     * one — each undisposed swap leaks GPU memory.
      */
     private updateTexture(): void {
-        if (!this.screenMesh) return;
+        if (!this.canvasMesh) return;
 
         const texture = this.textureLoader.load(this.currentProject.texture, () => {
-            texture.flipY = false;
-            texture.wrapS = ClampToEdgeWrapping;
-            texture.wrapT = ClampToEdgeWrapping;
             texture.colorSpace = SRGBColorSpace;
-            texture.minFilter = LinearFilter;
-            texture.magFilter = LinearFilter;
 
-            // Dispose old material and its textures to prevent GPU memory leaks
-            const oldMaterial = this.screenMesh!.material as
-                | Material
-                | Material[];
-
-            if (Array.isArray(oldMaterial)) {
-                oldMaterial.forEach((m) => {
-                    if (m instanceof MeshBasicMaterial && m.map) {
-                        m.map.dispose();
-                    }
-                    m.dispose();
-                });
-            } else {
-                if (oldMaterial instanceof MeshBasicMaterial && oldMaterial.map) {
-                    oldMaterial.map.dispose();
+            const oldMaterial = this.canvasMesh!.material as Material | Material[];
+            const materials = Array.isArray(oldMaterial) ? oldMaterial : [oldMaterial];
+            materials.forEach((material) => {
+                if (material instanceof MeshBasicMaterial && material.map) {
+                    material.map.dispose();
                 }
-                oldMaterial.dispose();
-            }
+                material.dispose();
+            });
 
-            this.screenMesh!.material = new MeshBasicMaterial({
+            this.canvasMesh!.material = new MeshBasicMaterial({
                 map: texture,
                 toneMapped: false,
             });
-            this.screenMesh!.material.needsUpdate = true;
+            this.isLoading = false;
         });
     }
 
     private resetRotation(): void {
-        if (this.model) {
-            this.model.rotation.y = PROJECT_ANIMATION.ROTATION_START;
+        if (this.frameGroup) {
+            this.frameGroup.rotation.y = PROJECT_ANIMATION.SWING_START;
             this.rotationElapsed = 0;
             this.clock.start();
             this.isRotating = true;
@@ -336,15 +292,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy(): void {
         cancelAnimationFrame(this.animationId);
 
-        if (this.controls) {
-            this.controls.dispose();
-        }
-
         this.threeSceneService.disposeScene(this.scene);
-
-        if (this.dracoLoader) {
-            this.dracoLoader.dispose();
-        }
 
         if (this.renderer) {
             this.threeSceneService.disposeRenderer(this.renderer);

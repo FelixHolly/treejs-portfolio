@@ -1,7 +1,11 @@
-<section class="c-space my-20" id="projects">
-    <p class="head-text">My Work</p>
+<section class="c-space my-24" id="projects">
+    <div class="room-label">
+        <p class="room-number">Room II</p>
+        <h2 class="head-text">The Works</h2>
+        <span class="room-rule" aria-hidden="true"></span>
+    </div>
 
-    <div class="grid lg:grid-cols-2 grid-cols-1 mt-12 gap-5 w-full">
+    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 w-full">
         <!-- Project Details -->
         <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5">
             <div class="flex flex-col gap-5 text-stone my-5">
@@ -37,6 +41,7 @@
                 <button class="arrow-btn" (click)="handleNavigation('previous')" aria-label="View previous project">
                     <img src="assets/left-arrow.png" alt="" aria-hidden="true" loading="lazy"/>
                 </button>
+                <p class="font-mono text-xs uppercase tracking-[0.25em] text-stone" aria-live="polite">{{ exhibitLabel }}</p>
                 <button class="arrow-btn" (click)="handleNavigation('next')" aria-label="View next project">
                     <img src="assets/right-arrow.png" alt="" class="w-4 h-4" aria-hidden="true" loading="lazy"/>
                 </button>

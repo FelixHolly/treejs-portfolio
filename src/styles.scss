@@ -6,6 +6,11 @@
   scroll-behavior: smooth;
 }
 
+/* Anchor targets stop below the fixed navbar so room labels stay visible */
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -71,6 +76,30 @@ select:focus-visible,
     @apply h-px w-full bg-gradient-to-r from-transparent via-gold/70 to-transparent;
   }
 
+  /* Gallery wall label: each section opens like a museum room.
+     ROOM numeral (mono gold) -> Boska title -> short centered gold rule. */
+  .room-label {
+    @apply flex flex-col items-center text-center gap-3 mb-14;
+  }
+
+  .room-number {
+    @apply font-mono uppercase tracking-[0.35em] text-xs text-gold;
+  }
+
+  .room-rule {
+    @apply h-px w-16 bg-gold/70 mt-1;
+  }
+
+  /* Exhibit frame: images mounted like pieces on a gallery wall —
+     graphite matting inside a hairline frame, caption plaque beneath. */
+  .exhibit-frame {
+    @apply bg-graphite border border-graphite-700 rounded-sm p-3;
+  }
+
+  .exhibit-caption {
+    @apply font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone text-center mt-3;
+  }
+
   .nav-ul {
     @apply flex flex-col items-center gap-4 sm:flex-row md:gap-6 relative z-20;
   }
@@ -132,7 +161,7 @@ select:focus-visible,
 
   /* clients section */
   .client-container {
-    @apply grid md:grid-cols-2 grid-cols-1 gap-5 mt-12;
+    @apply grid md:grid-cols-2 grid-cols-1 gap-5;
   }
 
   .client-review {

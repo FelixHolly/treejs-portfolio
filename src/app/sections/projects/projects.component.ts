@@ -8,7 +8,7 @@
  * On project change the painting swings from profile to face the visitor,
  * and the canvas texture is swapped with proper GPU disposal.
  */
-import {AfterViewInit, Component, ElementRef, HostListener, inject, OnDestroy, ViewChild,} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, inject, OnDestroy, ViewChild,} from "@angular/core";
 import {
   Scene,
   PerspectiveCamera,
@@ -74,7 +74,7 @@ const CAMERA_CONFIG = {
     FOV: 50,
     NEAR: 0.1,
     FAR: 1000,
-    POSITION: [0, 0, 4.2] as const,
+    POSITION: [0, 0, 4.7] as const,
 } as const;
 
 @Component({
@@ -103,6 +103,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
     private clock = new Clock();
     private isRotating = true;
     private rotationElapsed = 0;
+    private resizeObserver?: ResizeObserver;
 
     myProjects: Project[] = [];
 
@@ -136,7 +137,14 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         this.setupSceneLights();
         this.buildFrame();
         this.updateTexture();
+        this.observePanelSize();
         this.animate();
+    }
+
+    /** The alcove panel that CSS sizes the canvas to fill. */
+    private panelSize(): { width: number; height: number } {
+        const panel = this.canvasRef.nativeElement.parentElement!;
+        return { width: panel.clientWidth, height: panel.clientHeight };
     }
 
     private setupRenderer() {
@@ -146,20 +154,38 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             alpha: true,
             antialias: true,
         });
-        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        const { width, height } = this.panelSize();
+        // updateStyle: false — CSS keeps the canvas at w-full/h-full; only
+        // the drawing buffer is sized here. Letting setSize write inline
+        // styles pins the canvas to its initial measurement.
+        this.renderer.setSize(width, height, false);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.outputColorSpace = SRGBColorSpace;
     }
 
     private setupCamera() {
-        const canvas = this.canvasRef.nativeElement;
+        const { width, height } = this.panelSize();
         this.camera = new PerspectiveCamera(
             CAMERA_CONFIG.FOV,
-            canvas.clientWidth / canvas.clientHeight,
+            width / height,
             CAMERA_CONFIG.NEAR,
             CAMERA_CONFIG.FAR,
         );
         this.camera.position.set(...CAMERA_CONFIG.POSITION);
+    }
+
+    /** Keeps buffer and camera in step with the panel, not just the window. */
+    private observePanelSize(): void {
+        this.resizeObserver = new ResizeObserver(() => this.syncSize());
+        this.resizeObserver.observe(this.canvasRef.nativeElement.parentElement!);
+    }
+
+    private syncSize(): void {
+        const { width, height } = this.panelSize();
+        if (!width || !height) return;
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height, false);
     }
 
     /** Museum lighting to match the hero: warm key, dim ambient, cool rim. */
@@ -281,16 +307,10 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    @HostListener("window:resize")
-    onResize(): void {
-        const canvas = this.canvasRef.nativeElement;
-        this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    }
-
     ngOnDestroy(): void {
         cancelAnimationFrame(this.animationId);
+
+        this.resizeObserver?.disconnect();
 
         this.threeSceneService.disposeScene(this.scene);
 

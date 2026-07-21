@@ -1,13 +1,13 @@
 /**
- * About section component featuring an interactive 3D Earth globe.
+ * About section component featuring an antique cartographer's globe.
+ *
+ * The globe is a gold wireframe sphere (meridians and parallels) over a
+ * graphite core — no external textures or globe libraries, so it renders
+ * instantly, works offline, and stays inside the Stone & Gold palette.
  *
  * Performance strategy:
  * - Uses IntersectionObserver for lazy initialization (defers WebGL context creation)
  * - Globe only initializes when section becomes visible, reducing initial page load
- * - Saves ~2-3MB initial bundle impact and GPU resources for above-the-fold content
- *
- * The globe visualizes locations relevant to the portfolio owner and provides
- * an engaging visual element without impacting critical rendering path.
  */
 import {
   AfterViewInit,
@@ -20,12 +20,16 @@ import {
   WebGLRenderer,
   Scene,
   PerspectiveCamera,
-  AmbientLight,
-  DirectionalLight,
   SRGBColorSpace,
   Mesh,
+  Group,
+  SphereGeometry,
+  MeshBasicMaterial,
+  LineLoop,
+  LineBasicMaterial,
+  BufferGeometry,
+  Vector3,
 } from "three";
-import Globe from "three-globe";
 import { ButtonComponent } from "../../components/button/button.component";
 
 /**
@@ -33,26 +37,21 @@ import { ButtonComponent } from "../../components/button/button.component";
  *
  * Fixed 326x326 size provides consistent appearance across devices.
  * Rotation speed calibrated for subtle, non-distracting animation.
+ * The wireframe segment counts ARE the drawing: widthSegments become
+ * meridians, heightSegments become parallels.
  */
 const GLOBE_CONFIG = {
   SIZE: 326,
-  CAMERA_FOV: 75,
+  CAMERA_FOV: 45,
   CAMERA_NEAR: 0.1,
-  CAMERA_FAR: 1000,
-  CAMERA_Z: 200,
+  CAMERA_FAR: 100,
+  CAMERA_Z: 30,
+  RADIUS: 10,
   ROTATION_SPEED: 0.0015,
-  ATMOSPHERE_COLOR: "#3a95ff",
-  ATMOSPHERE_ALTITUDE: 0.25,
+  GOLD: 0xc7a44a,
+  CORE: 0x1b1b1f,
   MAX_PIXEL_RATIO: 2,
 } as const;
-
-/**
- * Geographic location markers to display on the globe.
- * Can be extended with additional locations as needed.
- */
-const LOCATIONS = [
-  { lat: 36.1699, lng: -115.1398, text: "Las Vegas, USA", color: "white", size: 15 },
-] as const;
 
 @Component({
   selector: "app-about",
@@ -75,7 +74,7 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
   private animationId = 0;
   private renderer?: WebGLRenderer;
   private scene?: Scene;
-  private globe?: Globe;
+  private globe?: Group;
   private observer?: IntersectionObserver;
   private isGlobeInitialized = false;
 
@@ -93,19 +92,20 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
     }
 
     if (this.globe) {
-      this.scene?.remove(this.globe as any);
+      this.scene?.remove(this.globe);
     }
 
     if (this.scene) {
       this.scene.traverse((object) => {
-        if ((object as Mesh).isMesh) {
-          const mesh = object as Mesh;
-          mesh.geometry?.dispose();
-          if (mesh.material) {
-            if (Array.isArray(mesh.material)) {
-              mesh.material.forEach((mat) => mat.dispose());
+        // Meshes and the graticule's line rings both hold GPU resources
+        const drawable = object as Mesh;
+        if (drawable.geometry || drawable.material) {
+          drawable.geometry?.dispose();
+          if (drawable.material) {
+            if (Array.isArray(drawable.material)) {
+              drawable.material.forEach((mat) => mat.dispose());
             } else {
-              mesh.material.dispose();
+              drawable.material.dispose();
             }
           }
         }
@@ -123,12 +123,6 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Configures lazy loading for the 3D globe using IntersectionObserver.
-   *
-   * Performance rationale:
-   * - Avoids creating WebGL context during initial page load
-   * - Reduces time-to-interactive for hero section
-   * - rootMargin: 50px triggers slightly before viewport entry for smoother UX
-   * - threshold: 0.1 means 10% visibility required before initialization
    *
    * The observer is disconnected after first trigger since we only need
    * one-time initialization (globe persists once created).
@@ -154,6 +148,52 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
     this.observer.observe(this.canvasRef.nativeElement);
   }
 
+  /**
+   * Builds the gold graticule as clean line rings: parallels are latitude
+   * circles, meridians are great circles rotated about the axis — the
+   * drawing of an antique cartographer's globe, not a triangulated mesh.
+   */
+  private buildGraticule(): Group {
+    const graticule = new Group();
+    const radius = GLOBE_CONFIG.RADIUS;
+    const segments = 96;
+    const material = new LineBasicMaterial({
+      color: GLOBE_CONFIG.GOLD,
+      transparent: true,
+      opacity: 0.55,
+    });
+
+    const ring = (points: Vector3[]) =>
+      new LineLoop(new BufferGeometry().setFromPoints(points), material);
+
+    // Parallels every 15° of latitude (skipping the poles)
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const phi = (lat * Math.PI) / 180;
+      const y = radius * Math.sin(phi);
+      const r = radius * Math.cos(phi);
+      const points: Vector3[] = [];
+      for (let i = 0; i < segments; i++) {
+        const theta = (i / segments) * Math.PI * 2;
+        points.push(new Vector3(r * Math.cos(theta), y, r * Math.sin(theta)));
+      }
+      graticule.add(ring(points));
+    }
+
+    // Meridians every 15° of longitude: great circles about the axis
+    for (let lng = 0; lng < 180; lng += 15) {
+      const points: Vector3[] = [];
+      for (let i = 0; i < segments; i++) {
+        const theta = (i / segments) * Math.PI * 2;
+        points.push(new Vector3(radius * Math.cos(theta), radius * Math.sin(theta), 0));
+      }
+      const meridian = ring(points);
+      meridian.rotation.y = (lng * Math.PI) / 180;
+      graticule.add(meridian);
+    }
+
+    return graticule;
+  }
+
   private init3DGlobe(): void {
     this.renderer = new WebGLRenderer({
       alpha: true,
@@ -168,27 +208,23 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
     this.scene = new Scene();
     const camera = new PerspectiveCamera(
       GLOBE_CONFIG.CAMERA_FOV,
-      GLOBE_CONFIG.SIZE / GLOBE_CONFIG.SIZE,
+      1,
       GLOBE_CONFIG.CAMERA_NEAR,
       GLOBE_CONFIG.CAMERA_FAR
     );
     camera.position.z = GLOBE_CONFIG.CAMERA_Z;
 
-    this.globe = new Globe()
-      .globeImageUrl(
-        "//cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg",
-      )
-      .bumpImageUrl(
-        "https://unpkg.com/three-globe/example/img/earth-topology.png",
-      )
-      .showAtmosphere(true)
-      .atmosphereColor(GLOBE_CONFIG.ATMOSPHERE_COLOR)
-      .atmosphereAltitude(GLOBE_CONFIG.ATMOSPHERE_ALTITUDE)
-      .labelsData(LOCATIONS as any);
+    // Graphite core occludes the far-side lines so the sphere reads as solid
+    const core = new Mesh(
+      new SphereGeometry(GLOBE_CONFIG.RADIUS * 0.99, 48, 32),
+      new MeshBasicMaterial({ color: GLOBE_CONFIG.CORE }),
+    );
 
-    this.scene.add(this.globe as any);
-    this.scene.add(new AmbientLight(0xffffff, 1));
-    this.scene.add(new DirectionalLight(0xffffff, 0.6));
+    this.globe = new Group();
+    this.globe.add(core, this.buildGraticule());
+    // A cartographer's tilt
+    this.globe.rotation.z = 0.41;
+    this.scene.add(this.globe);
 
     const animate = () => {
       this.animationId = requestAnimationFrame(animate);

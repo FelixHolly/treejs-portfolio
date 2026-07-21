@@ -74,7 +74,7 @@ const CAMERA_CONFIG = {
     FOV: 50,
     NEAR: 0.1,
     FAR: 1000,
-    POSITION: [0, 0, 5] as const,
+    POSITION: [0, 0, 4.2] as const,
 } as const;
 
 @Component({

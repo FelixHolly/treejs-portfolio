@@ -5,25 +5,17 @@
         <span class="room-rule" aria-hidden="true"></span>
     </div>
 
-    <div class="client-container">
+    <div class="max-w-3xl mx-auto">
         @for (item of clientReviews; track item.name) {
-            <div class="client-review">
-                <div>
-                    <span class="font-display text-gold text-5xl leading-none block mb-2" aria-hidden="true">&ldquo;</span>
-                    <p class="text-bone font-light">{{ item.review }}</p>
-
-                    <div class="client-content">
-                        <div class="flex items-center gap-3">
-                            <span class="h-px w-6 bg-gold" aria-hidden="true"></span>
-                            <div class="flex flex-col">
-                                <p class="font-semibold text-bone">{{ item.name }}</p>
-                                <p class="text-stone md:text-base text-sm font-mono uppercase tracking-wider">{{ item.position }}</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+            <article class="py-12 text-center border-b border-graphite-700 last:border-b-0">
+                <span class="font-display text-gold text-6xl leading-none block" aria-hidden="true">&ldquo;</span>
+                <p class="font-display italic text-xl sm:text-2xl text-bone leading-relaxed mt-2">
+                    {{ item.review }}
+                </p>
+                <p class="mt-8 font-mono text-xs uppercase tracking-[0.25em] text-stone">
+                    {{ item.position }} — {{ item.name }}
+                </p>
+            </article>
         }
     </div>
 </section>

@@ -8,21 +8,16 @@
     <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 w-full">
         <!-- Project Details -->
         <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5">
-            <div class="flex flex-col gap-5 text-stone my-5">
-                <p class="text-bone text-2xl font-semibold animatedText">{{ currentProject.title }}</p>
-                <p class="animatedText">{{ currentProject.desc }}</p>
+            <div class="flex flex-col gap-4 text-stone my-5">
+                <p class="font-display text-3xl sm:text-4xl text-bone animatedText">{{ currentProject.title }}</p>
+                <p class="font-mono text-xs uppercase tracking-[0.2em] text-stone animatedText">
+                    @for (tag of currentProject.tags; track tag.name) {<span>{{ tag.name }}</span>@if (!$last) {<span class="text-gold px-2">·</span>}}
+                </p>
+                <p class="animatedText mt-2">{{ currentProject.desc }}</p>
                 <p class="animatedText">{{ currentProject.subdesc }}</p>
             </div>
 
             <div class="flex items-center justify-between flex-wrap gap-5">
-                <div class="flex items-center gap-3 flex-wrap">
-                    @for (tag of currentProject.tags; track tag.name) {
-                        <div class="tech-logo">
-                            <span class="text-stone text-xs font-mono uppercase tracking-wider">{{ tag.name }}</span>
-                        </div>
-                    }
-                </div>
-
                 @if (currentProject.href) {
                     <a
                             class="flex items-center gap-2 cursor-pointer text-gold hover:text-bone transition-colors font-mono text-sm"

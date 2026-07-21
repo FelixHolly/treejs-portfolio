@@ -4,7 +4,7 @@
             <div class="terminal-body">
                 <p class="room-number mb-3">Room IV — Correspondence</p>
                 <h3 class="head-text">Let's talk</h3>
-                <p class="text-base text-stone mt-3 font-mono">
+                <p class="text-base text-graphite/70 mt-3 font-mono">
                     Whether you’re looking to build a new website, improve your existing platform, or bring a unique
                     project to
                     life, I’m here to help.
@@ -21,7 +21,7 @@
                                 placeholder="ex., John Doe"
                         />
                         @if (nameRef.invalid && nameRef.touched) {
-                            <span class="text-red-500 text-sm">Full name is required</span>
+                            <span class="text-red-700 text-sm">Full name is required</span>
                         }
                     </label>
 
@@ -38,7 +38,7 @@
                                 placeholder="ex., johndoe@gmail.com"
                         />
                         @if (emailRef.invalid && emailRef.touched) {
-                            <span class="text-red-500 text-sm">Enter a valid email</span>
+                            <span class="text-red-700 text-sm">Enter a valid email</span>
                         }
                     </label>
 
@@ -54,13 +54,13 @@
                                 placeholder="Share your thoughts or inquiries..."
                         ></textarea>
                         @if (messageRef.invalid && messageRef.touched) {
-                            <span class="text-red-500 text-sm">Message is required</span>
+                            <span class="text-red-700 text-sm">Message is required</span>
                         }
                     </label>
 
                     <button class="field-btn" type="submit" [disabled]="loading()" [attr.aria-label]="loading() ? 'Sending message...' : 'Send message'">
                         {{ loading() ? 'Sending...' : 'Send Message' }}
-                        <img src="assets/arrow-up.png" alt="" class="field-btn_arrow" aria-hidden="true" loading="lazy"/>
+                        <span aria-hidden="true">↗</span>
                     </button>
                 </form>
             </div>

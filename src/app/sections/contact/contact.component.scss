@@ -1,33 +1,42 @@
+/* The letter: a bone paper sheet under a spotlight — the only light
+   surface on the site. Typed correspondence on museum stationery. */
 .terminal {
   position: relative;
-  background: #1b1b1f;
-  border: 1px solid #26262c;
-  border-radius: 1rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  background: #e8e5de;
+  border-radius: 0.375rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
   overflow: hidden;
   width: 100%;
   max-width: 800px;
 
-  /* Gold plinth accent along the top edge */
+  /* Gold-dim rule along the top edge, like a letterhead */
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 3px;
     background: linear-gradient(
       to right,
       transparent 0%,
-      rgba(199, 164, 74, 0.9) 50%,
+      rgba(143, 117, 52, 0.9) 50%,
       transparent 100%
     );
   }
 
   .terminal-body {
-    background-color: #1b1b1f;
-    padding: 2.5rem 2rem;
-    color: #e8e5de;
+    padding: 3rem 2.5rem;
+    color: #141417;
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Ink overrides: shared utilities assume the dark wall */
+    .head-text {
+      color: #141417;
+    }
+
+    .room-number {
+      color: #8f7534;
+    }
   }
 }

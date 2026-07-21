@@ -5,103 +5,66 @@
         <span class="room-rule" aria-hidden="true"></span>
     </div>
 
-    <div class="grid xl:grid-cols-3 xl:grid-rows-6 md:grid-cols-2 grid-cols-1 gap-5 h-full">
-        <!-- Grid 1 -->
-        <div class="col-span-1 xl:row-span-3">
-            <div class="grid-container">
-                <div class="exhibit-frame">
-                    <div class="w-full sm:h-[252px] h-52 flex items-center justify-center">
-                        <div class="medallion">
-                            <span class="font-display text-5xl text-bone tracking-[0.15em] pl-[0.15em]">FH</span>
-                        </div>
-                    </div>
-                    <p class="exhibit-caption">Fig. I — Monogram</p>
-                </div>
-                <div>
-                    <p class="grid-headtext">Hi, I'm Felix</p>
-                    <p class="grid-subtext">
-                        I’m a passionate Full Stack Developer with 3+ years of experience building web applications using Angular, Java, and modern web technologies. I enjoy turning complex problems into elegant, user-friendly solutions.
-                    </p>
-                </div>
+    <!-- Portrait & biography -->
+    <div class="grid md:grid-cols-[auto_1fr] gap-10 lg:gap-16 items-center max-w-4xl mx-auto">
+        <div class="flex flex-col items-center">
+            <div class="medallion">
+                <span class="font-display text-5xl text-bone tracking-[0.15em] pl-[0.15em]">FH</span>
             </div>
+            <p class="exhibit-caption">Fig. I — Monogram</p>
         </div>
-
-        <!-- Grid 2 -->
-        <div class="col-span-1 xl:row-span-3">
-            <div class="grid-container">
-                <div class="exhibit-frame">
-                    <div class="w-full sm:h-[252px] h-fit flex flex-col items-center justify-center gap-3 py-8">
-                        <span class="font-display uppercase tracking-[0.3em] text-2xl text-bone">Angular</span>
-                        <span class="font-display uppercase tracking-[0.3em] text-2xl text-gold">TypeScript</span>
-                        <span class="font-display uppercase tracking-[0.3em] text-2xl text-bone">Java</span>
-                        <span class="font-display uppercase tracking-[0.3em] text-2xl text-bone">Spring Boot</span>
-                    </div>
-                    <p class="exhibit-caption">Fig. II — Materials</p>
-                </div>
-                <div>
-                    <p class="grid-headtext">Tech Stack</p>
-                    <p class="grid-subtext">
-                        I work with Angular, TypeScript, Java, Spring Boot, and Jest—focusing on creating responsive UIs and robust backend systems. I also use tools like TailwindCSS, NgRx, and Docker to enhance development efficiency.
-                    </p>
-                </div>
-            </div>
+        <div class="flex flex-col gap-4 text-center md:text-left">
+            <h3 class="font-display text-2xl sm:text-3xl text-bone">Hi, I'm Felix</h3>
+            <p class="grid-subtext">
+                I’m a passionate Full Stack Developer with 3+ years of experience building web applications using Angular, Java, and modern web technologies. I enjoy turning complex problems into elegant, user-friendly solutions.
+            </p>
+            <p class="grid-subtext">
+                I love the creative and logical challenges of coding — from building UI components to optimizing backend performance, I thrive on crafting clean, efficient, and impactful software.
+            </p>
         </div>
+    </div>
 
-        <!-- Globe -->
-        <div class="col-span-1 xl:row-span-4">
-            <div class="grid-container">
-                <div class="rounded-3xl w-full sm:h-[326px] h-fit flex justify-center items-center">
-                    <div #globeCanvas style="width: 326px; height: 326px"></div>
-                </div>
-                <div>
-                    <p class="grid-headtext">Open to Global Collaboration</p>
-                    <p class="grid-subtext">
-                        Based in the United States and open to working with teams worldwide. I’m comfortable collaborating across time zones and adapting to different workflows.
-                    </p>
-                </div>
-                <app-button name="Let's work together" [isBeam]="true" containerClass="w-full" [navigate]="'#contact'"/>
-            </div>
+    <!-- Frieze: the materials of the practice, engraved between two rules -->
+    <div class="my-20 flex flex-col items-center gap-6">
+        <div class="plinth-rule"></div>
+        <p class="font-display uppercase tracking-[0.3em] text-lg sm:text-2xl text-bone text-center leading-loose">
+            Angular<span class="text-gold px-3">·</span>TypeScript<span class="text-gold px-3">·</span>Java<span class="text-gold px-3">·</span>Spring Boot<span class="text-gold px-3">·</span>Tailwind<span class="text-gold px-3">·</span>NgRx<span class="text-gold px-3">·</span>Docker
+        </p>
+        <div class="plinth-rule"></div>
+        <p class="exhibit-caption">Materials &amp; instruments of the practice</p>
+    </div>
+
+    <!-- Catalogue: the figures, free-standing on the wall -->
+    <div class="flex flex-wrap justify-center gap-x-16 gap-y-10">
+        <div class="text-center">
+            <p class="font-display text-5xl text-gold leading-none">{{ stats.experience }}+</p>
+            <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Years Experience</p>
         </div>
-
-        <!-- Grid 3 -->
-        <div class="xl:col-span-2 xl:row-span-3">
-            <div class="grid-container">
-                <div class="text-center py-10 sm:py-14 flex flex-col gap-6">
-                    <p class="font-display text-3xl sm:text-4xl text-bone leading-snug max-w-2xl mx-auto">
-                        Driven by curiosity &amp; code
-                    </p>
-                    <span class="room-rule mx-auto" aria-hidden="true"></span>
-                    <p class="grid-subtext sm:text-lg max-w-2xl mx-auto">
-                        I love the creative and logical challenges of coding. From building UI components to optimizing backend performance, I thrive on crafting clean, efficient, and impactful software.
-                    </p>
-                </div>
-            </div>
+        <div class="text-center">
+            <p class="font-display text-5xl text-gold leading-none">{{ stats.projects }}+</p>
+            <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Projects Completed</p>
         </div>
+        <div class="text-center">
+            <p class="font-display text-5xl text-gold leading-none">{{ stats.satisfaction }}%</p>
+            <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Client Satisfaction</p>
+        </div>
+        <div class="text-center">
+            <p class="font-display text-5xl text-gold leading-none">{{ stats.techStack }}+</p>
+            <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Tech Stack</p>
+        </div>
+    </div>
 
-        <!-- Quick Stats -->
-        <div class="xl:col-span-1 xl:row-span-2">
-            <div class="grid-container">
-                <div class="rounded-3xl w-full sm:h-[326px] h-fit flex justify-center items-center">
-                    <div class="grid grid-cols-2 gap-6 p-6 w-full">
-                        <div class="text-center">
-                            <p class="sm:text-5xl text-4xl font-display text-gold leading-none">{{ stats.experience }}+</p>
-                            <p class="font-mono uppercase tracking-[0.15em] sm:text-xs text-[0.65rem] text-stone mt-3">Years Experience</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="sm:text-5xl text-4xl font-display text-gold leading-none">{{ stats.projects }}+</p>
-                            <p class="font-mono uppercase tracking-[0.15em] sm:text-xs text-[0.65rem] text-stone mt-3">Projects Completed</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="sm:text-5xl text-4xl font-display text-gold leading-none">{{ stats.satisfaction }}%</p>
-                            <p class="font-mono uppercase tracking-[0.15em] sm:text-xs text-[0.65rem] text-stone mt-3">Client Satisfaction</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="sm:text-5xl text-4xl font-display text-gold leading-none">{{ stats.techStack }}+</p>
-                            <p class="font-mono uppercase tracking-[0.15em] sm:text-xs text-[0.65rem] text-stone mt-3">Tech Stack</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- The reach: globe beside the collaboration text -->
+    <div class="grid md:grid-cols-2 gap-10 lg:gap-16 items-center max-w-4xl mx-auto mt-24">
+        <div class="flex justify-center">
+            <div #globeCanvas style="width: 326px; height: 326px"></div>
+        </div>
+        <div class="flex flex-col gap-4 text-center md:text-left">
+            <h3 class="font-display text-2xl sm:text-3xl text-bone">Open to Global Collaboration</h3>
+            <p class="grid-subtext">
+                Based in the United States and open to working with teams worldwide. I’m comfortable collaborating across time zones and adapting to different workflows.
+            </p>
+            <app-button name="Let's work together" [isBeam]="true" containerClass="w-full md:w-auto md:mx-0 md:px-6" [navigate]="'#contact'"/>
         </div>
     </div>
 </section>

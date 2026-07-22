@@ -1,0 +1,26 @@
+.torch {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 85vmin;
+  height: 85vmin;
+  pointer-events: none;
+  z-index: 9997;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  /* Warm key-light color, screened onto the wall at whisper strength */
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 217, 160, 0.055),
+    rgba(255, 217, 160, 0.02) 45%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+}
+
+/* No cursor, no torch: touch devices never see it */
+@media (pointer: coarse) {
+  .torch {
+    display: none;
+  }
+}

@@ -4,9 +4,14 @@
       <a
         [href]="item.href"
         class="nav-li_a"
+        [class.nav-active]="activeId() === item.id"
+        [attr.aria-current]="activeId() === item.id ? 'true' : null"
         (click)="linkClick.emit()"
       >
         {{ item.name }}
+        @if (item.room && activeId() === item.id) {
+          <span class="nav-room" aria-hidden="true">{{ item.room }}</span>
+        }
       </a>
     </li>
   }

@@ -109,7 +109,17 @@ select:focus-visible,
   }
 
   .nav-li_a {
-    @apply text-sm uppercase tracking-[0.15em] hover:text-gold transition-colors;
+    @apply relative text-sm uppercase tracking-[0.15em] hover:text-gold transition-colors;
+  }
+
+  /* Wayfinding: the visitor's current room reads gold, with its numeral
+     hung beneath the link on desktop and inline in the mobile menu */
+  .nav-li_a.nav-active {
+    @apply text-gold;
+  }
+
+  .nav-room {
+    @apply sm:absolute sm:left-1/2 sm:top-full sm:-translate-x-1/2 sm:mt-1 text-[0.6rem] tracking-[0.3em] text-gold/70 ml-2 sm:ml-0;
   }
 
   .nav-sidebar {

@@ -5,10 +5,35 @@
         <span class="room-rule" aria-hidden="true"></span>
     </div>
 
-    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 w-full">
-        <!-- Project Details -->
-        <div class="flex flex-col gap-5 relative sm:p-10 py-10 px-5">
-            <div class="flex flex-col gap-4 text-stone my-5">
+    <!-- Mobile reads like standing before the piece: painting, then the
+         exhibit controls under it, then the wall label. Desktop hangs the
+         label beside the painting with the controls at its foot. -->
+    <div class="grid lg:grid-cols-2 lg:grid-rows-[1fr_auto] grid-cols-1 gap-x-5 gap-y-6 w-full">
+        <!-- 3D Canvas View -->
+        <div class="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 border border-graphite-700 bg-graphite-800 rounded-lg h-96 md:h-[28rem] lg:h-full relative">
+            @if (isLoading) {
+                <div class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-graphite-800 font-mono">
+                    <p class="text-stone">Hanging the exhibit...</p>
+                    <div class="spinner"></div>
+                </div>
+            }
+            <canvas #canvas class="absolute top-0 left-0 w-full h-full" role="img" [attr.aria-label]="'Framed screenshot of ' + currentProject.title"></canvas>
+        </div>
+
+        <!-- Exhibit controls -->
+        <div class="order-2 lg:order-none lg:col-start-1 lg:row-start-2 flex justify-between items-center sm:px-10 px-5">
+            <button class="arrow-btn" (click)="handleNavigation('previous')" aria-label="View previous project">
+                <img src="assets/left-arrow.png" alt="" aria-hidden="true" loading="lazy"/>
+            </button>
+            <p class="font-mono text-xs uppercase tracking-[0.25em] text-stone" aria-live="polite">{{ exhibitLabel }}</p>
+            <button class="arrow-btn" (click)="handleNavigation('next')" aria-label="View next project">
+                <img src="assets/right-arrow.png" alt="" class="w-4 h-4" aria-hidden="true" loading="lazy"/>
+            </button>
+        </div>
+
+        <!-- Wall label -->
+        <div class="order-3 lg:order-none lg:col-start-1 lg:row-start-1 flex flex-col gap-5 relative sm:px-10 px-5 lg:py-10">
+            <div class="flex flex-col gap-4 text-stone">
                 <p class="font-display text-3xl sm:text-4xl text-bone animatedText">{{ currentProject.title }}</p>
                 <p class="max-w-full font-mono text-xs uppercase tracking-[0.2em] text-stone animatedText">
                     @for (tag of currentProject.tags; track tag.name) {<span class="whitespace-nowrap">{{ tag.name }}</span>@if (!$last) {<span class="text-gold px-1"> · </span>}}
@@ -17,41 +42,18 @@
                 <p class="animatedText">{{ currentProject.subdesc }}</p>
             </div>
 
-            <div class="flex items-center justify-between flex-wrap gap-5">
-                @if (currentProject.href) {
-                    <a
-                            class="flex items-center gap-2 cursor-pointer text-gold hover:text-bone transition-colors font-mono text-sm"
-                            [href]="currentProject.href"
-                            target="_blank"
-                            rel="noreferrer"
-                            [attr.aria-label]="'Visit ' + currentProject.title + ' live site'"
-                    >
-                        <p>Check Live Site</p>
-                        <span aria-hidden="true">↗</span>
-                    </a>
-                }
-            </div>
-
-            <div class="flex justify-between items-center mt-7">
-                <button class="arrow-btn" (click)="handleNavigation('previous')" aria-label="View previous project">
-                    <img src="assets/left-arrow.png" alt="" aria-hidden="true" loading="lazy"/>
-                </button>
-                <p class="font-mono text-xs uppercase tracking-[0.25em] text-stone" aria-live="polite">{{ exhibitLabel }}</p>
-                <button class="arrow-btn" (click)="handleNavigation('next')" aria-label="View next project">
-                    <img src="assets/right-arrow.png" alt="" class="w-4 h-4" aria-hidden="true" loading="lazy"/>
-                </button>
-            </div>
-        </div>
-
-        <!-- 3D Canvas View -->
-        <div class="border border-graphite-700 bg-graphite-800 rounded-lg h-96 md:h-full relative">
-            @if (isLoading) {
-                <div class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-graphite-800 font-mono">
-                    <p class="text-stone">Hanging the exhibit...</p>
-                    <div class="spinner"></div>
-                </div>
+            @if (currentProject.href) {
+                <a
+                        class="flex items-center gap-2 cursor-pointer text-gold hover:text-bone transition-colors font-mono text-sm"
+                        [href]="currentProject.href"
+                        target="_blank"
+                        rel="noreferrer"
+                        [attr.aria-label]="'Visit ' + currentProject.title + ' live site'"
+                >
+                    <p>Check Live Site</p>
+                    <span aria-hidden="true">↗</span>
+                </a>
             }
-            <canvas #canvas class="absolute top-0 left-0 w-full h-full" role="img" [attr.aria-label]="'Framed screenshot of ' + currentProject.title"></canvas>
         </div>
     </div>
 </section>

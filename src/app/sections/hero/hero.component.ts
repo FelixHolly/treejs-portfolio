@@ -75,6 +75,19 @@ const RENDERER_CONFIG = {
 } as const;
 
 /**
+ * Opening sequence: the gallery lights come up once the statue is ready.
+ * Target intensities match the museum lighting rig; the ramp eases over
+ * INTRO_MS with a cubic ease-out, skipped under prefers-reduced-motion.
+ */
+const LIGHT_TARGETS = {
+  AMBIENT: 0.5,
+  KEY: 2.4,
+  RIM: 0.9,
+} as const;
+
+const INTRO_MS = 2200;
+
+/**
  * Shadow quality configuration.
  *
  * MAP_SIZE: 2048x2048 shadow map provides good quality without excessive memory usage
@@ -111,6 +124,15 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   private animationId = 0;
   private dracoLoader?: DRACOLoader;
 
+  private ambientLight!: AmbientLight;
+  private keyLight!: DirectionalLight;
+  private rimLight!: DirectionalLight;
+  private introStart = 0;
+  private lightsUp = false;
+  private readonly reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   ngOnInit(): void {
     const width = window.innerWidth;
     this.sizes = calculateSizes(width);
@@ -142,26 +164,31 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     this.camera.lookAt(0, 0, 0);
 
     // Museum lighting: dim neutral ambient, warm key light (gallery spot),
-    // cool rim light to separate the stone from the dark background
-    const ambientLight = new AmbientLight(0xe8e5de, 0.5);
+    // cool rim light to separate the stone from the dark background.
+    // The room starts dark; intensities ramp up when the statue is ready.
+    const startBright = this.reducedMotion;
+    this.ambientLight = new AmbientLight(0xe8e5de, startBright ? LIGHT_TARGETS.AMBIENT : 0);
 
-    const keyLight = new DirectionalLight(0xffd9a0, 2.4);
-    keyLight.position.set(4, 8, 6);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
-    keyLight.shadow.mapSize.height = SHADOW_CONFIG.MAP_SIZE;
-    keyLight.shadow.camera.near = SHADOW_CONFIG.CAMERA_NEAR;
-    keyLight.shadow.camera.far = SHADOW_CONFIG.CAMERA_FAR;
+    this.keyLight = new DirectionalLight(0xffd9a0, startBright ? LIGHT_TARGETS.KEY : 0);
+    this.keyLight.position.set(4, 8, 6);
+    this.keyLight.castShadow = true;
+    this.keyLight.shadow.mapSize.width = SHADOW_CONFIG.MAP_SIZE;
+    this.keyLight.shadow.mapSize.height = SHADOW_CONFIG.MAP_SIZE;
+    this.keyLight.shadow.camera.near = SHADOW_CONFIG.CAMERA_NEAR;
+    this.keyLight.shadow.camera.far = SHADOW_CONFIG.CAMERA_FAR;
 
-    const rimLight = new DirectionalLight(0x8fa3bf, 0.9);
-    rimLight.position.set(-6, 3, -4);
+    this.rimLight = new DirectionalLight(0x8fa3bf, startBright ? LIGHT_TARGETS.RIM : 0);
+    this.rimLight.position.set(-6, 3, -4);
 
-    this.scene.add(ambientLight, keyLight, rimLight);
+    this.lightsUp = startBright;
+    this.scene.add(this.ambientLight, this.keyLight, this.rimLight);
 
     this.loadModel();
 
     const animate = () => {
       this.animationId = requestAnimationFrame(animate);
+
+      this.updateIntroLights();
 
       if (this.modelObject) {
         if (window.innerWidth < HERO_ANIMATION.MOBILE_BREAKPOINT) {
@@ -178,6 +205,24 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     animate();
+  }
+
+  /**
+   * Ramps the gallery lights from dark to their targets after the statue
+   * loads (cubic ease-out over INTRO_MS). No-op once the ramp completes,
+   * and under prefers-reduced-motion the lights start at full.
+   */
+  private updateIntroLights(): void {
+    if (this.lightsUp || !this.introStart) return;
+
+    const t = Math.min((performance.now() - this.introStart) / INTRO_MS, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+
+    this.ambientLight.intensity = LIGHT_TARGETS.AMBIENT * eased;
+    this.keyLight.intensity = LIGHT_TARGETS.KEY * eased;
+    this.rimLight.intensity = LIGHT_TARGETS.RIM * eased;
+
+    if (t >= 1) this.lightsUp = true;
   }
 
   /**
@@ -234,6 +279,8 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
         this.modelObject = group;
         this.scene.add(group);
         this.isLoading = false;
+        // The statue is hung: bring the gallery lights up
+        this.introStart = performance.now();
       },
       (xhr) => {
         if (xhr.total > 0) {
@@ -243,6 +290,11 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
       (error) => {
         console.error("Failed to load model:", error);
         this.isLoading = false;
+        // No statue to unveil; light the room so the text is readable
+        this.ambientLight.intensity = LIGHT_TARGETS.AMBIENT;
+        this.keyLight.intensity = LIGHT_TARGETS.KEY;
+        this.rimLight.intensity = LIGHT_TARGETS.RIM;
+        this.lightsUp = true;
         // Propagate error to global handler for user-facing notification
         throw new Error(`Failed to load 3D model: ${error}`);
       },

@@ -31,6 +31,7 @@ import {
   Vector3,
 } from "three";
 import { ButtonComponent } from "../../components/button/button.component";
+import { RevealDirective } from "../../directives/reveal.directive";
 
 /**
  * Globe rendering configuration.
@@ -56,7 +57,7 @@ const GLOBE_CONFIG = {
 @Component({
   selector: "app-about",
   standalone: true,
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, RevealDirective],
   templateUrl: "./about.component.html",
   styleUrls: ["./about.component.scss"],
 })

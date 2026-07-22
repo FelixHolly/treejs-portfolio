@@ -1,5 +1,5 @@
 <section class="c-space my-24" id="projects">
-    <div class="room-label">
+    <div class="room-label" appReveal>
         <p class="room-number">Room II</p>
         <h2 class="head-text">The Works</h2>
         <span class="room-rule" aria-hidden="true"></span>
@@ -10,7 +10,7 @@
          label beside the painting with the controls at its foot. -->
     <div class="grid lg:grid-cols-2 lg:grid-rows-[1fr_auto] grid-cols-1 gap-x-5 gap-y-6 w-full">
         <!-- 3D Canvas View -->
-        <div class="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 border border-graphite-700 bg-graphite-800 rounded-lg h-96 md:h-[28rem] lg:h-full relative">
+        <div class="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:row-span-2 border border-graphite-700 bg-graphite-800 rounded-lg h-96 md:h-[28rem] lg:h-full relative" appReveal [revealDelay]="120">
             @if (isLoading) {
                 <div class="absolute inset-0 flex flex-col justify-center items-center gap-4 z-10 bg-graphite-800 font-mono">
                     <p class="text-stone">Hanging the exhibit...</p>
@@ -21,7 +21,7 @@
         </div>
 
         <!-- Exhibit controls -->
-        <div class="order-2 lg:order-none lg:col-start-1 lg:row-start-2 flex justify-between items-center sm:px-10 px-5">
+        <div class="order-2 lg:order-none lg:col-start-1 lg:row-start-2 flex justify-between items-center sm:px-10 px-5" appReveal [revealDelay]="220">
             <button class="arrow-btn" (click)="handleNavigation('previous')" aria-label="View previous project">
                 <img src="assets/left-arrow.png" alt="" aria-hidden="true" loading="lazy"/>
             </button>
@@ -32,7 +32,7 @@
         </div>
 
         <!-- Wall label -->
-        <div class="order-3 lg:order-none lg:col-start-1 lg:row-start-1 flex flex-col gap-5 relative sm:px-10 px-5 lg:py-10">
+        <div class="order-3 lg:order-none lg:col-start-1 lg:row-start-1 flex flex-col gap-5 relative sm:px-10 px-5 lg:py-10" appReveal [revealDelay]="320">
             <div class="flex flex-col gap-4 text-stone">
                 <p class="font-display text-3xl sm:text-4xl text-bone animatedText">{{ currentProject.title }}</p>
                 <p class="max-w-full font-mono text-xs uppercase tracking-[0.2em] text-stone animatedText">

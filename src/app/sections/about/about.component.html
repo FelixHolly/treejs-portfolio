@@ -1,12 +1,12 @@
 <section class="c-space my-24" id="about">
-    <div class="room-label">
+    <div class="room-label" appReveal>
         <p class="room-number">Room I</p>
         <h2 class="head-text">The Developer</h2>
         <span class="room-rule" aria-hidden="true"></span>
     </div>
 
     <!-- Portrait & biography -->
-    <div class="grid md:grid-cols-[auto_1fr] gap-10 lg:gap-16 items-center max-w-4xl mx-auto">
+    <div class="grid md:grid-cols-[auto_1fr] gap-10 lg:gap-16 items-center max-w-4xl mx-auto" appReveal [revealDelay]="120">
         <div class="flex flex-col items-center">
             <div class="medallion">
                 <span class="font-display text-5xl text-bone tracking-[0.15em] pl-[0.15em]">FH</span>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Frieze: the materials of the practice, engraved between two rules -->
-    <div class="my-20 flex flex-col items-center gap-6">
+    <div class="my-14 sm:my-20 flex flex-col items-center gap-6" appReveal>
         <div class="plinth-rule"></div>
         <p class="max-w-full font-display uppercase tracking-[0.2em] sm:tracking-[0.3em] text-base sm:text-2xl text-bone text-center leading-loose">
             <span class="whitespace-nowrap">Angular</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">TypeScript</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">Java</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">Spring Boot</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">Tailwind</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">NgRx</span><span class="text-gold px-1 sm:px-2"> · </span><span class="whitespace-nowrap">Docker</span>
@@ -35,27 +35,27 @@
     </div>
 
     <!-- Catalogue: the figures, free-standing on the wall -->
-    <div class="flex flex-wrap justify-center gap-x-16 gap-y-10">
+    <div class="grid grid-cols-2 gap-x-4 gap-y-10 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-16" appReveal>
         <div class="text-center">
-            <p class="font-display text-5xl text-gold leading-none">{{ stats.experience }}+</p>
+            <p class="font-display text-4xl sm:text-5xl text-gold leading-none">{{ stats.experience }}+</p>
             <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Years Experience</p>
         </div>
         <div class="text-center">
-            <p class="font-display text-5xl text-gold leading-none">{{ stats.projects }}+</p>
+            <p class="font-display text-4xl sm:text-5xl text-gold leading-none">{{ stats.projects }}+</p>
             <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Projects Completed</p>
         </div>
         <div class="text-center">
-            <p class="font-display text-5xl text-gold leading-none">{{ stats.satisfaction }}%</p>
+            <p class="font-display text-4xl sm:text-5xl text-gold leading-none">{{ stats.satisfaction }}%</p>
             <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Client Satisfaction</p>
         </div>
         <div class="text-center">
-            <p class="font-display text-5xl text-gold leading-none">{{ stats.techStack }}+</p>
+            <p class="font-display text-4xl sm:text-5xl text-gold leading-none">{{ stats.techStack }}+</p>
             <p class="font-mono uppercase tracking-[0.15em] text-xs text-stone mt-3">Tech Stack</p>
         </div>
     </div>
 
     <!-- The reach: globe beside the collaboration text -->
-    <div class="grid md:grid-cols-2 gap-10 lg:gap-16 items-center max-w-4xl mx-auto mt-24">
+    <div class="grid md:grid-cols-2 gap-6 md:gap-10 lg:gap-16 items-center max-w-4xl mx-auto mt-16 sm:mt-24" appReveal>
         <div class="flex justify-center">
             <div #globeCanvas style="width: 326px; height: 326px"></div>
         </div>

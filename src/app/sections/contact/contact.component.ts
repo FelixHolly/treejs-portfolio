@@ -3,12 +3,13 @@ import { FormsModule, NgForm } from "@angular/forms";
 import { EmailService } from "../../services/email.service";
 import { ContactForm } from "../../models/contact.model";
 import { NotificationService } from "../../services/notification.service";
+import { RevealDirective } from "../../directives/reveal.directive";
 
 @Component({
   selector: "app-contact",
   templateUrl: "./contact.component.html",
   styleUrls: ["./contact.component.scss"],
-  imports: [FormsModule],
+  imports: [FormsModule, RevealDirective],
 })
 export class ContactComponent {
   private emailService = inject(EmailService);

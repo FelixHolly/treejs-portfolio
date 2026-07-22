@@ -1,5 +1,5 @@
 <section class="c-space my-24">
-    <div class="room-label">
+    <div class="room-label" appReveal>
         <p class="room-number">Room III</p>
         <h2 class="head-text">Visitors' Book</h2>
         <span class="room-rule" aria-hidden="true"></span>
@@ -7,7 +7,7 @@
 
     <div class="max-w-3xl mx-auto">
         @for (item of clientReviews; track item.name) {
-            <article class="py-12 text-center border-b border-graphite-700 last:border-b-0">
+            <article class="py-10 sm:py-12 text-center border-b border-graphite-700 last:border-b-0" appReveal>
                 <span class="font-display text-gold text-6xl leading-none block" aria-hidden="true">&ldquo;</span>
                 <p class="font-display italic text-xl sm:text-2xl text-bone leading-relaxed mt-2">
                     {{ item.review }}

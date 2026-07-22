@@ -29,6 +29,7 @@ import {
 import { ProjectService } from "../../services/project.service";
 import { Project } from "../../models/project.model";
 import { ThreeSceneService } from "../../services/three-scene.service";
+import { RevealDirective } from "../../directives/reveal.directive";
 
 /**
  * Swing animation: the framed piece starts turned away and eases to face
@@ -80,6 +81,7 @@ const CAMERA_CONFIG = {
 @Component({
     selector: "app-projects",
     standalone: true,
+    imports: [RevealDirective],
     templateUrl: "./projects.component.html",
     styleUrls: ["./projects.component.scss"],
 })

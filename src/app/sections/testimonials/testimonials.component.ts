@@ -1,7 +1,9 @@
 import { Component } from "@angular/core";
+import { RevealDirective } from "../../directives/reveal.directive";
 
 @Component({
   selector: "app-testimonials",
+  imports: [RevealDirective],
   templateUrl: "./testimonials.component.html",
   styleUrl: "./testimonials.component.scss",
 })

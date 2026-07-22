@@ -90,7 +90,7 @@ select:focus-visible,
     @apply h-px w-16 bg-gold/70 mt-1;
   }
 
-  /* Exhibit frame: images mounted like pieces on a gallery wall —
+  /* Exhibit frame: images mounted like pieces on a gallery wall,
      graphite matting inside a hairline frame, caption plaque beneath. */
   .exhibit-frame {
     @apply bg-graphite border border-graphite-700 rounded-sm p-3;
@@ -144,7 +144,7 @@ select:focus-visible,
     @apply max-w-xl relative z-10 sm:px-10 px-5 mt-24;
   }
 
-  /* Letter fields: typed blanks on paper — underlines, not boxes */
+  /* Letter fields: typed blanks on paper (underlines, not boxes) */
   .field-label {
     @apply text-xs font-mono uppercase tracking-[0.2em] text-graphite/70;
   }

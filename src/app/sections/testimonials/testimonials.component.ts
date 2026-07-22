@@ -14,7 +14,7 @@ export class TestimonialsComponent {
       review:
         "Felix H. demonstrated his willingness to learn, flexibility, and strong comprehension skills by quickly adapting to new technologies such as Angular. His technically sound and conscientious approach consistently delivered flawless results.",
       name: "Polyoint AG",
-      position: "Full Stack Developer",
+      position: "Team Lead",
       img: "assets/images/reviewer1.jpg",
     },
     {

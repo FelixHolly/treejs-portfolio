@@ -157,7 +157,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
             antialias: true,
         });
         const { width, height } = this.panelSize();
-        // updateStyle: false — CSS keeps the canvas at w-full/h-full; only
+        // updateStyle: false. CSS keeps the canvas at w-full/h-full; only
         // the drawing buffer is sized here. Letting setSize write inline
         // styles pins the canvas to its initial measurement.
         this.renderer.setSize(width, height, false);
@@ -275,7 +275,7 @@ export class ProjectsComponent implements AfterViewInit, OnDestroy {
      * Swaps the canvas texture for the selected project.
      *
      * Disposes the previous material and its texture before assigning the new
-     * one — each undisposed swap leaks GPU memory.
+     * one, since each undisposed swap leaks GPU memory.
      */
     private updateTexture(): void {
         if (!this.canvasMesh) return;

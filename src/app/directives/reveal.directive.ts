@@ -9,7 +9,7 @@ import {
 
 /**
  * Spotlight reveal: the element rests in shadow (faded, slightly lowered)
- * until it scrolls into view, then settles into place — like a piece
+ * until it scrolls into view, then settles into place, like a piece
  * emerging as the visitor's light reaches it.
  *
  * Usage: <div appReveal [revealDelay]="120">…</div>

@@ -2,7 +2,7 @@
  * About section component featuring an antique cartographer's globe.
  *
  * The globe is a gold wireframe sphere (meridians and parallels) over a
- * graphite core — no external textures or globe libraries, so it renders
+ * graphite core. No external textures or globe libraries, so it renders
  * instantly, works offline, and stays inside the Stone & Gold palette.
  *
  * Performance strategy:
@@ -151,7 +151,7 @@ export class AboutComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Builds the gold graticule as clean line rings: parallels are latitude
-   * circles, meridians are great circles rotated about the axis — the
+   * circles, meridians are great circles rotated about the axis: the
    * drawing of an antique cartographer's globe, not a triangulated mesh.
    */
   private buildGraticule(): Group {

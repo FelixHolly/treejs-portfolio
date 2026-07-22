@@ -59,6 +59,18 @@ body::before {
   outline-offset: 2px;
 }
 
+/* Selected text is lit gold, like a highlight on the wall label */
+::selection {
+  background: rgba(199, 164, 74, 0.4);
+  color: #e8e5de;
+}
+
+/* On the bone letter paper, keep the ink readable under the highlight */
+.terminal ::selection {
+  background: rgba(199, 164, 74, 0.45);
+  color: #141417;
+}
+
 /* Global focus styles for accessibility */
 a:focus-visible,
 button:focus-visible,

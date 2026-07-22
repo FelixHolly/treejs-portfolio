@@ -22,7 +22,7 @@ export class TestimonialsComponent {
       review:
         "Felix H. demonstrated exceptional technical skills and a professional, empathetic approach in his role as a Software Developer. His structured and effective work style, combined with his above-average dedication, consistently delivered outstanding results.",
       name: "Eurotours",
-      position: "Backend Developer",
+      position: "Tech Lead",
       img: "assets/images/reviewer2.jpg",
     },
     // Add more reviews as needed

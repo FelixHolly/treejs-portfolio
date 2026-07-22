@@ -28,6 +28,19 @@ body {
   font-family: 'General Sans', sans-serif;
 }
 
+/* Wall grain: a faint plaster texture over the whole gallery. An inline
+   SVG noise tile at ~3% opacity, fixed so it reads as material rather
+   than pattern; pointer-events none keeps it purely visual. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
 .skip-link {
   position: absolute;
   top: -40px;

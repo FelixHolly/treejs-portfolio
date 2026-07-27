@@ -1,6 +1,6 @@
 # Felix Hollndonner – 3D Portfolio Website
 
-Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**, and **Three.js**. This site showcases my work and skills through a responsive and animated web experience.
+Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**, and **Three.js**. Designed as a walk through a museum: Stone & Gold palette, gallery rooms with wall labels, a Viennese lion under museum lighting, and projects hung in a gilded frame.
 
 [Live Site](https://felixhollndonner.com)
 

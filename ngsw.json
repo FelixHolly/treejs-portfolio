@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1785129817925,
+  "timestamp": 1794433658554,
   "index": "./index.html",
   "assetGroups": [
     {
@@ -12,12 +12,12 @@
       },
       "urls": [
         "./chunk-2DSX5LFM.js",
-        "./chunk-5XRJRB2Q.js",
+        "./chunk-4XSFDJJ2.js",
         "./chunk-FNRYT2OX.js",
         "./chunk-RSQVWLVN.js",
         "./chunk-Y5UDMCXV.js",
         "./index.html",
-        "./main-6IVDNAHP.js",
+        "./main-2HPLVOH4.js",
         "./manifest.webmanifest",
         "./polyfills-B6TNHZQ6.js",
         "./styles-GNHTWVSQ.css"
@@ -54,6 +54,7 @@
         "./assets/og.png",
         "./assets/right-arrow.png",
         "./assets/textures/projects/greenwave.webp",
+        "./assets/textures/projects/kuechenschelle.webp",
         "./assets/textures/projects/reloo.webp",
         "./assets/textures/projects/wheel-wallet.webp",
         "./assets/tick.svg",
@@ -93,11 +94,12 @@
     "./assets/og.png": "1a41356e6acfa355b430d71df241ac99c5e6e088",
     "./assets/right-arrow.png": "013ac7c699653bf4652dabc61f7ecc3046f8ce44",
     "./assets/textures/projects/greenwave.webp": "9f25ee64228fbb688efd24cec7c627372d5f47cf",
+    "./assets/textures/projects/kuechenschelle.webp": "6ce8e2d2cf115ec42b9e3ff44a245bf595d74ddc",
     "./assets/textures/projects/reloo.webp": "cc1735b80af5665007822ade351990ed994e3d59",
     "./assets/textures/projects/wheel-wallet.webp": "bf62718b5f466154853fc21f6b15e9af78b2c0cb",
     "./assets/tick.svg": "88cdc6e2ecd37d9b2633f4ac37ecf8f96856c6f5",
     "./chunk-2DSX5LFM.js": "7c01699ae3d8916a41dba477b14e9a5143db150e",
-    "./chunk-5XRJRB2Q.js": "7411701ce9c06892915f287f1ed15c300004d173",
+    "./chunk-4XSFDJJ2.js": "a33e2b09af409dbc7e59da76573d5668be47aeae",
     "./chunk-FNRYT2OX.js": "7a36491b7043991736e9ef6bb1c5678acfa11097",
     "./chunk-RSQVWLVN.js": "a56a8a92f57bbd7a1edbd54b8efdbcdeb7d1f49b",
     "./chunk-Y5UDMCXV.js": "0b544aa08807bb89cfbbad7b9831f789be7968a4",
@@ -109,8 +111,8 @@
     "./icons/icon-512x512.png": "d416a2c11ee5c33a6d547aab27f567b68e849520",
     "./icons/icon-72x72.png": "6f328632a1fbe188c26201d49bc023de2209ecad",
     "./icons/icon-96x96.png": "6cce8dd7aa4a97d89b547ee4e4d07cc510792821",
-    "./index.html": "720730b34ca9889f2bbf6a1120f05aa60e0d2b16",
-    "./main-6IVDNAHP.js": "992fe9d26f2ab316d1cc7fd552f24f1796b48d0b",
+    "./index.html": "5eba5fd400fbe7fd8d11bf30e8873d7bfc65fff3",
+    "./main-2HPLVOH4.js": "866923abfa0bd172293a85daad65eecec6ba84f8",
     "./manifest.webmanifest": "d32162bddcde7acb858fd357d4b8fe8a530349ba",
     "./polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
     "./styles-GNHTWVSQ.css": "bf3529032e009a00f722237d079252beab71b040"

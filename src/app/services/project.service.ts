@@ -24,6 +24,19 @@ export class ProjectService {
    */
   private projects: Project[] = [
     {
+      title: "Küchenschelle",
+      desc: "Recipe site for an Austrian YouTube cooking channel.",
+      subdesc: "Searchable, server-rendered recipes with an admin dashboard that turns YouTube videos into recipes.",
+      texture: "assets/textures/projects/kuechenschelle.webp",
+      tags: [
+        { name: "Angular", path: "assets/logos/angular.svg" },
+        { name: "Java", path: "assets/logos/java.svg" },
+        { name: "SpringBoot", path: "assets/logos/spring.svg" },
+        { name: "PostgreSQL", path: "assets/logos/postgresql.svg" },
+      ],
+      href: "https://kuechenschelle.at",
+    },
+    {
       title: "WheelWallet",
       desc: "All-in-one car manager.",
       subdesc: "Documents, maintenance, and trips.",

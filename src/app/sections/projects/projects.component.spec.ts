@@ -20,6 +20,18 @@ describe("ProjectsComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should open on Küchenschelle as the first of four exhibits", () => {
+    expect(component.currentProject.title).toBe("Küchenschelle");
+    expect(component.exhibitLabel).toBe("Exhibit I / IV");
+  });
+
+  it("should wrap from the first exhibit back to the last", () => {
+    component.handleNavigation("previous");
+
+    expect(component.currentProject.title).toBe("GreenWave");
+    expect(component.exhibitLabel).toBe("Exhibit IV / IV");
+  });
+
   it("should label the carousel position in roman numerals", () => {
     component.selectedProjectIndex = 0;
     expect(component.exhibitLabel).toMatch(/^Exhibit I \/ [IVX]+$/);

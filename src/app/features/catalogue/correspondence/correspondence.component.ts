@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild } from "@angular/core";
+import { afterNextRender, ChangeDetectionStrategy, Component, ElementRef, inject, Injector, signal, viewChild } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { CORRESPONDENCE } from "../../../core/content/correspondence.content";
 import { RevealDirective } from "../../../directives/reveal.directive";
@@ -18,6 +18,7 @@ type Field = "name" | "email" | "message";
 export class CorrespondenceComponent {
   private readonly emailService = inject(EmailService);
   private readonly notificationService = inject(NotificationService);
+  private readonly injector = inject(Injector);
   private readonly formElement = viewChild.required<ElementRef<HTMLFormElement>>("letter");
 
   readonly content = CORRESPONDENCE;
@@ -40,7 +41,11 @@ export class CorrespondenceComponent {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.formElement().nativeElement.querySelector<HTMLElement>(".ng-invalid[formControlName]")?.focus();
+      // Focus after the error text exists, so it is read out with the field
+      afterNextRender(
+        () => this.formElement().nativeElement.querySelector<HTMLElement>(".ng-invalid[formControlName]")?.focus(),
+        { injector: this.injector },
+      );
       return;
     }
 

@@ -27,6 +27,9 @@ jobs:
       - name: 🛠 Build Angular app
         run: npm run build -- --configuration production --base-href ./
 
+      - name: Add SPA fallback for deep links
+        run: cp dist/treejs-portfolio/browser/index.html dist/treejs-portfolio/browser/404.html
+
       - name: 🚀 Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

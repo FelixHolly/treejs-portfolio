@@ -71,3 +71,9 @@
     }
   }
 }
+
+/* Gold on bone paper is too faint for a focus ring; the letter uses ink */
+.terminal :is(a, button, input, textarea):focus-visible {
+  outline: 2px solid #141417;
+  outline-offset: 3px;
+}

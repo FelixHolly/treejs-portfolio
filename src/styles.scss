@@ -151,7 +151,7 @@ select:focus-visible,
   }
 
   .field-input {
-    @apply w-full bg-transparent border-0 border-b border-graphite/30 rounded-none px-1 py-3 min-h-12 font-mono placeholder:text-graphite/40 text-base text-graphite transition-colors focus:border-gold-dim focus:outline-none;
+    @apply w-full bg-transparent border-0 border-b border-graphite/60 rounded-none px-1 py-3 min-h-12 font-mono placeholder:text-graphite/40 text-base text-graphite transition-colors focus:border-graphite;
   }
 
   .field-btn {

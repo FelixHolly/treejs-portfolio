@@ -71,8 +71,8 @@ export const WORKS: readonly Work[] = [
     images: [
       {
         src: "assets/works/reloo.webp",
-        alt: "ReLoo on a phone showing a recycling answer for a searched item",
-        caption: "Study · Answer",
+        alt: "ReLoo dashboard on a phone with an impact score, scan count and quick actions",
+        caption: "Study · Dashboard",
         orientation: "portrait",
       },
     ],

@@ -12,7 +12,7 @@
  * - Caches static assets for offline access and improved repeat visit performance
  */
 import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection, isDevMode } from "@angular/core";
-import { provideRouter } from "@angular/router";
+import { provideRouter, withInMemoryScrolling } from "@angular/router";
 
 import { routes } from "./app.routes";
 import { GlobalErrorHandler } from "./core/error-handler/global-error-handler.service";
@@ -23,7 +23,8 @@ export const appConfig: ApplicationConfig = {
     // Event coalescing batches multiple events into single change detection cycle
     // Reduces overhead in event-heavy scenarios (e.g., mouse movement on 3D canvas)
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
+    // Old deep links (/#projects) must land on their room once the lazy page has rendered
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: "enabled" })),
     // Replace default error handler with custom implementation for user-friendly notifications
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     // Service worker for PWA capabilities (offline access, faster subsequent loads)

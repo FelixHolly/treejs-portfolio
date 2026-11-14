@@ -1,0 +1,32 @@
+<section class="c-space my-24" id="about">
+    <app-room-label numeral="I" title="The Developer" appReveal />
+
+    <div class="grid md:grid-cols-[auto_1fr] gap-10 lg:gap-16 items-center max-w-4xl mx-auto" appReveal [revealDelay]="120">
+        <div class="flex flex-col items-center">
+            <div class="medallion" aria-hidden="true">
+                <span class="font-display text-5xl text-bone tracking-[0.15em] pl-[0.15em]">FH</span>
+            </div>
+            <p class="exhibit-caption">Fig. I · Monogram</p>
+        </div>
+        <div class="flex flex-col gap-4 text-center md:text-left">
+            <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
+            @for (paragraph of developer.bio; track paragraph) {
+                <p class="grid-subtext">{{ paragraph }}</p>
+            }
+        </div>
+    </div>
+
+    <div class="mt-14 sm:mt-20 flex flex-col items-center gap-6" appReveal>
+        <div class="plinth-rule"></div>
+        <p class="max-w-full font-display uppercase tracking-[0.2em] sm:tracking-[0.3em] text-base sm:text-2xl text-bone text-center leading-loose">
+            @for (material of developer.frieze; track material) {<span class="whitespace-nowrap">{{ material }}</span>@if (!$last) {<span class="text-gold px-1 sm:px-2" aria-hidden="true"> · </span>}}
+        </p>
+        <div class="plinth-rule"></div>
+        <p class="exhibit-caption">Materials &amp; instruments of the practice</p>
+    </div>
+
+    <p class="mt-12 max-w-2xl mx-auto text-center grid-subtext" appReveal>
+        <span class="block font-mono uppercase tracking-[0.2em] text-xs text-gold mb-3">{{ developer.location }}</span>
+        {{ developer.viennaLine }}
+    </p>
+</section>

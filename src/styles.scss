@@ -126,15 +126,15 @@ select:focus-visible,
   }
 
   .nav-ul {
-    @apply flex flex-col items-center gap-4 sm:flex-row md:gap-6 relative z-20;
+    @apply flex flex-col items-center gap-4 lg:flex-row lg:gap-6 relative z-20;
   }
 
   .nav-li {
-    @apply text-stone hover:text-gold font-mono max-sm:hover:bg-graphite-800 max-sm:w-full max-sm:rounded-md py-2 max-sm:px-5;
+    @apply text-stone hover:text-gold font-mono max-lg:hover:bg-graphite-800 max-lg:w-full max-lg:rounded-md max-lg:text-center py-2 max-lg:px-5;
   }
 
   .nav-li_a {
-    @apply relative text-sm uppercase tracking-[0.15em] hover:text-gold transition-colors;
+    @apply relative inline-flex items-center min-h-6 text-sm uppercase tracking-[0.15em] hover:text-gold transition-colors;
   }
 
   /* Wayfinding: the visitor's current room reads gold, with its numeral
@@ -144,7 +144,7 @@ select:focus-visible,
   }
 
   .nav-room {
-    @apply sm:absolute sm:left-1/2 sm:top-full sm:-translate-x-1/2 sm:mt-1 text-[0.6rem] tracking-[0.3em] text-gold/70 ml-2 sm:ml-0;
+    @apply lg:absolute lg:left-1/2 lg:top-full lg:-translate-x-1/2 lg:mt-1 text-[0.6rem] tracking-[0.3em] text-gold/70 ml-2 lg:ml-0;
   }
 
   .nav-sidebar {

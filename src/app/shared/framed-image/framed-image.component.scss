@@ -1,0 +1,35 @@
+.frame {
+  padding: 0.6rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.frame--gilded {
+  background: linear-gradient(135deg, #8f7534 0%, #c7a44a 28%, #6b5726 55%, #c7a44a 80%, #8f7534 100%);
+}
+
+.frame--plain {
+  padding: 0.3rem;
+  background: #26262c;
+}
+
+.mat {
+  background: #e8e5de;
+  padding: clamp(0.5rem, 2.2vw, 1.25rem);
+  box-shadow: inset 0 0 0 1px rgba(20, 20, 23, 0.35);
+}
+
+.picture {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #141417;
+
+  img {
+    object-fit: cover;
+    object-position: top center;
+  }
+}
+
+.picture--portrait {
+  aspect-ratio: 9 / 19;
+}

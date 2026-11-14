@@ -1,0 +1,37 @@
+.anchor {
+  display: block;
+  scroll-margin-top: 5.5rem;
+}
+
+.commission,
+.study {
+  scroll-margin-top: 6rem;
+}
+
+.triptych {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 2.5rem;
+  }
+}
+
+.triptych-centre {
+  @media (min-width: 640px) {
+    grid-column: 1 / -1;
+    width: min(100%, 52rem);
+    margin-inline: auto;
+  }
+}
+
+.study-frame {
+  width: min(60%, 14rem);
+  margin-inline: auto;
+
+  @media (min-width: 768px) {
+    margin-inline: 0;
+  }
+}

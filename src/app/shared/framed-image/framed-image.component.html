@@ -1,0 +1,10 @@
+<figure>
+    <div class="frame" [class.frame--gilded]="variant() === 'gilded'" [class.frame--plain]="variant() === 'plain'">
+        <div class="mat">
+            <div class="picture" [class.picture--portrait]="image().orientation === 'portrait'">
+                <img [ngSrc]="image().src" [alt]="image().alt" fill [sizes]="sizes()">
+            </div>
+        </div>
+    </div>
+    <figcaption class="exhibit-caption">{{ image().caption }}</figcaption>
+</figure>

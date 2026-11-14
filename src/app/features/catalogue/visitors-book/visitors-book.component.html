@@ -1,0 +1,17 @@
+<section class="c-space my-24" id="visitors-book">
+    <app-room-label numeral="III" title="Visitors' Book" appReveal />
+
+    <div class="max-w-3xl mx-auto">
+        @for (entry of entries; track entry.company) {
+            <figure class="py-10 sm:py-12 text-center border-b border-graphite-700 last:border-b-0" appReveal>
+                <span class="font-display text-gold text-6xl leading-none block" aria-hidden="true">&ldquo;</span>
+                <blockquote class="font-display italic text-xl sm:text-2xl text-bone leading-relaxed mt-2">
+                    {{ entry.quote }}
+                </blockquote>
+                <figcaption class="mt-8 font-mono text-xs uppercase tracking-[0.25em] text-stone">
+                    {{ entry.role }} · {{ entry.company }}
+                </figcaption>
+            </figure>
+        }
+    </div>
+</section>

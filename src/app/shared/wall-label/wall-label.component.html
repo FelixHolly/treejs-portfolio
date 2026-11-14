@@ -1,0 +1,41 @@
+<p class="room-number">{{ work().kind === 'commission' ? 'Commission' : 'Study' }}</p>
+<h3 class="font-display text-3xl sm:text-4xl text-bone mt-2">{{ work().title }}</h3>
+<p class="mt-3 font-mono text-xs uppercase tracking-[0.2em] text-stone leading-relaxed">
+    <span class="whitespace-nowrap">{{ work().year }}</span>@for (material of work().materials; track material) {<span class="text-gold px-1" aria-hidden="true"> · </span><span class="whitespace-nowrap">{{ material }}</span>}
+</p>
+<dl class="mt-5 flex flex-col gap-3 text-stone">
+    <div>
+        <dt class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone">The problem</dt>
+        <dd class="text-bone/90">{{ work().problem }}</dd>
+    </div>
+    <div>
+        <dt class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone">What I built</dt>
+        <dd class="text-bone/90">{{ work().built }}</dd>
+    </div>
+    <div>
+        <dt class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone">My role</dt>
+        <dd class="text-bone/90">{{ work().role }}</dd>
+    </div>
+    @if (work().outcome; as outcome) {
+        <div>
+            <dt class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone">Outcome</dt>
+            <dd class="text-bone/90">{{ outcome }}</dd>
+        </div>
+    }
+</dl>
+@if (work().href || work().repo) {
+    <p class="mt-5 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm">
+        @if (work().href; as href) {
+            <a class="inline-flex items-center gap-2 min-h-6 text-gold hover:text-bone transition-colors" [href]="href" target="_blank" rel="noopener noreferrer">
+                Visit the live site<span class="sr-only"> of {{ work().title }} (opens in a new tab)</span>
+                <app-icon-arrow-out />
+            </a>
+        }
+        @if (work().repo; as repo) {
+            <a class="inline-flex items-center gap-2 min-h-6 text-gold hover:text-bone transition-colors" [href]="repo" target="_blank" rel="noopener noreferrer">
+                View the code<span class="sr-only"> of {{ work().title }} (opens in a new tab)</span>
+                <app-icon-arrow-out />
+            </a>
+        }
+    </p>
+}

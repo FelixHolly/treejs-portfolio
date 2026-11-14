@@ -1,0 +1,26 @@
+<section class="c-space my-24" id="projects">
+    <span id="works" class="anchor"></span>
+    <app-room-label numeral="II" title="The Works" appReveal />
+
+    @for (work of commissions(); track work.slug) {
+        <article class="commission" [id]="'works-' + work.slug">
+            <div class="triptych" appReveal [revealDelay]="120">
+                @for (image of work.images; track image.src) {
+                    <app-framed-image [image]="image" [class.triptych-centre]="$first" [sizes]="$first ? '(min-width: 1024px) 60vw, 100vw' : '(min-width: 640px) 45vw, 100vw'" />
+                }
+            </div>
+            <app-wall-label class="max-w-2xl mx-auto mt-10" [work]="work" appReveal [revealDelay]="220" />
+        </article>
+    }
+
+    <div class="plinth-rule my-16 sm:my-24" appReveal></div>
+
+    <div class="grid md:grid-cols-2 gap-x-10 lg:gap-x-20 gap-y-16 max-w-4xl mx-auto">
+        @for (work of studies(); track work.slug) {
+            <article class="study" [id]="'works-' + work.slug" appReveal [revealDelay]="$index * 120">
+                <app-framed-image class="study-frame" [image]="work.images[0]" variant="plain" sizes="(min-width: 768px) 14rem, 60vw" />
+                <app-wall-label class="mt-8" [work]="work" />
+            </article>
+        }
+    </div>
+</section>

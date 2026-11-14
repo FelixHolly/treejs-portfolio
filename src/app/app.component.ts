@@ -1,4 +1,5 @@
-import { Component } from "@angular/core";
+import { Component, inject } from "@angular/core";
+import { ViewportScroller } from "@angular/common";
 import { RouterOutlet } from "@angular/router";
 import { NotificationToastComponent } from "./components/notification-toast/notification-toast.component";
 import { TorchComponent } from "./components/torch/torch.component";
@@ -10,4 +11,9 @@ import { TorchComponent } from "./components/torch/torch.component";
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.scss",
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    // Router anchor scrolling ignores CSS scroll-margin; clear the 5.5rem fixed navbar.
+    inject(ViewportScroller).setOffset([0, 88]);
+  }
+}

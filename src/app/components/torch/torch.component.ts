@@ -2,7 +2,6 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   ViewChild,
 } from "@angular/core";
@@ -20,6 +19,7 @@ import {
   standalone: true,
   template: `<div class="torch" #glow aria-hidden="true"></div>`,
   styleUrls: ["./torch.component.scss"],
+  host: { "(document:mousemove)": "onMouseMove($event)" },
 })
 export class TorchComponent implements AfterViewInit, OnDestroy {
   @ViewChild("glow", { static: true })
@@ -37,7 +37,6 @@ export class TorchComponent implements AfterViewInit, OnDestroy {
       ? 1
       : 0.1;
 
-  @HostListener("document:mousemove", ["$event"])
   onMouseMove(event: MouseEvent): void {
     this.targetX = event.clientX;
     this.targetY = event.clientY;

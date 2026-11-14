@@ -1,0 +1,36 @@
+<a href="#main" class="skip-link">Skip to main content</a>
+<header class="fixed top-0 left-0 right-0 z-50 bg-graphite/90 backdrop-blur-sm border-b border-graphite-700/60">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center py-5 mx-auto c-space">
+      <a href="#home" class="font-display text-bone text-2xl tracking-wide hover:text-gold transition-colors">
+        Felix Hollndonner
+      </a>
+
+      <button
+        type="button"
+        (click)="isOpen.set(!isOpen())"
+        class="text-stone hover:text-bone lg:hidden flex w-11 h-11 items-center justify-center"
+        aria-controls="mobile-nav"
+        [attr.aria-label]="isOpen() ? 'Close navigation menu' : 'Open navigation menu'"
+        [attr.aria-expanded]="isOpen()">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          @if (isOpen()) {
+            <path d="M6 18 18 6M6 6l12 12" />
+          } @else {
+            <path d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+          }
+        </svg>
+      </button>
+
+      <nav class="lg:flex hidden" aria-label="Rooms">
+        <app-nav-items />
+      </nav>
+    </div>
+  </div>
+
+  <div id="mobile-nav" class="lg:hidden" [class.hidden]="!isOpen()">
+    <nav class="p-5" aria-label="Rooms">
+      <app-nav-items (linkClick)="isOpen.set(false)" />
+    </nav>
+  </div>
+</header>

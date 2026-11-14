@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { NavbarComponent } from "../../sections/navbar/navbar.component";
-import { HeroComponent } from "../../sections/hero/hero.component";
+import { EntranceComponent } from "../../features/catalogue/entrance/entrance.component";
 import { AboutComponent } from "../../sections/about/about.component";
 import { ProjectsComponent } from "../../sections/projects/projects.component";
 import { TestimonialsComponent } from "../../sections/testimonials/testimonials.component";
@@ -12,7 +12,7 @@ import { FooterComponent } from "../../sections/footer/footer.component";
   standalone: true,
   imports: [
     NavbarComponent,
-    HeroComponent,
+    EntranceComponent,
     AboutComponent,
     ProjectsComponent,
     TestimonialsComponent,

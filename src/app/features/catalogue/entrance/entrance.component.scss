@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.lion {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  /* Spotlight falloff so the statue recedes into shadow above Room I */
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 98%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 98%);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.lion--ready {
+  opacity: 1;
+}
+
+.intro-item {
+  animation: settle 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.intro-eyebrow { animation-delay: 0.05s; }
+.intro-name { animation-name: settle-name; animation-delay: 0.15s; }
+.intro-rule { animation-name: draw; animation-duration: 1.1s; animation-delay: 0.5s; }
+.intro-row { animation-delay: 0.7s; }
+
+@keyframes settle {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes settle-name {
+  from { opacity: 0; letter-spacing: 0.04em; }
+  to { opacity: 1; letter-spacing: 0; }
+}
+
+@keyframes draw {
+  from { opacity: 0; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-item { animation: none; }
+  .lion { transition: none; }
+}

@@ -115,12 +115,6 @@ select:focus-visible,
     @apply h-px w-16 bg-gold/70 mt-1;
   }
 
-  /* Exhibit frame: images mounted like pieces on a gallery wall,
-     graphite matting inside a hairline frame, caption plaque beneath. */
-  .exhibit-frame {
-    @apply bg-graphite border border-graphite-700 rounded-sm p-3;
-  }
-
   .exhibit-caption {
     @apply font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone text-center mt-3;
   }
@@ -147,36 +141,8 @@ select:focus-visible,
     @apply lg:absolute lg:left-1/2 lg:top-full lg:-translate-x-1/2 lg:mt-1 text-[0.6rem] tracking-[0.3em] text-gold/70 ml-2 lg:ml-0;
   }
 
-  .nav-sidebar {
-    @apply absolute left-0 right-0 bg-graphite-800 backdrop-blur-sm transition-all duration-300 ease-in-out overflow-hidden z-20 mx-auto sm:hidden block;
-  }
-
-  /* button component */
-  .btn {
-    @apply flex gap-4 items-center justify-center cursor-pointer p-3 rounded-md bg-graphite-800 border border-graphite-700 transition-all active:scale-95 text-bone hover:border-gold/50 mx-auto;
-  }
-
-  .btn-ping {
-    @apply animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75;
-  }
-
-  .btn-ping_dot {
-    @apply relative inline-flex rounded-full h-3 w-3 bg-gold;
-  }
-
-  /* about section */
   .grid-subtext {
     @apply text-stone text-base font-generalsans;
-  }
-
-  /* projects section  */
-  .arrow-btn {
-    @apply w-10 h-10 p-3 cursor-pointer active:scale-95 transition-all rounded-full border border-graphite-700 hover:border-gold arrow-gradient;
-  }
-
-  /* contact section */
-  .contact-container {
-    @apply max-w-xl relative z-10 sm:px-10 px-5 mt-24;
   }
 
   /* Letter fields: typed blanks on paper (underlines, not boxes) */
@@ -235,13 +201,4 @@ select:focus-visible,
   .reveal-init .plinth-rule {
     transform: none;
   }
-}
-
-.arrow-gradient {
-  background-image: linear-gradient(
-      to right,
-      rgba(199, 164, 74, 0.08) 0%,
-      rgba(27, 27, 31, 0.85) 55%,
-      rgba(27, 27, 31, 0.85) 100%
-  );
 }

@@ -1,6 +1,8 @@
 # Felix Hollndonner – 3D Portfolio Website
 
-Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**, and **Three.js**. Designed as a walk through a museum: Stone & Gold palette, gallery rooms with wall labels, a Viennese lion under museum lighting, and projects hung in a gilded frame.
+My portfolio, built with **Angular** and **Tailwind CSS** and designed as a museum: Stone & Gold palette, gallery rooms with wall labels, a Viennese lion at the entrance, and the works hung in gilded frames.
+
+The page you see today is the **catalogue**, a fast flat view of the collection. A guided walkable 3D gallery (Three.js) is planned on top of the same content; see `docs/superpowers/specs/2026-11-12-walkable-gallery-design.md`.
 
 [Live Site](https://felixhollndonner.com)
 
@@ -10,7 +12,7 @@ Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**,
 
 - Angular
 - Tailwind CSS
-- Three.js
+- Three.js (for the planned gallery view)
 - GitHub Pages (for deployment)
 
 ---
@@ -35,7 +37,7 @@ Welcome to my interactive 3D portfolio built with **Angular**, **Tailwind CSS**,
 
 4. **Build for production**:
    ```bash
-   npm run build -- --configuration production --base-href /treejs-portfolio/
+   npm run build -- --configuration production --base-href ./
    ```
 
 ---
@@ -52,25 +54,17 @@ Make sure your `angular.json` has:
 
 ---
 
-## 3D Assets & Attribution
+## Assets & Attribution
 
-This project includes the following 3D assets:
-
-- **Cyberpunk Phone**  
-  by [Zachey](https://sketchfab.com/3d-models/cyberpunk-phone-e854e1dd79ff47a488aea31a61a60bf1)  
-  Licensed under the [Sketchfab Standard License](https://sketchfab.com/licenses).  
-  **Note**: "NoAI" restriction applies.
-
-- **Löwe (Leopard Tank)**  
-  by [noe-3d.at](https://sketchfab.com/3d-models/lowe-3396c1f61742469ea956b1320d22eb95)  
-  Licensed under [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+- **Löwe (Vienna lion statue)** by [noe-3d.at](https://sketchfab.com/3d-models/lowe-3396c1f61742469ea956b1320d22eb95), licensed under [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/). The entrance image is rendered from this model.
+- **Boska** and **General Sans** by Indian Type Foundry, self-hosted under the [Fontshare free font licence](https://www.fontshare.com/licenses/itf-ffl).
+- **JetBrains Mono** by JetBrains, self-hosted under the [SIL Open Font License 1.1](https://github.com/JetBrains/JetBrainsMono/blob/master/OFL.txt).
 
 ---
 
 ## License
 
-This project is for **personal portfolio use**. All code is © Felix Hollndonner.  
-For reuse or questions, please [contact me](mailto:your@email.com).
+This project is for **personal portfolio use**. All code is © Felix Hollndonner.
 
 ---
 

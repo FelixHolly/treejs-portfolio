@@ -49,6 +49,10 @@ li + li {
 
 .room--long {
   width: 3.2rem;
+
+  @media (max-width: 480px) {
+    width: 2.4rem;
+  }
 }
 
 .room--current {

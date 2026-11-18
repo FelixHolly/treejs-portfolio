@@ -35,6 +35,8 @@ import { buildStops } from "./stops";
 /** Room the fixed header needs above a label that is taller than the screen. */
 const HEADER_CLEARANCE = 96;
 const CROSS_FADE_MS = 260;
+/** Breathing room kept between a piece and the label beside it, in pixels. */
+const SIDE_GUTTER = 24;
 /** Keys must not step the walk while the visitor is typing or operating a control. */
 const INTERACTIVE = "input, textarea, select, button, a, dialog, [contenteditable]";
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
@@ -87,6 +89,8 @@ export class GalleryComponent {
   private scene?: GalleryView;
   private fadeTarget = 0;
   private fadeTimer = 0;
+  /** Share of the screen width that a label beside the scene covers; 0 when labels sit over it. */
+  private labelShare = 0;
 
   constructor() {
     this.viewMode.active.set("gallery");
@@ -130,7 +134,7 @@ export class GalleryComponent {
     const onScroll = () => this.syncFromScroll();
     const onResize = () => {
       this.measure();
-      this.scene?.resize();
+      this.scene?.resize(this.labelShare);
       this.syncFromScroll();
     };
     const onKey = (event: KeyboardEvent) => this.onKey(event);
@@ -168,6 +172,7 @@ export class GalleryComponent {
               return;
             }
             this.scene = scene;
+            scene.resize(this.labelShare);
             scene.jumpTo(this.reducedMotion ? this.activeIndex() : this.progress);
           })
           .catch(() => {
@@ -209,10 +214,21 @@ export class GalleryComponent {
 
   private measure(): void {
     const scrollY = this.document.defaultView?.scrollY ?? 0;
-    this.spans = Array.from(this.main().nativeElement.querySelectorAll<HTMLElement>("[data-label]"), (label) => {
-      const box = label.getBoundingClientRect();
-      return { top: box.top + scrollY, bottom: box.bottom + scrollY };
+    const width = this.document.documentElement.clientWidth;
+    const height = this.document.defaultView?.innerHeight ?? 0;
+    const labels = Array.from(this.main().nativeElement.querySelectorAll<HTMLElement>("[data-label]"));
+    const boxes = labels.map((label) => label.getBoundingClientRect());
+    this.spans = boxes.map((box) => ({ top: box.top + scrollY, bottom: box.bottom + scrollY }));
+
+    // Scroll snapping rests where the keys and the floor plan land: centred, or under the header when too tall.
+    labels.forEach((label, index) => {
+      const spare = (height - boxes[index].height) / 2;
+      label.style.scrollMarginTop = index === 0 ? "0px" : `${Math.max(spare, HEADER_CLEARANCE)}px`;
     });
+
+    const side = boxes[1];
+    const beside = side && side.left > width * 0.3;
+    this.labelShare = beside ? (width - side.left + SIDE_GUTTER) / width : 0;
   }
 
   private syncFromScroll(): void {

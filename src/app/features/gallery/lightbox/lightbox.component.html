@@ -1,4 +1,4 @@
-<dialog #dialog class="lightbox" aria-labelledby="lightbox-title" (click)="closeFromBackdrop($event)" (close)="work.set(null)">
+<dialog #dialog class="lightbox" aria-labelledby="lightbox-title" (close)="work.set(null)">
   @if (work(); as current) {
     <div class="panel">
       <header>

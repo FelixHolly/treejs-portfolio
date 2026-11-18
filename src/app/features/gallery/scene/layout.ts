@@ -30,7 +30,9 @@ export interface PieceSlot {
   slug: string;
   frames: FrameSlot[];
   centre: { x: number; y: number };
-  /** How far back the camera stands to take the piece in. */
+  /** Width of the whole hanging, frames included. */
+  span: number;
+  /** The closest the camera stands to it. */
   distance: number;
 }
 
@@ -65,7 +67,8 @@ export function pieceSlots(works: readonly SceneWork[]): PieceSlot[] {
         slug: work.slug,
         frames,
         centre: { x: (left + right) / 2, y: COMMISSION.y },
-        distance: companions.length ? 6.3 : 4.4,
+        span: right - left,
+        distance: 4.4,
       };
     }
 
@@ -76,6 +79,7 @@ export function pieceSlots(works: readonly SceneWork[]): PieceSlot[] {
       slug: work.slug,
       frames: [{ x, y: STUDY.y, width, height, gilded: false, src: image.src }],
       centre: { x, y: STUDY.y },
+      span: width + 0.3,
       distance: 3.3,
     };
   });

@@ -100,7 +100,7 @@ export class GalleryScene implements GalleryView {
       () => this.raiseLights(),
     );
 
-    this.resize();
+    this.resize(0);
   }
 
   setProgress(progress: number): void {
@@ -122,13 +122,16 @@ export class GalleryScene implements GalleryView {
     this.invalidate();
   }
 
-  resize(): void {
+  resize(labelShare: number): void {
     const width = this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    this.path = new CameraPath(buildPoses(this.slots, this.camera.aspect), buildWaypoints(this.slots.length));
+    this.path = new CameraPath(
+      buildPoses(this.slots, { aspect: this.camera.aspect, labelShare }),
+      buildWaypoints(this.slots.length),
+    );
     this.invalidate();
   }
 
@@ -223,7 +226,7 @@ export class GalleryScene implements GalleryView {
   }
 
   private furnish(): void {
-    const poses = buildPoses(this.slots, 1.6);
+    const poses = buildPoses(this.slots, { aspect: 1.6, labelShare: 0.38 });
     const visitorsBook = poses[poses.length - 2].position;
     const correspondence = poses[poses.length - 1].position;
 

@@ -21,7 +21,8 @@ export interface GalleryView {
   jumpTo(progress: number): void;
   /** Mouse position in -1..1 on both axes, for the look-around offset. */
   setPointer(x: number, y: number): void;
-  resize(): void;
+  /** Call when the canvas changes size; `labelShare` is the part of its width a side label covers (0 to 1). */
+  resize(labelShare: number): void;
   setPaused(paused: boolean): void;
   dispose(): void;
 }

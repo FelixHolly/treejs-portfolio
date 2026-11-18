@@ -1,10 +1,10 @@
-import { Box3, Group, Mesh, Vector3 } from "three";
+import { Box3, Group, Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { ROTUNDA } from "./layout";
+import { LION_YAW, ROTUNDA } from "./layout";
 
-/** Turns the statue to meet the visitor arriving at the entrance. */
-const LION_YAW = Math.PI * 0.86;
+/** Multiplied into the scan's colours: warms the pale stone and leaves headroom for the key light. */
+const STONE_TINT = 0xcbb893;
 
 /** Loads the Viennese lion onto its plinth. Returns a function that cancels the load and frees the decoder. */
 export function loadLion(
@@ -28,16 +28,18 @@ export function loadLion(
       const centre = bounds.getCenter(new Vector3());
       model.position.set(-centre.x, -bounds.min.y, -centre.z);
       model.traverse((child) => {
-        if ((child as Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
+        const mesh = child as Mesh<never, MeshStandardMaterial>;
+        if (!mesh.isMesh) return;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.material.color.set(STONE_TINT);
+        if (mesh.material.map) mesh.material.map.anisotropy = 8;
       });
 
       const lion = new Group();
       lion.add(model);
       lion.scale.setScalar(ROTUNDA.lionHeight / size.y);
-      lion.position.y = ROTUNDA.plinthHeight;
+      lion.position.set(ROTUNDA.x, ROTUNDA.plinthHeight, 0);
       lion.rotation.y = LION_YAW;
       onReady(lion);
     },

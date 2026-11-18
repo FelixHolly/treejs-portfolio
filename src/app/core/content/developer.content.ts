@@ -8,4 +8,11 @@ export const DEVELOPER = {
   viennaLine:
     "The lion at the entrance is a Viennese Löwe. My first teams and clients were in Austria and Switzerland.",
   frieze: ["Angular", "TypeScript", "Java", "Spring Boot", "Tailwind", "NgRx", "Docker"],
+  /** The layers of an application as the storeys of Room I's section drawing, from the roof down. */
+  anatomy: [
+    { caption: "What the visitor sees", tools: ["Angular", "TypeScript", "NgRx", "Tailwind"] },
+    { caption: "Where the work is done", tools: ["Java", "Spring Boot"] },
+    { caption: "Where it is kept", tools: ["PostgreSQL"] },
+    { caption: "What it stands on", tools: ["Docker"] },
+  ],
 } as const;

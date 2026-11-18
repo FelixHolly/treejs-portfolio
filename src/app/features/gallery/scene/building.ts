@@ -10,9 +10,20 @@ import {
   MeshLambertMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
-  TorusGeometry,
+  RingGeometry,
 } from "three";
-import { BENCH, DOOR, DOOR_XS, END_WALL_X, ENFILADE, HALF_DEPTH, ROTUNDA, WALL_HEIGHT, WALL_THICKNESS } from "./layout";
+import {
+  BENCH,
+  DOOR,
+  DOOR_XS,
+  END_WALL_X,
+  ENFILADE,
+  HALF_DEPTH,
+  PEDESTAL_RADIUS,
+  ROTUNDA,
+  WALL_HEIGHT,
+  WALL_THICKNESS,
+} from "./layout";
 
 export interface Palette {
   wall: Material;
@@ -23,7 +34,7 @@ export interface Palette {
   bone: Material;
   dark: Material;
   wood: Material;
-  stone: Material;
+  pedestal: Material;
 }
 
 export function createPalette(): Palette {
@@ -37,7 +48,7 @@ export function createPalette(): Palette {
     bone: new MeshLambertMaterial({ color: 0xe8e5de }),
     dark: new MeshLambertMaterial({ color: 0x1c1a19 }),
     wood: new MeshLambertMaterial({ color: 0x5a4030 }),
-    stone: new MeshLambertMaterial({ color: 0x6a675f }),
+    pedestal: new MeshStandardMaterial({ color: 0x33312e, roughness: 0.6, metalness: 0 }),
   };
 }
 
@@ -55,9 +66,30 @@ export function slab(
   return mesh;
 }
 
+/** A stepped drum of dark stone with one gold line let into it; round, so the statue can stand turned on it. */
+function pedestal(palette: Palette): Group {
+  const group = new Group();
+  const top = ROTUNDA.plinthHeight;
+  const drum = (radius: number, height: number, y: number, material: Material) => {
+    const mesh = new Mesh(new CylinderGeometry(radius, radius, height, 64), material);
+    mesh.position.y = y;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+  };
+
+  group.add(
+    drum(PEDESTAL_RADIUS + 0.2, 0.18, 0.09, palette.pedestal),
+    drum(PEDESTAL_RADIUS, top - 0.26, 0.18 + (top - 0.26) / 2, palette.pedestal),
+    drum(PEDESTAL_RADIUS + 0.1, 0.08, top - 0.04, palette.pedestal),
+    drum(PEDESTAL_RADIUS + 0.006, 0.014, top - 0.2, palette.gold),
+  );
+  return group;
+}
+
 function rotunda(palette: Palette): Group {
   const group = new Group();
-  const { radius, height, plinthHeight } = ROTUNDA;
+  const { radius, height } = ROTUNDA;
   // CylinderGeometry starts its sweep at +Z; the door to Room I faces +X, a quarter turn on.
   const gap = Math.asin(DOOR.width / 2 / radius);
 
@@ -78,20 +110,16 @@ function rotunda(palette: Palette): Group {
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.y = height;
 
-  const cornice = new Mesh(new TorusGeometry(radius - 0.03, 0.025, 8, 96), palette.gold);
-  cornice.rotation.x = Math.PI / 2;
-  cornice.position.y = 4.9;
+  const floor = new Mesh(new CircleGeometry(radius, 72), palette.floor);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
 
-  const plinth = new Mesh(new CylinderGeometry(1.2, 1.32, plinthHeight, 48), palette.stone);
-  plinth.position.y = plinthHeight / 2;
-  plinth.castShadow = true;
-  plinth.receiveShadow = true;
+  const inlay = new Mesh(new RingGeometry(3.3, 3.34, 96), palette.gold);
+  inlay.rotation.x = -Math.PI / 2;
+  inlay.position.y = 0.004;
 
-  const band = new Mesh(new TorusGeometry(1.215, 0.015, 8, 64), palette.gold);
-  band.rotation.x = Math.PI / 2;
-  band.position.y = plinthHeight - 0.06;
-
-  group.add(wall, lintel, ceiling, cornice, plinth, band);
+  group.position.x = ROTUNDA.x;
+  group.add(wall, lintel, ceiling, floor, inlay, pedestal(palette));
   return group;
 }
 
@@ -124,9 +152,11 @@ export function buildArchitecture(palette: Palette): Group {
   const length = ENFILADE.to - ENFILADE.from;
   const midX = (ENFILADE.from + ENFILADE.to) / 2;
 
-  const floor = new Mesh(new PlaneGeometry(68, 12), palette.floor);
+  // Starts in the doorway's depth and a hair above the hall's own floor, so the two never flicker where they meet
+  const floorFrom = ENFILADE.from - 0.15;
+  const floor = new Mesh(new PlaneGeometry(END_WALL_X - floorFrom, HALF_DEPTH * 2 + 0.4), palette.floor);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(26, 0, 0);
+  floor.position.set((floorFrom + END_WALL_X) / 2, 0.001, 0);
   floor.receiveShadow = true;
 
   const ceiling = new Mesh(new PlaneGeometry(length, HALF_DEPTH * 2 + 0.4), palette.ceiling);

@@ -1,48 +1,74 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from "three";
-import { DESK, DOOR_XS, EYE, FOV, HANG_Z, LECTERN, MEDALLION, PieceSlot } from "./layout";
+import { PageFraming } from "./gallery-view";
+import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, PLATE, ROTUNDA } from "./layout";
 
 export interface Pose {
   position: Vector3;
   target: Vector3;
 }
 
-/** How the page frames the scene: its proportions and the share of its width a side label covers. */
-export interface Framing {
+/** How the page frames the scene: its proportions and where its text lies. */
+export interface Framing extends PageFraming {
   aspect: number;
-  /** 0 when labels sit over the scene instead of beside it. */
-  labelShare: number;
 }
 
-const TAN_HALF_FOV = Math.tan(MathUtils.degToRad(FOV / 2));
-const LOOK_AHEAD = 6;
+/** How far down the route the walking visitor looks, in metres. */
+const LOOK_AHEAD = 4;
 /** A piece fills at most this much of the width left free beside the label. */
 const FILL = 0.84;
 const FARTHEST = 6.9;
+/** Length samples taken between neighbouring points of the route. */
+const SAMPLES_PER_POINT = 24;
 const OVERVIEW = { x: 16.6, z: 3 } as const;
+/** The statue as the arriving visitor meets it: its width, how far its head and front paws stand out towards them, and how near they may come. */
+const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.8 } as const;
+
+/** Half the height of what the camera sees one metre away. */
+function lens(aspect: number): number {
+  return Math.tan(MathUtils.degToRad(fieldOfView(aspect) / 2));
+}
 
 function halfWidth(distance: number, aspect: number): number {
-  return distance * TAN_HALF_FOV * aspect;
+  return distance * lens(aspect) * aspect;
 }
 
 /** Stands square to the hanging wall, far enough back to fit the piece into the space beside the label. */
 function wallPose(x: number, y: number, span: number, nearest: number, framing: Framing): Pose {
-  const toFit = span / (FILL * (1 - framing.labelShare) * 2 * TAN_HALF_FOV * framing.aspect);
+  const toFit = span / (FILL * (1 - framing.labelShare) * 2 * lens(framing.aspect) * framing.aspect);
   const back = MathUtils.clamp(toFit, nearest, FARTHEST);
   const shift = framing.labelShare * halfWidth(back, framing.aspect);
   return { position: new Vector3(x + shift, EYE, HANG_Z + back), target: new Vector3(x + shift, y, HANG_Z) };
 }
 
-/** Looks at a free-standing object from a given spot; `offset` moves it left (+) or right (-) by a share of the half width. */
-function objectPose(from: Vector3, object: Vector3, offset: number, framing: Framing, maxBack: number): Pose {
-  const forward = new Vector3(object.x - from.x, 0, object.z - from.z);
-  const distance = forward.length();
-  forward.normalize();
-  const back = Math.min(distance * Math.max(1, 1.45 / framing.aspect), distance * maxBack);
-  const right = new Vector3(-forward.z, 0, forward.x);
+/** Faces the statue down the hall's axis, from where it fills the band the entrance text leaves free. */
+function statuePose(framing: Framing): Pose {
+  const [top, bottom] = framing.statueBand;
+  const tan = lens(framing.aspect);
+  const crown = ROTUNDA.plinthHeight + ROTUNDA.lionHeight - EYE;
+  const feet = ROTUNDA.plinthHeight - EYE;
+
+  // From `back` metres away: the tilt that puts the statue's crown at the top of the band, and where its feet then fall
+  const tiltFrom = (back: number) => Math.atan(crown / (back - STATUE.head)) - Math.atan((1 - 2 * top) * tan);
+  const feetFrom = (back: number) => (1 - Math.tan(Math.atan(feet / (back - STATUE.paws)) - tiltFrom(back)) / tan) / 2;
+
+  const farthest = ROTUNDA.radius - STATUE.wallGap;
+  const nearest = Math.min(Math.max(STATUE.nearest, STATUE.width / (FILL * 2 * tan * framing.aspect)), farthest);
+  let back = nearest;
+  // Step back until the feet clear the bottom of the band. Where the hall is too small for that, the
+  // head still stays under the name and the feet run on behind the plaques.
+  if (feetFrom(nearest) > bottom) {
+    let tooClose = nearest;
+    back = farthest;
+    for (let step = 0; step < 16; step++) {
+      const between = (tooClose + back) / 2;
+      if (feetFrom(between) > bottom) tooClose = between;
+      else back = between;
+    }
+  }
 
   return {
-    position: new Vector3(object.x - forward.x * back, from.y, object.z - forward.z * back),
-    target: object.clone().addScaledVector(right, offset * halfWidth(back, framing.aspect)),
+    position: new Vector3(ROTUNDA.x - back, EYE, 0),
+    target: new Vector3(ROTUNDA.x, EYE + back * Math.tan(tiltFrom(back)), 0),
   };
 }
 
@@ -50,7 +76,7 @@ function objectPose(from: Vector3, object: Vector3, offset: number, framing: Fra
 function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
   const depth = OVERVIEW.z - HANG_Z;
   const bearing = (x: number) => Math.atan((x - OVERVIEW.x) / depth);
-  const offCentre = (share: number) => Math.atan(share * framing.aspect * TAN_HALF_FOV);
+  const offCentre = (share: number) => Math.atan(share * framing.aspect * lens(framing.aspect));
 
   const first = slots[0];
   const last = slots[slots.length - 1];
@@ -70,11 +96,9 @@ function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
 
 /** One camera pose per stop: entrance, developer, works overview, each work, visitors' book, correspondence. */
 export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[] {
-  const wide = framing.aspect >= 1.2;
-
   return [
-    objectPose(new Vector3(-4.2, 1.7, -0.7), new Vector3(0, wide ? 2.3 : 3, 0), wide ? -0.42 : 0, framing, 1.1),
-    wallPose(MEDALLION.x, 1.95, MEDALLION.radius * 2 + 0.6, 3.4, framing),
+    statuePose(framing),
+    wallPose(PLATE.x, PLATE.y - 0.15, PLATE.width + 0.75, 3.4, framing),
     overviewPose(slots, framing),
     ...slots.map((slot) => wallPose(slot.centre.x, slot.centre.y, slot.span, slot.distance, framing)),
     wallPose(LECTERN.x, 1.3, 3, 4.2, framing),
@@ -87,7 +111,15 @@ export function buildWaypoints(workCount: number): Vector3[][] {
   const door = (index: number) => new Vector3(DOOR_XS[index], EYE, 0);
   const waypoints: Vector3[][] = Array.from({ length: workCount + 5 }, () => []);
 
-  waypoints[0] = [new Vector3(0.3, EYE, -2.8), new Vector3(3.7, EYE, -0.9), door(0)];
+  // Round the statue on the side it faces, then squared up to the doorway before stepping through
+  waypoints[0] = [
+    new Vector3(ROTUNDA.x - 3.4, EYE, -1.9),
+    new Vector3(ROTUNDA.x + 0.1, EYE, -3.1),
+    new Vector3(ROTUNDA.x + 3.2, EYE, -1.7),
+    new Vector3(DOOR_XS[0] - 2.7, EYE, -0.3),
+    new Vector3(DOOR_XS[0] - 1.2, EYE, 0),
+    door(0),
+  ];
   waypoints[1] = [door(1)];
   waypoints[workCount + 2] = [door(2)];
   waypoints[workCount + 3] = [door(3)];
@@ -96,9 +128,9 @@ export function buildWaypoints(workCount: number): Vector3[][] {
 
 export class CameraPath {
   private readonly curve: CatmullRomCurve3;
-  private readonly stopPoints: number[] = [];
-  private readonly lastPoint: number;
-  private readonly tangent = new Vector3();
+  /** How far along the route each stop lies, in metres; between stops the visitor walks at an even pace. */
+  private readonly stopLengths: number[];
+  private readonly length: number;
   private readonly ahead = new Vector3();
 
   constructor(
@@ -106,12 +138,17 @@ export class CameraPath {
     waypoints: readonly Vector3[][],
   ) {
     const points: Vector3[] = [];
+    const stopPoints: number[] = [];
     poses.forEach((pose, index) => {
-      this.stopPoints.push(points.length);
+      stopPoints.push(points.length);
       points.push(pose.position, ...(waypoints[index] ?? []));
     });
     this.curve = new CatmullRomCurve3(points, false, "centripetal");
-    this.lastPoint = points.length - 1;
+    // A whole number of samples per point, so every stop falls exactly on one
+    this.curve.arcLengthDivisions = Math.max(points.length - 1, 1) * SAMPLES_PER_POINT;
+    const lengths = this.curve.getLengths();
+    this.length = lengths[lengths.length - 1];
+    this.stopLengths = stopPoints.map((point) => lengths[point * SAMPLES_PER_POINT]);
   }
 
   /** Writes the camera pose at `progress` stops along the route into `out`. */
@@ -122,19 +159,19 @@ export class CameraPath {
     const to = Math.min(from + 1, last);
     const fraction = clamped - from;
 
-    const point = MathUtils.lerp(this.stopPoints[from], this.stopPoints[to], fraction);
-    const t = this.lastPoint === 0 ? 0 : point / this.lastPoint;
-    this.curve.getPoint(t, out.position);
+    const walked = MathUtils.lerp(this.stopLengths[from], this.stopLengths[to], fraction);
+    this.curve.getPointAt(this.length > 0 ? walked / this.length : 0, out.position);
     out.target.lerpVectors(this.poses[from].target, this.poses[to].target, MathUtils.smoothstep(fraction, 0, 1));
 
     // Mid-stride the visitor looks where they are going; short hops along one wall keep facing it.
     const stride = this.poses[from].position.distanceTo(this.poses[to].position);
     const forward = Math.sin(Math.PI * fraction) * 0.8 * Math.min(1, stride / 8);
-    if (forward > 0) {
-      this.curve.getTangent(t, this.tangent);
-      this.ahead.copy(out.position).addScaledVector(this.tangent, LOOK_AHEAD);
+    if (forward > 0 && this.length > 0) {
+      // Looking at a point further down the route turns the head into a bend before the feet follow,
+      // so a doorway is faced squarely on the way in.
+      this.curve.getPointAt(Math.min((walked + LOOK_AHEAD) / this.length, 1), this.ahead);
       this.ahead.y = out.position.y - 0.05;
-      out.target.lerp(this.ahead, forward);
+      if (this.ahead.distanceToSquared(out.position) > 1) out.target.lerp(this.ahead, forward);
     }
   }
 }

@@ -1,5 +1,20 @@
 import { SceneWork } from "./gallery-view";
-import { ENFILADE, pieceSlots } from "./layout";
+import {
+  DESK,
+  DOOR,
+  DOOR_XS,
+  ENFILADE,
+  fieldOfView,
+  HALF_DEPTH,
+  LETTERBOX,
+  MEDALLION,
+  PEDESTAL_RADIUS,
+  pieceSlots,
+  PLATE,
+  ROOM_ONE_X,
+  ROTUNDA,
+  WALL_HEIGHT,
+} from "./layout";
 
 const landscape = (src: string) => ({ src, portrait: false });
 const portrait = (src: string) => ({ src, portrait: true });
@@ -61,5 +76,63 @@ describe("pieceSlots", () => {
 
   it("returns nothing for an empty collection", () => {
     expect(pieceSlots([])).toEqual([]);
+  });
+});
+
+describe("fieldOfView", () => {
+  it("is the same lens on every screen that is wider than tall", () => {
+    expect(fieldOfView(1)).toBe(50);
+    expect(fieldOfView(16 / 9)).toBe(50);
+    expect(fieldOfView(3.5)).toBe(50);
+  });
+
+  it("widens on an upright screen, most on a phone", () => {
+    const tablet = fieldOfView(768 / 1024);
+    const phone = fieldOfView(390 / 664);
+
+    expect(tablet).toBeGreaterThan(50);
+    expect(phone).toBeGreaterThan(tablet);
+    expect(fieldOfView(0.5)).toBe(66);
+  });
+
+  it("stays between its two lenses however odd the screen", () => {
+    for (const aspect of [0, 0.01, 0.2, 0.55, 0.99, 1.01, 50, Infinity]) {
+      expect(fieldOfView(aspect)).withContext(`aspect ${aspect}`).toBeGreaterThanOrEqual(50);
+      expect(fieldOfView(aspect)).withContext(`aspect ${aspect}`).toBeLessThanOrEqual(66);
+    }
+  });
+});
+
+describe("the building", () => {
+  it("joins the hall's east wall to the first room", () => {
+    expect(ROTUNDA.x + ROTUNDA.radius).toBe(ENFILADE.from);
+    expect(DOOR_XS[0]).toBeGreaterThan(ENFILADE.from);
+    expect(DOOR_XS[0] - ENFILADE.from).toBeLessThan(0.5);
+  });
+
+  it("leaves room to walk round the statue's drum", () => {
+    expect(ROTUNDA.radius - PEDESTAL_RADIUS).toBeGreaterThan(4);
+    expect(ROTUNDA.height).toBeGreaterThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 2);
+  });
+
+  it("hangs Room I's drawing between its two doors, under the ceiling", () => {
+    expect(PLATE.x - PLATE.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
+    expect(PLATE.x + PLATE.width / 2).toBeLessThan(DOOR_XS[1] - 1);
+    expect(PLATE.y + PLATE.height / 2).toBeLessThan(WALL_HEIGHT - 1);
+    expect(ROOM_ONE_X).toBeCloseTo((DOOR_XS[0] + DOOR_XS[1]) / 2, 6);
+  });
+
+  it("hangs the seal on the wall beside the door to Room II, clear of the door and the corner", () => {
+    expect(MEDALLION.x).toBeLessThan(DOOR_XS[1]);
+    expect(DOOR_XS[1] - MEDALLION.x).toBeLessThan(0.5);
+    expect(MEDALLION.z + MEDALLION.radius).toBeLessThan(-DOOR.width / 2 - 0.2);
+    expect(MEDALLION.z - MEDALLION.radius).toBeGreaterThan(-HALF_DEPTH);
+  });
+
+  it("mounts the letterbox on the wall over the writing desk, its slot within the box", () => {
+    expect(LETTERBOX.x).toBe(DESK.x);
+    expect(LETTERBOX.y - LETTERBOX.height / 2).toBeGreaterThan(1.3);
+    expect(LETTERBOX.y + LETTERBOX.height / 2).toBeLessThan(2.6);
+    expect(LETTERBOX.slotRise).toBeLessThan(LETTERBOX.height / 2);
   });
 });

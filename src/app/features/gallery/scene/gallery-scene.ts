@@ -21,14 +21,31 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
-import { FramedPicture, framedPicture, lectern, medallion, writingDesk } from "./exhibits";
-import { GalleryView, GalleryViewOptions } from "./gallery-view";
-import { DESK, DOOR, DOOR_XS, FOV, HALF_DEPTH, HANG_Z, LECTERN, MEDALLION, pieceSlots, PieceSlot, ROTUNDA } from "./layout";
+import { FramedPicture, framedPicture, lectern, letterbox, medallion, nameBoard, writingDesk } from "./exhibits";
+import { GalleryView, GalleryViewOptions, OPEN_BAND, PageFraming } from "./gallery-view";
+import {
+  DOOR,
+  DOOR_XS,
+  fieldOfView,
+  HALF_DEPTH,
+  HANG_Z,
+  LECTERN,
+  LETTERBOX,
+  MEDALLION,
+  pieceSlots,
+  PieceSlot,
+  PLATE,
+  ROOM_ONE_X,
+  ROTUNDA,
+} from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
-import { coverFit, inscriptionTexture } from "./textures";
+import { sectionPlateTexture } from "./plate";
+import { Post } from "./post";
+import { coverFit, inscriptionTexture, nameBoardTexture } from "./textures";
 
 const BACKGROUND = 0x141417;
 const MAX_PIXEL_RATIO = 2;
@@ -39,22 +56,27 @@ const INTRO_MS = 2200;
 const EMPTY_PLINTH_LEVEL = 0.3;
 const SLOW = { frames: 60, fps: 30 } as const;
 const ROOM_INSCRIPTIONS = ["Room I", "Room II", "Room III", "Room IV"] as const;
+/** The board of names above the visitors' book: its width, and the height each name adds. */
+const NAME_BOARD = { width: 2.3, line: 0.31, margin: 0.17, bottom: 1.6 } as const;
 
 export class GalleryScene implements GalleryView {
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(FOV, 1, 0.1, 80);
+  private readonly camera = new PerspectiveCamera(fieldOfView(1), 1, 0.1, 80);
   private readonly palette: Palette = createPalette();
   private readonly plainFrame = new MeshLambertMaterial({ color: 0x2c2c33 });
   private readonly slots: PieceSlot[];
   private readonly pictures: FramedPicture[] = [];
+  private readonly plate: FramedPicture;
   private readonly lights: GalleryLights;
+  private readonly atmosphere = new RotundaAtmosphere();
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
   private readonly pointer = new Vector2();
   private readonly look = new Vector2();
   private readonly cancelLion: () => void;
 
   private path!: CameraPath;
+  private mail!: Post;
   private progress = 0;
   private target = 0;
   private lionLevel: number;
@@ -87,9 +109,10 @@ export class GalleryScene implements GalleryView {
 
     this.slots = pieceSlots(options.works);
     this.lights = new GalleryLights(this.slots);
+    this.plate = framedPicture({ ...PLATE, gilded: true, src: "" }, this.palette, this.plainFrame);
     this.lionLevel = EMPTY_PLINTH_LEVEL;
 
-    this.scene.add(buildArchitecture(this.palette), ...this.lights.objects);
+    this.scene.add(buildArchitecture(this.palette), ...this.lights.objects, ...this.atmosphere.objects);
     this.furnish();
     void this.inscribe();
 
@@ -99,7 +122,7 @@ export class GalleryScene implements GalleryView {
       () => this.raiseLights(),
     );
 
-    this.resize(0);
+    this.resize({ labelShare: 0, statueBand: OPEN_BAND });
     // Shaders compile in the background; a blocking first render would freeze the page for most of a second.
     this.renderer.compileAsync(this.scene, this.camera).finally(() => {
       this.compiled = true;
@@ -126,16 +149,22 @@ export class GalleryScene implements GalleryView {
     this.invalidate();
   }
 
-  resize(labelShare: number): void {
+  resize(framing: PageFraming): void {
     const width = this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
+    this.camera.fov = fieldOfView(this.camera.aspect);
     this.camera.updateProjectionMatrix();
     this.path = new CameraPath(
-      buildPoses(this.slots, { aspect: this.camera.aspect, labelShare }),
+      buildPoses(this.slots, { aspect: this.camera.aspect, ...framing }),
       buildWaypoints(this.slots.length),
     );
+    this.invalidate();
+  }
+
+  post(): void {
+    this.mail.send(performance.now(), this.options.reducedMotion);
     this.invalidate();
   }
 
@@ -189,6 +218,7 @@ export class GalleryScene implements GalleryView {
     if (looking) this.look.lerp(this.pointer, 1 - Math.exp(-seconds * LOOK.ease));
 
     const rising = this.advanceIntro(now);
+    const posting = this.mail.update(now);
 
     this.path.sample(this.progress, this.pose);
     this.camera.position.copy(this.pose.position);
@@ -196,9 +226,10 @@ export class GalleryScene implements GalleryView {
     this.camera.rotateY(-this.look.x * LOOK.yaw);
     this.camera.rotateX(-this.look.y * LOOK.pitch);
     this.lights.update(this.progress, this.lionLevel);
+    this.atmosphere.update(this.progress, this.lionLevel);
     this.renderer.render(this.scene, this.camera);
 
-    this.running = gliding || looking || rising;
+    this.running = gliding || looking || rising || posting;
     this.measure(seconds);
     if (this.running) this.invalidate();
   };
@@ -242,11 +273,20 @@ export class GalleryScene implements GalleryView {
   }
 
   private furnish(): void {
-    const poses = buildPoses(this.slots, { aspect: 1.6, labelShare: 0.38 });
+    const poses = buildPoses(this.slots, { aspect: 1.6, labelShare: 0.38, statueBand: OPEN_BAND });
     const visitorsBook = poses[poses.length - 2].position;
     const correspondence = poses[poses.length - 1].position;
 
-    this.scene.add(medallion(this.palette), lectern(this.palette, visitorsBook), writingDesk(this.palette, correspondence));
+    const desk = writingDesk(this.palette, correspondence);
+    this.mail = new Post(this.palette, desk);
+    this.scene.add(
+      medallion(this.palette),
+      this.plate.group,
+      lectern(this.palette, visitorsBook),
+      desk,
+      letterbox(this.palette),
+      this.mail.envelope,
+    );
 
     for (const slot of this.slots) {
       for (const frame of slot.frames) {
@@ -284,7 +324,11 @@ export class GalleryScene implements GalleryView {
   /** Wall lettering uses the page's fonts, so it waits for them. */
   private async inscribe(): Promise<void> {
     try {
-      await Promise.all([document.fonts.load('500 160px "Boska"'), document.fonts.load('400 40px "JetBrains Mono"')]);
+      await Promise.all([
+        document.fonts.load('500 160px "Boska"'),
+        document.fonts.load('italic 400 60px "Boska"'),
+        document.fonts.load('400 40px "JetBrains Mono"'),
+      ]);
     } catch {
       // Lettering falls back to the system serif and monospace.
     }
@@ -294,12 +338,13 @@ export class GalleryScene implements GalleryView {
       new MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false });
 
     const monogram = new Mesh(
-      new PlaneGeometry(1.05, 0.62),
+      new PlaneGeometry(0.92, 0.54),
       lettering(
         inscriptionTexture({ text: "FH", font: '500 250px "Boska", Georgia, serif', color: "#e8e5de", width: 560, height: 330, spacing: "0.12em" }),
       ),
     );
-    monogram.position.set(MEDALLION.x + 0.03, MEDALLION.y, HANG_Z + 0.04);
+    monogram.position.set(MEDALLION.x - 0.04, MEDALLION.y, MEDALLION.z - 0.03);
+    monogram.rotation.y = -Math.PI / 2;
     this.scene.add(monogram);
 
     const friezeText = this.options.frieze.join("  ·  ").toUpperCase();
@@ -308,23 +353,30 @@ export class GalleryScene implements GalleryView {
     );
     for (const side of [-1, 1]) {
       const frieze = new Mesh(new PlaneGeometry(9.2, 0.3), friezeLettering);
-      frieze.position.set(MEDALLION.x, 4.12, side * (HALF_DEPTH - 0.02));
+      frieze.position.set(ROOM_ONE_X, 4.12, side * (HALF_DEPTH - 0.02));
       if (side === 1) frieze.rotation.y = Math.PI;
       this.scene.add(frieze);
     }
 
-    const wallLine = (text: string, x: number, y: number, width: number) => {
-      const line = new Mesh(
-        new PlaneGeometry(width, width * 0.085),
-        lettering(
-          inscriptionTexture({ text: text.toUpperCase(), font: '500 96px "Boska", Georgia, serif', color: "#c7a44a", width: 2048, height: 174, spacing: "0.22em" }),
-        ),
-      );
-      line.position.set(x, y, HANG_Z + 0.02);
-      this.scene.add(line);
-    };
-    this.options.visitors.forEach((name, index) => wallLine(name, LECTERN.x, 2.85 - index * 0.42, 3));
-    wallLine("Correspondence", DESK.x, 2.7, 3.4);
+    const engraved = new Mesh(
+      new PlaneGeometry(0.46, 0.1),
+      lettering(
+        inscriptionTexture({ text: "LETTERS", font: '500 120px "Boska", Georgia, serif', color: "#2a2114", width: 1024, height: 220, spacing: "0.3em" }),
+      ),
+    );
+    engraved.position.set(LETTERBOX.x, LETTERBOX.y + 0.02, HANG_Z + LETTERBOX.depth + 0.004);
+    this.scene.add(engraved);
+
+    this.plate.picture.material.map = sectionPlateTexture(this.options.anatomy);
+    this.plate.picture.material.color.set(0xffffff);
+    this.plate.picture.material.needsUpdate = true;
+
+    const names = this.options.visitors;
+    if (names.length) {
+      const height = NAME_BOARD.margin * 2 + NAME_BOARD.line * names.length;
+      const lettered = nameBoardTexture(names, NAME_BOARD.width / height);
+      this.scene.add(nameBoard(LECTERN.x, NAME_BOARD.bottom + height / 2, NAME_BOARD.width, height, lettered, this.palette));
+    }
 
     ROOM_INSCRIPTIONS.forEach((text, index) => {
       const texture = inscriptionTexture({
@@ -348,7 +400,7 @@ export class GalleryScene implements GalleryView {
           new CylinderGeometry(ROTUNDA.radius - 0.03, ROTUNDA.radius - 0.03, 0.216, 24, 1, true, Math.PI / 2 - arc, arc * 2),
           material,
         );
-        band.position.y = y;
+        band.position.set(ROTUNDA.x, y, 0);
         this.scene.add(band);
         return;
       }

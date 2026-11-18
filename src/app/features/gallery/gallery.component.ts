@@ -29,18 +29,28 @@ import { WallLabelComponent } from "../../shared/wall-label/wall-label.component
 import { FloorPlanComponent } from "./floor-plan/floor-plan.component";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { LightboxComponent } from "./lightbox/lightbox.component";
-import { GalleryView } from "./scene/gallery-view";
+import { GalleryView, OPEN_BAND, PageFraming } from "./scene/gallery-view";
 import { labelShareOf, LabelSpan, neighbourStop, progressFromScroll, scrollTargetFor } from "./scroll-progress";
 import { buildStops } from "./stops";
 
 /** Room the fixed header needs above a label that is taller than the screen. */
 const HEADER_CLEARANCE = 84;
 const CROSS_FADE_MS = 260;
+/** How far along the first stride the entrance's own text gives way to the walk. */
+const SET_OFF = 0.08;
+/** Air kept between the statue and the entrance text above and below it, in pixels. */
+const STATUE_CLEARANCE = { above: 22, below: 8 } as const;
+/** How far either side of the screen's middle the statue reaches, as a share of the screen's height. */
+const STATUE_HALF_WIDTH = 0.2;
 /** Breathing room kept between a piece and the label beside it, in pixels. */
 const SIDE_GUTTER = 24;
 /** Keys must not step the walk while the visitor is typing or operating a control. */
 const INTERACTIVE = "input, textarea, select, button, a, dialog, [contenteditable]";
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
+
+function sameFraming(a: PageFraming, b: PageFraming): boolean {
+  return a.labelShare === b.labelShare && a.statueBand[0] === b.statueBand[0] && a.statueBand[1] === b.statueBand[1];
+}
 
 @Component({
   selector: "app-gallery",
@@ -79,6 +89,8 @@ export class GalleryComponent {
   /** True while the scene cuts between stops for visitors who asked for reduced motion. */
   readonly fading = signal(false);
   readonly slow = signal(false);
+  /** True once the visitor has walked on from the entrance, so its plaques stop floating over the walk. */
+  readonly setOff = signal(false);
   readonly currentRoom = computed(() => this.stops[this.activeIndex()].room);
   readonly announcement = computed(() => {
     const room = this.currentRoom();
@@ -90,8 +102,7 @@ export class GalleryComponent {
   private scene?: GalleryView;
   private fadeTarget = 0;
   private fadeTimer = 0;
-  /** Share of the screen width that a label beside the scene covers; 0 when labels sit over it. */
-  private labelShare = 0;
+  private framing: PageFraming = { labelShare: 0, statueBand: OPEN_BAND };
 
   constructor() {
     this.viewMode.active.set("gallery");
@@ -116,6 +127,10 @@ export class GalleryComponent {
     if (index >= 0) this.goTo(index, true);
   }
 
+  letterPosted(): void {
+    this.scene?.post();
+  }
+
   closerLook(work: Work): void {
     this.lightbox().open(work);
   }
@@ -137,7 +152,7 @@ export class GalleryComponent {
     const onScroll = () => this.syncFromScroll();
     const onResize = () => {
       this.measure();
-      this.scene?.resize(this.labelShare);
+      this.scene?.resize(this.framing);
       this.syncFromScroll();
     };
     const onKey = (event: KeyboardEvent) => this.onKey(event);
@@ -161,7 +176,9 @@ export class GalleryComponent {
 
     // Labels change height when fonts arrive or the letter shows its errors.
     const resizeObserver = new ResizeObserver(() => {
+      const before = this.framing;
       this.measure();
+      if (!sameFraming(before, this.framing)) this.scene?.resize(this.framing);
       this.syncFromScroll();
     });
     resizeObserver.observe(main);
@@ -177,7 +194,7 @@ export class GalleryComponent {
               return;
             }
             this.scene = scene;
-            scene.resize(this.labelShare);
+            scene.resize(this.framing);
             scene.jumpTo(this.reducedMotion ? this.activeIndex() : this.progress);
           })
           .catch(() => {
@@ -213,6 +230,7 @@ export class GalleryComponent {
       })),
       frieze: this.developer.frieze,
       visitors: this.entries.map((entry) => entry.company),
+      anatomy: this.developer.anatomy,
       reducedMotion: this.reducedMotion,
       assets: { dracoPath: environment.assets.dracoPath, lionModel: environment.assets.models.heroModel },
       onSlow: () => this.slow.set(true),
@@ -233,7 +251,27 @@ export class GalleryComponent {
       label.style.scrollMarginTop = index === 0 ? "0px" : `${Math.max(spare, HEADER_CLEARANCE)}px`;
     });
 
-    this.labelShare = labelShareOf(boxes[1]?.left, width, SIDE_GUTTER);
+    this.framing = {
+      labelShare: labelShareOf(boxes[1]?.left, width, SIDE_GUTTER),
+      statueBand: this.statueBand(labels[0], width, height),
+    };
+  }
+
+  /** The stretch of the first screen the statue is framed in: under the name, above whatever lies across its feet. */
+  private statueBand(entrance: HTMLElement | undefined, width: number, height: number): PageFraming["statueBand"] {
+    const head = entrance?.querySelector(".entrance-head")?.getBoundingClientRect();
+    const foot = entrance?.querySelector(".entrance-foot");
+    const origin = entrance?.getBoundingClientRect().top ?? 0;
+    if (!head || !foot || height <= 0) return OPEN_BAND;
+
+    // Plaques standing either side of the statue leave it room down to the hint; stacked ones stop it sooner.
+    const reach = height * STATUE_HALF_WIDTH;
+    const tops = Array.from(foot.querySelectorAll<HTMLElement>(".plaques > *, .hint"))
+      .map((element) => element.getBoundingClientRect())
+      .filter((box) => box.left < width / 2 + reach && box.right > width / 2 - reach)
+      .map((box) => box.top);
+    const floor = Math.min(...tops, foot.getBoundingClientRect().bottom);
+    return [(head.bottom - origin + STATUE_CLEARANCE.above) / height, (floor - origin - STATUE_CLEARANCE.below) / height];
   }
 
   private syncFromScroll(): void {
@@ -242,6 +280,7 @@ export class GalleryComponent {
 
     this.progress = progressFromScroll(window.scrollY, this.spans, window.innerHeight);
     const index = Math.round(this.progress);
+    this.setOff.set(this.progress > SET_OFF);
     if (this.reducedMotion) {
       this.crossFadeTo(index);
     } else {

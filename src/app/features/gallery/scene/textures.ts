@@ -34,6 +34,40 @@ export function inscriptionTexture(inscription: Inscription): CanvasTexture {
   return texture;
 }
 
+/** Names in gold on a dark board, one to a line; `aspect` is the board's width over its height. */
+export function nameBoardTexture(names: readonly string[], aspect: number): CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1536;
+  canvas.height = Math.round(canvas.width / aspect);
+
+  const context = canvas.getContext("2d");
+  if (context) {
+    const { width, height } = canvas;
+    context.fillStyle = "#17171b";
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = "rgba(199, 164, 74, 0.5)";
+    context.lineWidth = 3;
+    context.strokeRect(26, 26, width - 52, height - 52);
+
+    const pitch = (height - 120) / names.length;
+    context.font = `500 ${Math.round(Math.min(pitch * 0.5, 132))}px "Boska", Georgia, serif`;
+    context.fillStyle = "#d9b85c";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    if ("letterSpacing" in context) {
+      (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0.22em";
+    }
+    names.forEach((name, index) => {
+      context.fillText(name.toUpperCase(), width / 2, 60 + pitch * (index + 0.5) + 6, width - 180);
+    });
+  }
+
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
 /** Crops a texture to a plane's proportions like CSS `object-fit: cover`, keeping the top of the image. */
 export function coverFit(texture: Texture, planeAspect: number): void {
   const image = texture.image as { width: number; height: number };

@@ -9,13 +9,14 @@ const SPANS: LabelSpan[] = [
 ];
 
 describe("progressFromScroll", () => {
-  it("holds at the entrance until its label has mostly scrolled away", () => {
+  it("stands at the entrance only while the page is unscrolled, then sets off at once", () => {
     expect(progressFromScroll(0, SPANS, VH)).toBe(0);
-    expect(progressFromScroll(600, SPANS, VH)).toBe(0);
+    expect(progressFromScroll(40, SPANS, VH)).toBeGreaterThan(0);
+    expect(progressFromScroll(40, SPANS, VH)).toBeLessThan(0.01);
   });
 
   it("glides between stops, monotonically, easing in and out", () => {
-    const samples = [600, 800, 1050, 1300, 1500].map((y) => progressFromScroll(y, SPANS, VH));
+    const samples = [0, 330, 750, 1170, 1500].map((y) => progressFromScroll(y, SPANS, VH));
 
     expect(samples[0]).toBe(0);
     expect(samples[4]).toBe(1);

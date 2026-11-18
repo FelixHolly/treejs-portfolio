@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
 import { PlaceService } from "../../core/place/place.service";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
 import { EmailService } from "../../services/email.service";
+import { LetterComponent } from "../../shared/letter/letter.component";
 import { FakeViewEnvironment } from "../../testing/fake-view-environment";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { GalleryComponent } from "./gallery.component";
@@ -24,7 +26,7 @@ describe("GalleryComponent", () => {
   let scrollTo: jasmine.Spy;
 
   async function open(sceneFails = false): Promise<void> {
-    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "dispose"]);
+    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "post", "dispose"]);
     factory = jasmine.createSpy("factory").and.callFake((_canvas: HTMLCanvasElement, received: GalleryViewOptions) => {
       options = received;
       return sceneFails ? Promise.reject(new Error("no WebGL")) : Promise.resolve(scene);
@@ -82,7 +84,7 @@ describe("GalleryComponent", () => {
         "WheelWallet",
         "ReLoo",
         "Visitors' Book",
-        "Let's talk",
+        "Write to me",
       ]);
     });
 
@@ -130,6 +132,23 @@ describe("GalleryComponent", () => {
       expect(TestBed.inject(PlaceService).current()).toBe("entrance");
     });
 
+    it("shows the entrance text until the visitor walks on", () => {
+      expect(element.querySelector(".stop--entrance")?.classList.contains("stop--left")).toBeFalse();
+
+      fixture.componentInstance.setOff.set(true);
+      fixture.detectChanges();
+
+      expect(element.querySelector(".stop--entrance")?.classList.contains("stop--left")).toBeTrue();
+      expect(element.querySelector('[data-stop="1"]')?.classList.contains("stop--left")).toBeFalse();
+    });
+
+    it("offers the arrow keys in its hint in a part a touch screen can drop", () => {
+      const hint = element.querySelector(".hint")!;
+
+      expect(hint.textContent).toBe("Scroll, or use the arrow keys, to walk through");
+      expect(hint.querySelector(".keys")?.textContent).toBe(", or use the arrow keys,");
+    });
+
     it("tells the app the gallery is on screen and marks the page for scroll snapping", () => {
       expect(TestBed.inject(ViewModeService).active()).toBe("gallery");
       expect(document.documentElement.classList.contains("gallery-active")).toBeTrue();
@@ -154,6 +173,53 @@ describe("GalleryComponent", () => {
       expect(options?.reducedMotion).toBeFalse();
       expect(scene.resize).toHaveBeenCalled();
       expect(scene.jumpTo).toHaveBeenCalledOnceWith(0);
+    });
+
+    it("is given the storeys of Room I's drawing, from the roof down", async () => {
+      await open();
+
+      expect(options?.anatomy.length).toBe(4);
+      expect(options?.anatomy[0].tools).toContain("Angular");
+      expect(options?.anatomy[2].tools).toEqual(["PostgreSQL"]);
+      expect(options?.anatomy.every((storey) => storey.caption.length > 0 && storey.tools.length > 0)).toBeTrue();
+    });
+
+    it("is told where the entrance text leaves room for the statue: under the name, above the foot", async () => {
+      await open();
+
+      const { labelShare, statueBand } = scene.resize.calls.mostRecent().args[0];
+      const [top, bottom] = statueBand;
+      const entrance = element.querySelector<HTMLElement>("[data-label]")!.getBoundingClientRect();
+      const name = element.querySelector(".entrance-head")!.getBoundingClientRect();
+      const foot = element.querySelector(".entrance-foot")!.getBoundingClientRect();
+
+      expect(labelShare).toBeGreaterThanOrEqual(0);
+      expect(labelShare).toBeLessThanOrEqual(0.6);
+      expect(top * window.innerHeight).toBeGreaterThan(name.bottom - entrance.top);
+      expect(bottom * window.innerHeight).toBeLessThan(foot.bottom - entrance.top);
+      expect(bottom).toBeGreaterThan(top);
+    });
+
+    it("measures the statue's band the same wherever the page happens to be scrolled", async () => {
+      await open();
+      const before = scene.resize.calls.mostRecent().args[0].statueBand;
+
+      element.querySelector<HTMLElement>("main")!.style.transform = "translateY(-240px)";
+      window.dispatchEvent(new Event("resize"));
+      const after = scene.resize.calls.mostRecent().args[0].statueBand;
+
+      expect(after[0]).toBeCloseTo(before[0], 6);
+      expect(after[1]).toBeCloseTo(before[1], 6);
+    });
+
+    it("posts the envelope once a letter has gone, and not before", async () => {
+      await open();
+      const letter = fixture.debugElement.query(By.directive(LetterComponent)).componentInstance as LetterComponent;
+
+      expect(scene.post).not.toHaveBeenCalled();
+      letter.posted.emit();
+
+      expect(scene.post).toHaveBeenCalledTimes(1);
     });
 
     it("shows a dismissible notice when the scene reports a slow device", async () => {
@@ -246,7 +312,7 @@ describe("GalleryComponent", () => {
 
     it("jumps to the last and first stop on End and Home", () => {
       press("End");
-      expect(document.activeElement?.textContent?.trim()).toBe("Let's talk");
+      expect(document.activeElement?.textContent?.trim()).toBe("Write to me");
 
       press("Home");
       expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);

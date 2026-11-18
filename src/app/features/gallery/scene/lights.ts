@@ -1,5 +1,5 @@
 import { HemisphereLight, MathUtils, Object3D, SpotLight } from "three";
-import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot } from "./layout";
+import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot, PLATE, ROTUNDA } from "./layout";
 
 interface PieceLight {
   light: SpotLight;
@@ -16,6 +16,7 @@ type Point = [number, number, number];
 
 const WARM = 0xffe7c2;
 const COOL = 0x9fb2d0;
+const AMBER = 0xffd9a0;
 
 function spot(from: Point, to: Point, angle: number, color = WARM): SpotLight {
   const light = new SpotLight(color, 0, 18, angle, 0.75, 2);
@@ -32,13 +33,15 @@ function nearness(progress: number, stop: number, reach: number): number {
 export class GalleryLights {
   readonly objects: Object3D[] = [];
   private readonly pieces: PieceLight[] = [];
-  private readonly lionKey = spot([-3.4, 6.8, -3.2], [0, 2.2, 0], 0.5);
-  private readonly lionRim = spot([3.6, 5.2, 3.4], [0, 2.4, 0], 0.6, COOL);
+  // From over the arriving visitor's left shoulder, and a cool edge from behind on the other side
+  private readonly lionKey = spot([ROTUNDA.x - 4.4, 6.6, -3.6], [ROTUNDA.x, 2.5, 0], 0.44, AMBER);
+  private readonly lionRim = spot([ROTUNDA.x + 1.6, 4.6, 4.8], [ROTUNDA.x, 2.6, 0], 0.46, COOL);
 
   constructor(slots: readonly PieceSlot[]) {
     const firstPiece = 3;
     const visitorsBook = firstPiece + slots.length;
 
+    this.lionKey.penumbra = 1;
     this.lionKey.castShadow = true;
     this.lionKey.shadow.mapSize.set(1024, 1024);
     this.lionKey.shadow.bias = -0.0006;
@@ -46,7 +49,8 @@ export class GalleryLights {
     this.addLight(this.lionKey);
     this.addLight(this.lionRim);
 
-    this.addPiece(spot([MEDALLION.x, 4.8, -1.2], [MEDALLION.x, MEDALLION.y, HANG_Z], 0.5), [1], 1, 80, 0.5, 0.38);
+    this.addPiece(spot([MEDALLION.x - 2.8, 4.8, MEDALLION.z], [MEDALLION.x, MEDALLION.y, MEDALLION.z], 0.5), [1], 1, 80, 0.5, 0.38);
+    this.addPiece(spot([PLATE.x, 4.9, HANG_Z + 3.2], [PLATE.x, PLATE.y, HANG_Z], 0.62), [1], 1, 110, 0.66, 0.56);
 
     slots.forEach((slot, index) => {
       const commission = slot.frames.length > 1 || slot.frames[0].gilded;
@@ -81,8 +85,8 @@ export class GalleryLights {
   /** `lionLevel` runs 0..1 as the lights come up on the statue. */
   update(progress: number, lionLevel: number): void {
     const atEntrance = 0.35 + 0.65 * nearness(progress, 0, 1.6);
-    this.lionKey.intensity = 230 * lionLevel * atEntrance;
-    this.lionRim.intensity = 90 * lionLevel * atEntrance;
+    this.lionKey.intensity = 560 * lionLevel * atEntrance;
+    this.lionRim.intensity = 330 * lionLevel * atEntrance;
 
     for (const piece of this.pieces) {
       let lit = 0;

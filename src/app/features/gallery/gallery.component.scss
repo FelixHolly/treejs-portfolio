@@ -17,6 +17,15 @@
   opacity: 0;
 }
 
+/* Darkens the edges of the view so the eye stays on the lit piece and the text */
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 85% at 50% 48%, rgba(12, 12, 14, 0) 45%, rgba(12, 12, 14, 0.62) 100%);
+}
+
 .hud {
   position: fixed;
   inset: 0 0 auto;
@@ -138,6 +147,22 @@ main {
   transition: opacity 0.3s ease;
 }
 
+/* A phone held sideways: less air above the name, so the statue still has a place under it */
+@media (max-height: 480px) {
+  .stop--entrance .label {
+    padding: 4.25rem 1.25rem 0.75rem;
+  }
+
+  .entrance-head {
+    gap: 0.4rem;
+  }
+}
+
+.stop--left .label:not(:focus-within) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .entrance-head {
   text-shadow: 0 2px 24px rgba(20, 20, 23, 0.9);
   display: flex;
@@ -165,12 +190,43 @@ main {
   border-radius: 0.125rem;
 }
 
+/* A touch screen has no arrow keys to offer */
+@media (pointer: coarse) {
+  .keys {
+    display: none;
+  }
+}
+
 .plaques {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 1rem 1.5rem;
+}
+
+/* On a screen wider than it is tall the two plaques stand either side of the statue, and it is framed larger between them */
+@media (min-width: 640px) and (min-aspect-ratio: 5/4) {
+  .entrance-foot {
+    width: 100%;
+  }
+
+  .plaques {
+    display: grid;
+    grid-template-columns: 1fr min(54vh, 100vw - 32rem) 1fr;
+    gap: 0;
+    width: 100%;
+
+    > :first-child {
+      grid-column: 1;
+      justify-self: end;
+    }
+
+    > :last-child {
+      grid-column: 3;
+      justify-self: start;
+    }
+  }
 }
 
 .label--letter {

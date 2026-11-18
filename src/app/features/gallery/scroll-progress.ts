@@ -9,8 +9,10 @@ const ARRIVE = 0.6;
 /** It leaves once the label's bottom has risen above this fraction. */
 const LEAVE = 0.4;
 
-function hold(span: LabelSpan, viewportHeight: number): [start: number, end: number] {
-  return [span.top - ARRIVE * viewportHeight, span.bottom - LEAVE * viewportHeight];
+function hold(span: LabelSpan, viewportHeight: number, first = false): [start: number, end: number] {
+  // The entrance fills the first screen, so the walk begins with the first scroll instead of after a wait.
+  const end = first ? 0 : span.bottom - LEAVE * viewportHeight;
+  return [span.top - ARRIVE * viewportHeight, end];
 }
 
 function smooth(t: number): number {
@@ -22,11 +24,11 @@ function smooth(t: number): number {
 // label is in the middle band of the screen and glides to the next across the gap between labels.
 export function progressFromScroll(scrollY: number, spans: readonly LabelSpan[], viewportHeight: number): number {
   for (let index = 0; index < spans.length; index++) {
-    const [start, end] = hold(spans[index], viewportHeight);
+    const [start, end] = hold(spans[index], viewportHeight, index === 0);
 
     if (scrollY < start) {
       if (index === 0) return 0;
-      const previousEnd = hold(spans[index - 1], viewportHeight)[1];
+      const previousEnd = hold(spans[index - 1], viewportHeight, index === 1)[1];
       return index - 1 + smooth((scrollY - previousEnd) / (start - previousEnd));
     }
     if (scrollY <= end) return index;

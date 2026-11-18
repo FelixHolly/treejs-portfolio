@@ -18,10 +18,8 @@ function smooth(t: number): number {
   return clamped * clamped * (3 - 2 * clamped);
 }
 
-/**
- * Maps the scroll position to a position on the route, in stops. The camera holds at a stop while
- * its label is in the middle band of the screen and glides to the next across the gap between labels.
- */
+// Maps the scroll position to a position on the route, in stops. The camera holds at a stop while its
+// label is in the middle band of the screen and glides to the next across the gap between labels.
 export function progressFromScroll(scrollY: number, spans: readonly LabelSpan[], viewportHeight: number): number {
   for (let index = 0; index < spans.length; index++) {
     const [start, end] = hold(spans[index], viewportHeight);

@@ -17,7 +17,6 @@ export interface GalleryViewOptions {
 export interface GalleryView {
   /** Glide towards a position on the route, measured in stops (2.5 is halfway between stops 2 and 3). */
   setProgress(progress: number): void;
-  /** Cut straight to a position on the route. */
   jumpTo(progress: number): void;
   /** Mouse position in -1..1 on both axes, for the look-around offset. */
   setPointer(x: number, y: number): void;

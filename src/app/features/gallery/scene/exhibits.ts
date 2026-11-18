@@ -54,7 +54,6 @@ export function medallion(palette: Palette): Group {
   return group;
 }
 
-/** A lectern with the open visitors' book, turned to face the visitor's stop. */
 export function lectern(palette: Palette, towards: { x: number; z: number }): Group {
   const group = new Group();
   group.position.set(LECTERN.x, 0, LECTERN.z);
@@ -78,7 +77,6 @@ export function lectern(palette: Palette, towards: { x: number; z: number }): Gr
   return group;
 }
 
-/** The writing desk with the letter on it. */
 export function writingDesk(palette: Palette, towards: { x: number; z: number }): Group {
   const group = new Group();
   group.position.set(DESK.x, 0, DESK.z);

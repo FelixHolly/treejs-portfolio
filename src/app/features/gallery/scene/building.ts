@@ -105,7 +105,6 @@ function crossWall(x: number, palette: Palette): Group {
     slab(WALL_THICKNESS, headHeight, DOOR.width, x, DOOR.height + headHeight / 2, 0, palette.wall),
   );
 
-  // Gold architrave on both faces of the doorway
   for (const face of [-1, 1]) {
     const faceX = x + face * (WALL_THICKNESS / 2 + 0.012);
     const jambHeight = DOOR.height + 0.12;
@@ -118,7 +117,6 @@ function crossWall(x: number, palette: Palette): Group {
   return group;
 }
 
-/** Walls, floor, doors and fixed furniture of the whole building. */
 export function buildArchitecture(palette: Palette): Group {
   const building = new Group();
   const length = ENFILADE.to - ENFILADE.from;

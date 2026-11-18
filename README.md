@@ -1,8 +1,13 @@
-# Felix Hollndonner – 3D Portfolio Website
+# Felix Hollndonner: Portfolio
 
 My portfolio, built with **Angular** and **Tailwind CSS** and designed as a museum: Stone & Gold palette, gallery rooms with wall labels, a Viennese lion at the entrance, and the works hung in gilded frames.
 
-The page you see today is the **catalogue**, a fast flat view of the collection. A guided walkable 3D gallery (Three.js) is planned on top of the same content; see `docs/superpowers/specs/2026-11-12-walkable-gallery-design.md`.
+The site has two views of the same collection:
+
+- **The gallery**: a guided walk through a small 3D museum (Three.js). Scrolling, the arrow keys or the floor plan move the camera from stop to stop: the rotunda with the lion, then Rooms I to IV. It opens by default on desktop-sized screens with a mouse and WebGL.
+- **The catalogue**: a fast flat page with the same content. It opens on phones, with reduced motion or data saver, and whenever the visitor chooses it.
+
+`?view=gallery` or `?view=catalogue` forces a view, and every stop has its own link, for example `/#works/kuechenschelle`. The design is described in `docs/superpowers/specs/2026-11-12-walkable-gallery-design.md`.
 
 [Live Site](https://felixhollndonner.com)
 
@@ -10,9 +15,9 @@ The page you see today is the **catalogue**, a fast flat view of the collection.
 
 ## Tech Stack
 
-- Angular
+- Angular 21 (zoneless)
 - Tailwind CSS
-- Three.js (for the planned gallery view)
+- Three.js (gallery view, loaded on demand)
 - GitHub Pages (for deployment)
 
 ---

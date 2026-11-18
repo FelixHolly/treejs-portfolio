@@ -1,42 +1,80 @@
-<div class="terminal">
-    <div class="terminal-body">
-        <p class="room-number mb-3">Room IV · Correspondence</p>
-        <h2 class="head-text">Let's talk</h2>
-        <p class="text-base text-graphite/80 mt-3 font-mono">{{ content.intro }}</p>
-
-        <form #letter [formGroup]="form" (ngSubmit)="send()" class="mt-12 flex flex-col space-y-7" novalidate>
-            <div class="flex flex-col gap-3">
-                <label class="field-label" for="letter-name">Full name</label>
-                <input id="letter-name" formControlName="name" class="field-input" autocomplete="name"
-                       [attr.aria-invalid]="showError('name')" [attr.aria-describedby]="showError('name') ? 'letter-name-error' : null">
-                @if (showError('name')) {
-                    <span id="letter-name-error" class="text-red-800 text-sm">Full name is required</span>
-                }
+<div class="letter-sheet">
+    <div class="letter-body">
+        <header class="letterhead">
+            <div>
+                <p class="room-number mb-3">Room IV · Correspondence</p>
+                <h2 class="head-text">Write to me</h2>
             </div>
-
-            <div class="flex flex-col gap-3">
-                <label class="field-label" for="letter-email">Email address</label>
-                <input id="letter-email" type="email" formControlName="email" class="field-input" autocomplete="email"
-                       [attr.aria-invalid]="showError('email')" [attr.aria-describedby]="showError('email') ? 'letter-email-error' : null">
-                @if (showError('email')) {
-                    <span id="letter-email-error" class="text-red-800 text-sm">Enter a valid email address</span>
-                }
+            <div class="stamp" aria-hidden="true">
+                <div class="stamp-face">
+                    <img ngSrc="assets/lion-stamp.webp" width="216" height="280" alt="">
+                    <span>FH</span>
+                </div>
             </div>
+        </header>
+        <p class="intro">{{ content.intro }}</p>
 
-            <div class="flex flex-col gap-3">
-                <label class="field-label" for="letter-message">Your message</label>
-                <textarea id="letter-message" formControlName="message" rows="5" class="field-input"
-                          [attr.aria-invalid]="showError('message')" [attr.aria-describedby]="showError('message') ? 'letter-message-error' : null"></textarea>
-                @if (showError('message')) {
-                    <span id="letter-message-error" class="text-red-800 text-sm">Message is required</span>
-                }
+        @if (repliesTo(); as address) {
+            <div #sealed class="sealed" role="status" tabindex="-1">
+                <svg class="seal" viewBox="0 0 80 80" width="80" height="80" aria-hidden="true">
+                    <path d="M40 3.5c4.6 0 6.800 4.800 10.900 6.300 4.200 1.500 9-.6 12.300 2.200 3.300 2.800 2.200 7.900 4.400 11.700 2.200 3.800 7.100 5.300 7.900 9.600.8 4.300-3 7.800-3 12.200s3.800 7.900 3 12.200c-.8 4.300-5.700 5.800-7.900 9.600-2.200 3.800-1.100 8.900-4.400 11.700-3.300 2.800-8.100.7-12.300 2.200-4.100 1.500-6.300 6.300-10.900 6.300s-6.800-4.800-10.900-6.300c-4.200-1.500-9 .6-12.300-2.200-3.300-2.800-2.200-7.900-4.400-11.700-2.200-3.800-7.100-5.300-7.900-9.600-.8-4.300 3-7.800 3-12.200s-3.800-7.900-3-12.200c.8-4.300 5.700-5.800 7.900-9.600 2.200-3.800 1.100-8.900 4.400-11.700 3.300-2.800 8.100-.7 12.300-2.200C33.200 8.300 35.400 3.500 40 3.500Z" fill="#8f7534" />
+                    <circle cx="40" cy="40" r="23" fill="none" stroke="#e8e5de" stroke-opacity="0.55" stroke-width="1.2" />
+                    <text x="40" y="49.500" text-anchor="middle" font-family="Boska, Georgia, serif" font-size="25" font-weight="500" letter-spacing="1.5" fill="#e8e5de">FH</text>
+                </svg>
+                <p class="sealed-title">Your letter is on its way.</p>
+                <p class="sealed-text">I will write back to <span class="break-all">{{ address }}</span>.</p>
+                <button type="button" class="chip" (click)="writeAnother()">Write another letter</button>
             </div>
+        } @else {
+            <form #letter [formGroup]="form" (ngSubmit)="send()" class="letter-form" novalidate>
+                <div class="starters" role="group" aria-labelledby="letter-starters">
+                    <span id="letter-starters" class="field-label">Start with</span>
+                    @for (starter of content.starters; track starter.label) {
+                        <button type="button" class="chip" (click)="startWith(starter.opening)">{{ starter.label }}</button>
+                    }
+                </div>
 
-            <button class="field-btn" type="submit" [disabled]="loading()">
-                {{ loading() ? 'Sending...' : 'Send message' }}
-                <app-icon-arrow-out />
-            </button>
-        </form>
+                <div class="flex flex-col gap-2">
+                    <label class="salutation" for="letter-message">Dear Felix,<span class="sr-only"> your message</span></label>
+                    <textarea #message id="letter-message" formControlName="message" rows="4" class="ruled"
+                              [attr.aria-invalid]="showError('message')" [attr.aria-describedby]="showError('message') ? 'letter-message-error' : null"></textarea>
+                    @if (showError('message')) {
+                        <span id="letter-message-error" class="field-error">Write a line or two first</span>
+                    }
+                </div>
+
+                <div class="signature">
+                    <div class="flex flex-col gap-1">
+                        <label class="field-label" for="letter-name">Your name</label>
+                        <input id="letter-name" formControlName="name" class="field-input" autocomplete="name"
+                               [attr.aria-invalid]="showError('name')" [attr.aria-describedby]="showError('name') ? 'letter-name-error' : null">
+                        @if (showError('name')) {
+                            <span id="letter-name-error" class="field-error">Sign with your name</span>
+                        }
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label class="field-label" for="letter-email">Your email</label>
+                        <input id="letter-email" type="email" formControlName="email" class="field-input" autocomplete="email"
+                               [attr.aria-invalid]="showError('email')" [attr.aria-describedby]="showError('email') ? 'letter-email-error' : null">
+                        @if (showError('email')) {
+                            <span id="letter-email-error" class="field-error">Enter a valid email address</span>
+                        }
+                    </div>
+                </div>
+
+                @if (failed()) {
+                    <p class="send-error" role="alert">
+                        The letter did not go out. What you wrote is still here: try again in a moment, or use the links below.
+                    </p>
+                }
+
+                <button class="field-btn" type="submit" [disabled]="loading()">
+                    {{ loading() ? 'Sending...' : 'Send the letter' }}
+                    <app-icon-arrow-out />
+                </button>
+            </form>
+        }
 
         <ul class="desk-links">
             @if (content.cvHref; as cv) {

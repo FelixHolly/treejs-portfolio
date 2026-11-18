@@ -66,7 +66,7 @@ body::before {
 }
 
 /* On the bone letter paper, keep the ink readable under the highlight */
-.terminal ::selection {
+.letter-sheet ::selection {
   background: rgba(199, 164, 74, 0.45);
   color: #141417;
 }

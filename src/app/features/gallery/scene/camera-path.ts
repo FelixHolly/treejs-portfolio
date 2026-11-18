@@ -17,8 +17,8 @@ const TAN_HALF_FOV = Math.tan(MathUtils.degToRad(FOV / 2));
 const LOOK_AHEAD = 6;
 /** A piece fills at most this much of the width left free beside the label. */
 const FILL = 0.84;
-const FARTHEST = 7.3;
-const OVERVIEW = { x: 16.6, z: 3.3 } as const;
+const FARTHEST = 6.9;
+const OVERVIEW = { x: 16.6, z: 3 } as const;
 
 function halfWidth(distance: number, aspect: number): number {
   return distance * TAN_HALF_FOV * aspect;

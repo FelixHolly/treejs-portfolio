@@ -15,7 +15,7 @@ export const END_WALL_X = 52.8;
 export const MEDALLION = { x: 10.4, y: 2.05, radius: 0.78 } as const;
 export const LECTERN = { x: 40.4, z: -1.3 } as const;
 export const DESK = { x: 48.8, z: -1.6 } as const;
-export const BENCH = { x: 24, z: 3.2 } as const;
+export const BENCH = { x: 31.4, z: 3.45 } as const;
 
 export interface FrameSlot {
   x: number;

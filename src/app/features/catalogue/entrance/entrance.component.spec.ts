@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { provideRouter } from "@angular/router";
 import { EntranceComponent } from "./entrance.component";
 
 describe("EntranceComponent", () => {
@@ -6,6 +7,7 @@ describe("EntranceComponent", () => {
   let element: HTMLElement;
 
   beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
     fixture = TestBed.createComponent(EntranceComponent);
     fixture.detectChanges();
     element = fixture.nativeElement;
@@ -35,6 +37,6 @@ describe("EntranceComponent", () => {
 
   it("describes the statue for screen readers and links down to the works", () => {
     expect(element.querySelector("img")?.getAttribute("alt")).toContain("Viennese lion");
-    expect(element.querySelector('a[href="#works"]')?.textContent).toContain("View the works");
+    expect(element.querySelector('a[href="/#works"]')?.textContent).toContain("View the works");
   });
 });

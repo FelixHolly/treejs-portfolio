@@ -1,11 +1,16 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { provideRouter } from "@angular/router";
+import { PlaceService } from "../../../../core/place/place.service";
 import { NavItemsComponent } from "./nav-items.component";
 
 describe("NavItemsComponent", () => {
   let fixture: ComponentFixture<NavItemsComponent>;
   let element: HTMLElement;
+  let place: PlaceService;
 
   beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    place = TestBed.inject(PlaceService);
     fixture = TestBed.createComponent(NavItemsComponent);
     fixture.detectChanges();
     element = fixture.nativeElement;
@@ -22,11 +27,11 @@ describe("NavItemsComponent", () => {
       "Correspondence",
     ]);
     expect(links.map((link) => link.getAttribute("href"))).toEqual([
-      "#home",
-      "#about",
-      "#projects",
-      "#visitors-book",
-      "#contact",
+      "/#home",
+      "/#about",
+      "/#projects",
+      "/#visitors-book",
+      "/#contact",
     ]);
   });
 
@@ -35,14 +40,20 @@ describe("NavItemsComponent", () => {
     expect(element.querySelector(".nav-room")).toBeNull();
   });
 
-  for (const [id, numeral] of [["about", "I"], ["projects", "II"], ["visitors-book", "III"], ["contact", "IV"]]) {
-    it(`marks ${id} as current with numeral ${numeral}`, () => {
-      fixture.componentInstance.activeId.set(id);
+  for (const [current, href, numeral] of [
+    ["developer", "/#about", "I"],
+    ["works", "/#projects", "II"],
+    ["works/kuechenschelle", "/#projects", "II"],
+    ["visitors-book", "/#visitors-book", "III"],
+    ["correspondence", "/#contact", "IV"],
+  ]) {
+    it(`marks the room of "${current}" as current with numeral ${numeral}`, () => {
+      place.current.set(current);
       fixture.detectChanges();
 
-      const current = element.querySelectorAll("[aria-current='location']");
-      expect(current.length).toBe(1);
-      expect(current[0].getAttribute("href")).toBe("#" + id);
+      const marked = element.querySelectorAll("[aria-current='location']");
+      expect(marked.length).toBe(1);
+      expect(marked[0].getAttribute("href")).toBe(href);
       expect(element.querySelector(".nav-room")?.textContent?.trim()).toBe(numeral);
     });
   }

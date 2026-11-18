@@ -165,6 +165,17 @@ describe("LetterComponent", () => {
       expect(message().hasAttribute("aria-describedby")).toBeFalse();
     });
 
+    for (const empty of ["   ", CORRESPONDENCE.starters[0].opening, CORRESPONDENCE.starters[1].opening.trim()]) {
+      it(`does not take "${empty}" for a letter`, async () => {
+        component.form.setValue({ ...VALID, message: empty });
+
+        await send();
+
+        expect(errors()).toEqual(["Write a line or two first"]);
+        expect(email.sendContactEmail).not.toHaveBeenCalled();
+      });
+    }
+
     for (const bad of ["plain", "a@", "@b.co", "a b@c.de"]) {
       it(`rejects the malformed address "${bad}"`, async () => {
         component.form.setValue({ ...VALID, email: bad });
@@ -189,6 +200,7 @@ describe("LetterComponent", () => {
       expect(posted).toHaveBeenCalledTimes(1);
       expect(element.querySelector("form")).toBeNull();
       expect(sealed.getAttribute("role")).toBe("status");
+      expect(element.querySelector(`#${sealed.getAttribute("aria-labelledby")}`)?.textContent).toContain("on its way");
       expect(sealed.textContent).toContain("Your letter is on its way.");
       expect(sealed.textContent).toContain("I will write back to ada@example.com.");
       expect(document.activeElement).toBe(sealed);
@@ -229,6 +241,7 @@ describe("LetterComponent", () => {
       expect(alert.textContent).toContain("The letter did not go out.");
       expect(alert.compareDocumentPosition(button("Send the letter")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(component.form.getRawValue()).toEqual(VALID);
+      expect(document.activeElement).toBe(button("Send the letter"));
       expect(element.querySelector(".sealed")).toBeNull();
       expect(posted).not.toHaveBeenCalled();
       expect(component.loading()).toBeFalse();

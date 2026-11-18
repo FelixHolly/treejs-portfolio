@@ -80,7 +80,7 @@ describe("RotundaAtmosphere", () => {
   });
 
   it("is dark from Room I onwards", () => {
-    for (const progress of [0.8, 1, 3.5, 7]) {
+    for (const progress of [0.6, 1, 3.5, 7]) {
       atmosphere.update(progress, 1);
       expect(strengths()).withContext(`progress ${progress}`).toEqual([0, 0, 0]);
     }

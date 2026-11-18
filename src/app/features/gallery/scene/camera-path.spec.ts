@@ -84,7 +84,7 @@ describe("the entrance pose", () => {
   // The statue's crown and front paws stand this far towards the arriving visitor from its middle.
   const crown = new Vector3(ROTUNDA.x - 0.7, ROTUNDA.plinthHeight + ROTUNDA.lionHeight, 0);
   const feet = new Vector3(ROTUNDA.x - 0.9, ROTUNDA.plinthHeight, 0);
-  const farthest = ROTUNDA.radius - 0.8;
+  const farthest = ROTUNDA.radius - 0.5;
 
   const entrance = (framing: Framing): Pose => buildPoses(pieceSlots(WORKS), framing)[0];
   const distance = (pose: Pose): number => ROTUNDA.x - pose.position.x;
@@ -238,6 +238,22 @@ describe("CameraPath", () => {
       const { position, target } = sample(path, progress);
       const pitch = Math.atan2(target.y - position.y, Math.hypot(target.x - position.x, target.z - position.z));
       expect(Math.abs(pitch)).withContext(`progress ${progress}`).toBeLessThan(0.12);
+    }
+  });
+
+  it("never snaps its view: the look direction turns smoothly along the whole route", () => {
+    const { path, poses } = pathFor(WORKS, FRAMINGS[0][1]);
+    const yawAt = (progress: number) => {
+      const { position, target } = sample(path, progress);
+      return Math.atan2(target.z - position.z, target.x - position.x);
+    };
+
+    let previous = yawAt(0);
+    for (let progress = 0.0005; progress <= poses.length - 1; progress += 0.0005) {
+      const yaw = yawAt(progress);
+      const turn = Math.abs(Math.atan2(Math.sin(yaw - previous), Math.cos(yaw - previous)));
+      expect(turn).withContext(`progress ${progress.toFixed(4)}`).toBeLessThan(0.02);
+      previous = yaw;
     }
   });
 

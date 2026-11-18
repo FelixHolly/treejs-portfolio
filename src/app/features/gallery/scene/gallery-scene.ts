@@ -343,7 +343,7 @@ export class GalleryScene implements GalleryView {
         inscriptionTexture({ text: "FH", font: '500 250px "Boska", Georgia, serif', color: "#e8e5de", width: 560, height: 330, spacing: "0.12em" }),
       ),
     );
-    monogram.position.set(MEDALLION.x - 0.04, MEDALLION.y, MEDALLION.z - 0.03);
+    monogram.position.set(MEDALLION.x - 0.04, MEDALLION.y, MEDALLION.z + 0.03);
     monogram.rotation.y = -Math.PI / 2;
     this.scene.add(monogram);
 

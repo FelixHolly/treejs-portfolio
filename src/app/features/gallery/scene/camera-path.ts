@@ -21,7 +21,7 @@ const FARTHEST = 6.9;
 const SAMPLES_PER_POINT = 24;
 const OVERVIEW = { x: 16.6, z: 3 } as const;
 /** The statue as the arriving visitor meets it: its width, how far its head and front paws stand out towards them, and how near they may come. */
-const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.8 } as const;
+const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.5 } as const;
 
 /** Half the height of what the camera sees one metre away. */
 function lens(aspect: number): number {
@@ -171,7 +171,8 @@ export class CameraPath {
       // so a doorway is faced squarely on the way in.
       this.curve.getPointAt(Math.min((walked + LOOK_AHEAD) / this.length, 1), this.ahead);
       this.ahead.y = out.position.y - 0.05;
-      if (this.ahead.distanceToSquared(out.position) > 1) out.target.lerp(this.ahead, forward);
+      // Fades out where the route ends, so the last metre does not snap back to the stop's own view
+      out.target.lerp(this.ahead, forward * Math.min(1, this.ahead.distanceTo(out.position) / LOOK_AHEAD));
     }
   }
 }

@@ -1,6 +1,6 @@
+// The building in metres. Visitors walk along +X; works hang on the wall at HANG_Z.
 import { SceneWork } from "./gallery-view";
 
-/** The building in metres. Visitors walk along +X; works hang on the wall at HANG_Z. */
 const FOV = { landscape: 50, portrait: 66 } as const;
 
 /** The camera's vertical field of view in degrees. An upright screen sees little to either side, so it gets a wider lens. */

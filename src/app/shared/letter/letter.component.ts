@@ -10,12 +10,19 @@ import {
   signal,
   viewChild,
 } from "@angular/core";
-import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
 import { CORRESPONDENCE } from "../../core/content/correspondence.content";
 import { EmailService } from "../../services/email.service";
 import { ArrowOutIconComponent } from "../icons/arrow-out.icon";
 
 type Field = "name" | "email" | "message";
+
+const isStarter = (text: string) => CORRESPONDENCE.starters.some((starter) => starter.opening.trim() === text.trim());
+
+/** A letter needs words of the visitor's own: blank space or a starter on its own is not one. */
+function written(control: AbstractControl<string>): ValidationErrors | null {
+  return control.value.trim() && !isStarter(control.value) ? null : { unwritten: true };
+}
 
 @Component({
   selector: "app-letter",
@@ -45,7 +52,7 @@ export class LetterComponent {
   readonly form = inject(FormBuilder).nonNullable.group({
     name: ["", Validators.required],
     email: ["", [Validators.required, Validators.email]],
-    message: ["", Validators.required],
+    message: ["", written],
   });
 
   showError(field: Field): boolean {
@@ -56,8 +63,7 @@ export class LetterComponent {
   /** Writes the letter's first words, unless the visitor has already written their own. */
   startWith(opening: string): void {
     const control = this.form.controls.message;
-    const unwritten = !control.value.trim() || this.content.starters.some((starter) => starter.opening === control.value);
-    if (unwritten) control.setValue(opening);
+    if (control.invalid) control.setValue(opening);
 
     const field = this.messageField()?.nativeElement;
     field?.focus();
@@ -87,6 +93,8 @@ export class LetterComponent {
       this.focusNext(() => this.sealed()?.nativeElement);
     } catch {
       this.failed.set(true);
+      // The button was disabled under the visitor's focus while sending
+      this.focusNext(() => this.formElement()?.nativeElement.querySelector<HTMLElement>("button[type=submit]"));
     } finally {
       this.loading.set(false);
     }

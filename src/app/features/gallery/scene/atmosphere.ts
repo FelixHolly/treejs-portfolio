@@ -43,10 +43,8 @@ export function glow(shape: "pool" | "rising", strength = 0): ShaderMaterial {
   });
 }
 
-/**
- * Light the hall would have without paying for more lamps: a glow on the wall behind the statue,
- * and warmth in the doorway to Room I spilling onto the floor, so the way on is the brightest thing but the lion.
- */
+// Light the hall would have without paying for more lamps: a glow behind the statue, and warmth in
+// the doorway to Room I spilling onto the floor, so the way on is the brightest thing but the lion.
 export class RotundaAtmosphere {
   readonly objects: Object3D[] = [];
   private readonly halo = glow("pool");
@@ -73,7 +71,7 @@ export class RotundaAtmosphere {
 
   /** `lionLevel` runs 0..1 as the lights come up; everything fades as the visitor walks on. */
   update(progress: number, lionLevel: number): void {
-    const here = MathUtils.clamp(1 - progress / 0.8, 0, 1);
+    const here = MathUtils.clamp(1 - progress / 0.6, 0, 1);
     // Gone before the visitor walks through where it hangs
     this.set(this.halo, 0.34 * lionLevel * MathUtils.clamp(1 - progress / 0.45, 0, 1));
     this.set(this.doorway, 0.2 * here);

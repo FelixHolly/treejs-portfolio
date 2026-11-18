@@ -237,4 +237,9 @@ html.gallery-active {
   @media (min-width: 640px) {
     padding-inline: 2.5rem;
   }
+
+  @media (max-height: 480px) {
+    gap: 0.4rem;
+    padding-top: 4.25rem;
+  }
 }

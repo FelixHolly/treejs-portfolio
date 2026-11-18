@@ -1,9 +1,7 @@
 import { CanvasTexture, SRGBColorSpace } from "three";
+import { GalleryViewOptions } from "./gallery-view";
 
-export interface Storey {
-  caption: string;
-  tools: readonly string[];
-}
+type Storey = GalleryViewOptions["anatomy"][number];
 
 type Pen = CanvasRenderingContext2D;
 type Point = readonly [x: number, y: number];
@@ -188,8 +186,10 @@ function note(pen: Pen, storey: Storey, at: (typeof NOTES)[number]): void {
   storey.tools.forEach((tool, index) => {
     if (index) {
       pen.fillStyle = INK.gold;
-      pen.fillText("·", x + 16, at.row + 42);
-      x += 32 + pen.measureText("·").width;
+      pen.beginPath();
+      pen.arc(x + 22, at.row + 24, 4, 0, Math.PI * 2);
+      pen.fill();
+      x += 44;
     }
     pen.fillStyle = INK.bone;
     pen.fillText(tool, x, at.row + 42);

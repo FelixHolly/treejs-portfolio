@@ -78,6 +78,7 @@ export class GalleryScene implements GalleryView {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
     this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
 
     this.scene.background = new Color(BACKGROUND);
     this.scene.fog = new Fog(BACKGROUND, 9, 36);
@@ -97,7 +98,10 @@ export class GalleryScene implements GalleryView {
         this.renderer.shadowMap.needsUpdate = true;
         this.raiseLights();
       },
-      () => this.raiseLights(),
+      () => {
+        this.renderer.shadowMap.needsUpdate = true;
+        this.raiseLights();
+      },
     );
 
     this.resize(0);
@@ -287,13 +291,11 @@ export class GalleryScene implements GalleryView {
     this.scene.add(monogram);
 
     const friezeText = this.options.frieze.join("  ·  ").toUpperCase();
+    const friezeLettering = lettering(
+      inscriptionTexture({ text: friezeText, font: '500 84px "Boska", Georgia, serif', color: "#c7a44a", width: 4096, height: 134, spacing: "0.3em" }),
+    );
     for (const side of [-1, 1]) {
-      const frieze = new Mesh(
-        new PlaneGeometry(9.2, 0.3),
-        lettering(
-          inscriptionTexture({ text: friezeText, font: '500 84px "Boska", Georgia, serif', color: "#c7a44a", width: 4096, height: 134, spacing: "0.3em" }),
-        ),
-      );
+      const frieze = new Mesh(new PlaneGeometry(9.2, 0.3), friezeLettering);
       frieze.position.set(MEDALLION.x, 4.12, side * (HALF_DEPTH - 0.02));
       if (side === 1) frieze.rotation.y = Math.PI;
       this.scene.add(frieze);

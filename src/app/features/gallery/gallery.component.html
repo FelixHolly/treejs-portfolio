@@ -1,8 +1,10 @@
 <canvas #canvas class="scene" [class.scene--fading]="fading()" aria-hidden="true"></canvas>
 
-<a href="#main" class="skip-link">Skip to main content</a>
+<a href="#main" class="skip-link" (click)="skipToMain($event)">Skip to main content</a>
 <header class="hud">
-  <button type="button" class="wordmark" (click)="goTo(0, true)">Felix Hollndonner</button>
+  <button type="button" class="wordmark" aria-label="Felix Hollndonner, back to the entrance" (click)="goTo(0, true)">
+    Felix Hollndonner
+  </button>
   <app-floor-plan [current]="currentRoom().id" (visit)="visit($event)" />
   <app-view-switch />
 </header>
@@ -43,6 +45,9 @@
             @for (paragraph of developer.bio; track paragraph) {
               <p class="grid-subtext mt-3">{{ paragraph }}</p>
             }
+            <p class="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone leading-relaxed">
+              @for (material of developer.frieze; track material) {<span class="whitespace-nowrap">{{ material }}</span>@if (!$last) {<span class="text-gold px-1" aria-hidden="true"> · </span>}}
+            </p>
             <p class="mt-5 font-mono uppercase tracking-[0.2em] text-xs text-gold">{{ developer.location }}</p>
             <p class="grid-subtext mt-2">{{ developer.viennaLine }}</p>
           }

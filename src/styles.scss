@@ -217,3 +217,8 @@ select:focus-visible,
 html.gallery-active {
   scroll-snap-type: y proximity;
 }
+
+/* Tabbing backwards must not park the focused control under the gallery's fixed header */
+html.gallery-active {
+  scroll-padding-top: 6rem;
+}

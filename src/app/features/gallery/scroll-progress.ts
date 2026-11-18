@@ -39,3 +39,20 @@ export function scrollTargetFor(span: LabelSpan, viewportHeight: number, headerC
   const spare = (viewportHeight - (span.bottom - span.top)) / 2;
   return Math.max(span.top - Math.max(spare, headerClearance), 0);
 }
+
+/** Labels sit beside the scene from this width up; below it they lie over it. */
+const SIDE_BY_SIDE_FROM = 900;
+const MAX_LABEL_SHARE = 0.6;
+
+/** The share of the page width a side label covers, gutter included; 0 when labels lie over the scene. */
+export function labelShareOf(labelLeft: number | undefined, pageWidth: number, gutter: number): number {
+  if (labelLeft === undefined || pageWidth < SIDE_BY_SIDE_FROM) return 0;
+  return Math.min(Math.max((pageWidth - labelLeft + gutter) / pageWidth, 0), MAX_LABEL_SHARE);
+}
+
+/** The stop a key press walks to: the neighbour when standing at a stop, otherwise the one being approached or left. */
+export function neighbourStop(progress: number, active: number, direction: -1 | 1): number {
+  const settled = Math.abs(progress - active) < 0.02;
+  if (settled) return active + direction;
+  return direction > 0 ? Math.ceil(progress) : Math.floor(progress);
+}

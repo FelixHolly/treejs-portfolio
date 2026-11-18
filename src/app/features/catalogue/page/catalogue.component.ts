@@ -1,6 +1,9 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject } from "@angular/core";
 import { DOCUMENT } from "@angular/common";
-import { ROOMS } from "../../../core/place/places";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { NavigationEnd, Router } from "@angular/router";
+import { WorksService } from "../../../core/content/works.service";
+import { catalogueAnchor, placeFromHash, ROOMS } from "../../../core/place/places";
 import { PlaceService } from "../../../core/place/place.service";
 import { ViewModeService } from "../../../core/view-mode/view-mode.service";
 import { CorrespondenceComponent } from "../correspondence/correspondence.component";
@@ -30,9 +33,30 @@ export class CatalogueComponent {
     const place = inject(PlaceService);
     const document = inject(DOCUMENT);
     const destroyRef = inject(DestroyRef);
+    const router = inject(Router);
+    const slugs = inject(WorksService)
+      .works()
+      .map((work) => work.slug);
     inject(ViewModeService).active.set("catalogue");
 
+    // A link shared from the gallery (#works/kuechenschelle) is led to the same place on this page.
+    const adoptHash = () => {
+      const hash = document.location.hash.slice(1);
+      const place = placeFromHash(hash, slugs);
+      const anchor = place ? catalogueAnchor(place) : null;
+      if (anchor && anchor !== hash && !document.getElementById(hash)) {
+        void router.navigate([], { fragment: anchor, replaceUrl: true, queryParamsHandling: "preserve" });
+      }
+    };
+
+    // The router settles a typed-in hash first; adopting it earlier would be cancelled by that navigation.
+    router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd) adoptHash();
+    });
+
     afterNextRender(() => {
+      adoptHash();
+
       // A room is current while it crosses a band around the upper third of the viewport.
       const observer = new IntersectionObserver(
         (entries) => {

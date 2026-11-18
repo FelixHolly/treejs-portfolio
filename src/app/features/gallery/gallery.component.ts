@@ -29,7 +29,7 @@ import { FloorPlanComponent } from "./floor-plan/floor-plan.component";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { LightboxComponent } from "./lightbox/lightbox.component";
 import { GalleryView } from "./scene/gallery-view";
-import { LabelSpan, progressFromScroll, scrollTargetFor } from "./scroll-progress";
+import { labelShareOf, LabelSpan, neighbourStop, progressFromScroll, scrollTargetFor } from "./scroll-progress";
 import { buildStops } from "./stops";
 
 /** Room the fixed header needs above a label that is taller than the screen. */
@@ -98,15 +98,15 @@ export class GalleryComponent {
     afterNextRender(() => this.start(destroyRef));
   }
 
-  /** Walks to a stop; with `focus` the stop's heading takes keyboard focus on arrival. */
+  /** Walks to a stop; with `focus` the stop's heading takes keyboard focus as the walk sets off. */
   goTo(index: number, focus = false): void {
-    const window = this.document.defaultView;
-    const span = this.spans[index];
-    if (!window || !span) return;
-
-    const top = index === 0 ? 0 : scrollTargetFor(span, window.innerHeight, HEADER_CLEARANCE);
-    window.scrollTo({ top, behavior: this.reducedMotion ? "instant" : "smooth" });
+    this.scrollToStop(index, "smooth");
     if (focus) this.focusHeading(index);
+  }
+
+  skipToMain(event: Event): void {
+    event.preventDefault();
+    this.main().nativeElement.focus();
   }
 
   visit(place: string): void {
@@ -226,9 +226,7 @@ export class GalleryComponent {
       label.style.scrollMarginTop = index === 0 ? "0px" : `${Math.max(spare, HEADER_CLEARANCE)}px`;
     });
 
-    const side = boxes[1];
-    const beside = side && side.left > width * 0.3;
-    this.labelShare = beside ? (width - side.left + SIDE_GUTTER) / width : 0;
+    this.labelShare = labelShareOf(boxes[1]?.left, width, SIDE_GUTTER);
   }
 
   private syncFromScroll(): void {
@@ -281,14 +279,24 @@ export class GalleryComponent {
     const index = this.stops.findIndex((stop) => stop.place === place);
     if (index < 0 || index === this.activeIndex()) return;
 
+    this.scrollToStop(index, behavior);
+  }
+
+  private scrollToStop(index: number, behavior: ScrollBehavior): void {
+    const window = this.document.defaultView;
     const span = this.spans[index];
+    if (!window || !span) return;
+
     const top = index === 0 ? 0 : scrollTargetFor(span, window.innerHeight, HEADER_CLEARANCE);
     window.scrollTo({ top, behavior: this.reducedMotion ? "instant" : behavior });
   }
 
   private onKey(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.shiftKey && event.key !== " ") return;
     if ((event.target as Element | null)?.closest?.(INTERACTIVE)) return;
+    // A click inside the open lightbox can leave focus on the page body.
+    if (this.document.querySelector("dialog[open]")) return;
 
     const last = this.stops.length - 1;
     if (event.key === "Home" || event.key === "End") {
@@ -301,15 +309,7 @@ export class GalleryComponent {
     const index = this.activeIndex();
     if (direction === 0 || this.labelRunsOffScreen(index, direction)) return;
 
-    const settled = Math.abs(this.progress - index) < 0.02;
-    const next =
-      direction > 0
-        ? settled
-          ? index + 1
-          : Math.ceil(this.progress)
-        : settled
-          ? index - 1
-          : Math.floor(this.progress);
+    const next = neighbourStop(this.progress, index, direction);
     // Past either end the browser scrolls as usual, which reaches the exit plaque.
     if (next < 0 || next > last) return;
 
@@ -336,8 +336,8 @@ export class GalleryComponent {
   private labelRunsOffScreen(index: number, direction: -1 | 1): boolean {
     const window = this.document.defaultView;
     const span = this.spans[index];
-    if (!window || !span || index === 0) return false;
-    if (span.bottom - span.top <= window.innerHeight - HEADER_CLEARANCE) return false;
+    if (!window || !span || index === 0 || Math.abs(this.progress - index) > 0.02) return false;
+    if (!this.isTall(span)) return false;
 
     return direction > 0
       ? span.bottom - window.scrollY > window.innerHeight - 16
@@ -348,7 +348,14 @@ export class GalleryComponent {
   private followFocus(event: FocusEvent): void {
     const section = (event.target as Element | null)?.closest<HTMLElement>("[data-stop]");
     const index = Number(section?.dataset["stop"]);
-    if (section && index !== this.activeIndex()) this.goTo(index);
+    if (!section || index === this.activeIndex()) return;
+    // In a label taller than the screen the browser already scrolled the focused control into view.
+    if (!this.isTall(this.spans[index])) this.goTo(index);
+  }
+
+  private isTall(span: LabelSpan | undefined): boolean {
+    const height = this.document.defaultView?.innerHeight ?? 0;
+    return !!span && span.bottom - span.top > height - HEADER_CLEARANCE;
   }
 
   private focusHeading(index: number): void {

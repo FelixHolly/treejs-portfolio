@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from "@angular/core";
+import { RouterLink } from "@angular/router";
 import { roomOf, ROOMS } from "../../../../core/place/places";
 import { PlaceService } from "../../../../core/place/place.service";
 
 @Component({
   selector: "app-nav-items",
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
   templateUrl: "./nav-items.component.html",
 })
 export class NavItemsComponent {

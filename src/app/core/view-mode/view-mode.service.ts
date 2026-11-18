@@ -20,6 +20,7 @@ export class ViewModeService {
   private readonly router = inject(Router);
   private broken = false;
   private visitChoice: ViewMode | null = null;
+  private deviceChoice: ViewMode | null = null;
 
   /** The view currently on screen, set by whichever page rendered. */
   readonly active = signal<ViewMode>("catalogue");
@@ -28,10 +29,12 @@ export class ViewModeService {
     return !this.broken && this.environment.hasWebGL();
   }
 
-  /** A `?view=` request wins, then the visitor's own choice, then what suits the device. */
+  /** A `?view=` request wins and holds for the visit, then the visitor's own choice, then what suits the device. */
   resolve(requested: string | null | undefined): ViewMode {
+    if (isViewMode(requested)) this.visitChoice = requested;
     const stored = this.visitChoice ?? this.environment.storedChoice();
-    const wanted = isViewMode(requested) ? requested : isViewMode(stored) ? stored : this.deviceDefault();
+    // Decided once, so resizing the window mid-visit never swaps the view under the visitor.
+    const wanted = isViewMode(stored) ? stored : (this.deviceChoice ??= this.deviceDefault());
     return wanted === "gallery" && !this.galleryAvailable() ? "catalogue" : wanted;
   }
 

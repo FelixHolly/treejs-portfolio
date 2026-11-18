@@ -1,11 +1,12 @@
-<a href="#main" class="skip-link">Skip to main content</a>
+<a href="#main" class="skip-link" (click)="skipToMain($event)">Skip to main content</a>
 <header class="fixed top-0 left-0 right-0 z-50 bg-graphite/90 backdrop-blur-sm border-b border-graphite-700/60">
   <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center py-5 mx-auto c-space">
-      <a href="#home" class="font-display text-bone text-2xl tracking-wide hover:text-gold transition-colors">
+      <a routerLink="/" fragment="home" queryParamsHandling="preserve" class="font-display text-bone text-2xl tracking-wide hover:text-gold transition-colors">
         Felix Hollndonner
       </a>
 
+      <app-view-switch class="lg:hidden ml-auto mr-2" />
       <button
         type="button"
         (click)="isOpen.set(!isOpen())"
@@ -35,8 +36,5 @@
     <nav class="p-5" aria-label="Rooms">
       <app-nav-items (linkClick)="isOpen.set(false)" />
     </nav>
-    <div class="flex justify-center pb-5">
-      <app-view-switch />
-    </div>
   </div>
 </header>

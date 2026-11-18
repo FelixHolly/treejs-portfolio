@@ -114,10 +114,6 @@ export class CameraPath {
     this.lastPoint = points.length - 1;
   }
 
-  get stopCount(): number {
-    return this.poses.length;
-  }
-
   /** Writes the camera pose at `progress` stops along the route into `out`. */
   sample(progress: number, out: Pose): void {
     const last = this.poses.length - 1;

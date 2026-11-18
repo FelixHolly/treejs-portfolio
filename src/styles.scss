@@ -222,3 +222,19 @@ html.gallery-active {
 html.gallery-active {
   scroll-padding-top: 5.25rem;
 }
+
+/* The static entrance in index.html: same place and type as the real one, so the swap is invisible */
+.shell {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 8rem 1.25rem 0;
+  pointer-events: none;
+
+  @media (min-width: 640px) {
+    padding-inline: 2.5rem;
+  }
+}

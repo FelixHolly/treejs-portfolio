@@ -9,13 +9,13 @@ export const WALL_HEIGHT = 5.2;
 export const WALL_THICKNESS = 0.4;
 export const DOOR = { width: 2.4, height: 3.3 } as const;
 export const ROTUNDA = { radius: 5, height: 9.5, plinthHeight: 0.9, lionHeight: 2.7 } as const;
-export const ENFILADE = { from: 5, to: 53 } as const;
-export const DOOR_XS = [5.2, 15.6, 36, 44.4] as const;
-export const END_WALL_X = 52.8;
+export const ENFILADE = { from: 5, to: 56 } as const;
+export const DOOR_XS = [5.2, 15.6, 39, 47.4] as const;
+export const END_WALL_X = 55.8;
 export const MEDALLION = { x: 10.4, y: 2.05, radius: 0.78 } as const;
-export const LECTERN = { x: 40.4, z: -1.3 } as const;
-export const DESK = { x: 48.8, z: -1.6 } as const;
-export const BENCH = { x: 31.4, z: 3.45 } as const;
+export const LECTERN = { x: 43.4, z: -3.25 } as const;
+export const DESK = { x: 51.6, z: -3.2 } as const;
+export const BENCH = { x: 29, z: 3.45 } as const;
 
 export interface FrameSlot {
   x: number;
@@ -38,7 +38,8 @@ export interface PieceSlot {
 
 const COMMISSION = { x: 21.6, y: 1.95, width: 2.4, height: 1.5, outerHalf: 1.41 } as const;
 const COMPANION = { offset: 2.5, rise: 0.56, width: 1.12, height: 0.7, outerHalf: 0.71 } as const;
-const STUDY = { x: 29.6, step: 4.2, y: 1.9 } as const;
+// Far enough along that a study never shows beside the commission's label
+const STUDY = { x: 32.6, step: 4.2, y: 1.9 } as const;
 
 /** Hangs the works along Room II: a commission with its companions stacked beside it, then the studies. */
 export function pieceSlots(works: readonly SceneWork[]): PieceSlot[] {

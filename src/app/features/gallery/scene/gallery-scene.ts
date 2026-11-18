@@ -25,7 +25,7 @@ import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
 import { FramedPicture, framedPicture, lectern, medallion, writingDesk } from "./exhibits";
 import { GalleryView, GalleryViewOptions } from "./gallery-view";
-import { DOOR, DOOR_XS, FOV, HALF_DEPTH, HANG_Z, MEDALLION, pieceSlots, PieceSlot, ROTUNDA } from "./layout";
+import { DESK, DOOR, DOOR_XS, FOV, HALF_DEPTH, HANG_Z, LECTERN, MEDALLION, pieceSlots, PieceSlot, ROTUNDA } from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
 import { coverFit, inscriptionTexture } from "./textures";
@@ -312,6 +312,19 @@ export class GalleryScene implements GalleryView {
       if (side === 1) frieze.rotation.y = Math.PI;
       this.scene.add(frieze);
     }
+
+    const wallLine = (text: string, x: number, y: number, width: number) => {
+      const line = new Mesh(
+        new PlaneGeometry(width, width * 0.085),
+        lettering(
+          inscriptionTexture({ text: text.toUpperCase(), font: '500 96px "Boska", Georgia, serif', color: "#c7a44a", width: 2048, height: 174, spacing: "0.22em" }),
+        ),
+      );
+      line.position.set(x, y, HANG_Z + 0.02);
+      this.scene.add(line);
+    };
+    this.options.visitors.forEach((name, index) => wallLine(name, LECTERN.x, 2.85 - index * 0.42, 3));
+    wallLine("Correspondence", DESK.x, 2.7, 3.4);
 
     ROOM_INSCRIPTIONS.forEach((text, index) => {
       const texture = inscriptionTexture({

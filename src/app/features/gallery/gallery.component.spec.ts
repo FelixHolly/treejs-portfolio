@@ -149,6 +149,7 @@ describe("GalleryComponent", () => {
       ]);
       expect(options?.works[1].images[0].portrait).toBeTrue();
       expect(options?.frieze).toContain("Angular");
+      expect(options?.visitors).toEqual(["Polyoint AG", "Eurotours"]);
       expect(options?.assets.lionModel).toMatch(/\.glb$/);
       expect(options?.reducedMotion).toBeFalse();
       expect(scene.resize).toHaveBeenCalled();
@@ -354,6 +355,36 @@ describe("GalleryComponent", () => {
       history.replaceState(null, "", "#attic");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
       expect(scrollTo).not.toHaveBeenCalled();
+    });
+
+    it("leaves a history entry on a deliberate jump, so Back returns to the stop before", () => {
+      const push = spyOn(history, "pushState").and.callThrough();
+
+      element.querySelectorAll<HTMLButtonElement>("app-floor-plan button")[3].click();
+
+      expect(push).toHaveBeenCalledTimes(1);
+      expect(location.hash).toBe("#visitors-book");
+    });
+
+    it("adds no history entry when asked to walk to the stop the visitor is already at", () => {
+      const push = spyOn(history, "pushState").and.callThrough();
+
+      element.querySelector<HTMLButtonElement>(".wordmark")!.click();
+
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it("walks back to the entrance when Back returns to the address without a hash", () => {
+      history.replaceState(null, "", "#works");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      scrollTo.calls.reset();
+      fixture.componentInstance.activeIndex.set(2);
+
+      history.replaceState(null, "", location.pathname);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
     });
 
     it("pauses the scene while the tab is hidden", () => {

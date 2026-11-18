@@ -101,6 +101,7 @@ export class GalleryComponent {
 
   /** Walks to a stop; with `focus` the stop's heading takes keyboard focus as the walk sets off. */
   goTo(index: number, focus = false): void {
+    if (focus) this.remember(index);
     this.scrollToStop(index, "smooth");
     if (focus) this.focusHeading(index);
   }
@@ -126,6 +127,7 @@ export class GalleryComponent {
     const main = this.main().nativeElement;
     let destroyed = false;
 
+    this.document.getElementById("shell")?.remove();
     root.classList.add("gallery-active");
     this.measure();
     this.restoreFromHash("instant");
@@ -144,6 +146,7 @@ export class GalleryComponent {
       this.scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
     };
     const onHash = () => this.restoreFromHash("smooth");
+    const onBack = () => this.restoreFromHash("smooth");
     const onVisibility = () => this.scene?.setPaused(this.document.hidden);
     const onFocus = (event: FocusEvent) => this.followFocus(event);
 
@@ -152,6 +155,7 @@ export class GalleryComponent {
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("hashchange", onHash);
+    window.addEventListener("popstate", onBack);
     this.document.addEventListener("visibilitychange", onVisibility);
     main.addEventListener("focusin", onFocus);
 
@@ -190,6 +194,7 @@ export class GalleryComponent {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("popstate", onBack);
       this.document.removeEventListener("visibilitychange", onVisibility);
       window.clearTimeout(this.fadeTimer);
       window.clearTimeout(sceneTimer);
@@ -207,6 +212,7 @@ export class GalleryComponent {
         images: work.images.map((image) => ({ src: image.src, portrait: image.orientation === "portrait" })),
       })),
       frieze: this.developer.frieze,
+      visitors: this.entries.map((entry) => entry.company),
       reducedMotion: this.reducedMotion,
       assets: { dracoPath: environment.assets.dracoPath, lionModel: environment.assets.models.heroModel },
       onSlow: () => this.slow.set(true),
@@ -249,12 +255,21 @@ export class GalleryComponent {
     const stop = this.stops[index];
     this.activeIndex.set(index);
     this.place.current.set(stop.place);
-    // replaceState keeps every stop linkable without filling the history with one entry per stop
-    window?.history.replaceState(
-      window.history.state,
-      "",
-      index === 0 ? window.location.pathname + window.location.search : `#${stop.place}`,
-    );
+    // Scrolling past stops only rewrites the current entry; history grows on deliberate jumps alone
+    window?.history.replaceState(window.history.state, "", this.urlFor(index));
+  }
+
+  /** A deliberate jump leaves a history entry behind, so Back walks to where the visitor came from. */
+  private remember(index: number): void {
+    const window = this.document.defaultView;
+    const stop = this.stops[index];
+    if (!window || !stop || index === this.activeIndex()) return;
+    window.history.pushState(window.history.state, "", this.urlFor(index));
+  }
+
+  private urlFor(index: number): string {
+    const location = this.document.location;
+    return index === 0 ? location.pathname + location.search : `#${this.stops[index].place}`;
   }
 
   private crossFadeTo(index: number): void {
@@ -277,7 +292,8 @@ export class GalleryComponent {
       window.location.hash,
       this.works.map((work) => work.slug),
     );
-    const index = this.stops.findIndex((stop) => stop.place === place);
+    // No hash is the entrance, which is where Back lands after the first jump
+    const index = window.location.hash.length > 1 ? this.stops.findIndex((stop) => stop.place === place) : 0;
     if (index < 0 || index === this.activeIndex()) return;
 
     this.scrollToStop(index, behavior);

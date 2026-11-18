@@ -124,9 +124,9 @@ export function buildArchitecture(palette: Palette): Group {
   const length = ENFILADE.to - ENFILADE.from;
   const midX = (ENFILADE.from + ENFILADE.to) / 2;
 
-  const floor = new Mesh(new PlaneGeometry(64, 12), palette.floor);
+  const floor = new Mesh(new PlaneGeometry(68, 12), palette.floor);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(24, 0, 0);
+  floor.position.set(26, 0, 0);
   floor.receiveShadow = true;
 
   const ceiling = new Mesh(new PlaneGeometry(length, HALF_DEPTH * 2 + 0.4), palette.ceiling);

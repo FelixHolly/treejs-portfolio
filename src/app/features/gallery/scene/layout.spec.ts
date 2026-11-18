@@ -53,7 +53,7 @@ describe("pieceSlots", () => {
     const edges = slots.map((slot) => [slot.centre.x - slot.span / 2, slot.centre.x + slot.span / 2]);
 
     expect(edges[0][0]).toBeGreaterThan(15.8);
-    expect(edges[2][1]).toBeLessThan(35.8);
+    expect(edges[2][1]).toBeLessThan(38.8);
     expect(edges[1][0]).toBeGreaterThan(edges[0][1]);
     expect(edges[2][0]).toBeGreaterThan(edges[1][1]);
     expect(ENFILADE.to).toBeGreaterThan(edges[2][1]);

@@ -28,7 +28,7 @@ function pathFor(works: SceneWork[], framing: Framing): { path: CameraPath; pose
 /** True when a point is inside the rotunda, the enfilade, or the doorway joining them. */
 function insideBuilding(point: Vector3): boolean {
   const inRotunda = Math.hypot(point.x, point.z) < ROTUNDA.radius - 0.2;
-  const inEnfilade = point.x > 4.8 && point.x < 52.6 && Math.abs(point.z) < HALF_DEPTH - 0.15;
+  const inEnfilade = point.x > 4.8 && point.x < 55.6 && Math.abs(point.z) < HALF_DEPTH - 0.15;
   return inRotunda || inEnfilade;
 }
 

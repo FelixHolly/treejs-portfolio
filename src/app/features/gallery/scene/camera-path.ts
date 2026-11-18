@@ -77,8 +77,8 @@ export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[
     wallPose(MEDALLION.x, 1.95, MEDALLION.radius * 2 + 0.6, 3.4, framing),
     overviewPose(slots, framing),
     ...slots.map((slot) => wallPose(slot.centre.x, slot.centre.y, slot.span, slot.distance, framing)),
-    objectPose(new Vector3(38.7, EYE, 1.1), new Vector3(LECTERN.x, 1.1, LECTERN.z), framing.labelShare, framing, 1.6),
-    objectPose(new Vector3(47, EYE, 1.1), new Vector3(DESK.x, 0.95, DESK.z), framing.labelShare, framing, 1.6),
+    wallPose(LECTERN.x, 1.3, 3, 4.2, framing),
+    wallPose(DESK.x, 1.25, 3.4, 4.4, framing),
   ];
 }
 

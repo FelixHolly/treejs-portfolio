@@ -7,6 +7,8 @@ export interface SceneWork {
 export interface GalleryViewOptions {
   works: readonly SceneWork[];
   frieze: readonly string[];
+  /** Names lettered on the wall behind the visitors' book. */
+  visitors: readonly string[];
   reducedMotion: boolean;
   assets: { dracoPath: string; lionModel: string };
   /** Called once if the first frames average under 30 fps. */

@@ -55,6 +55,7 @@ export class CatalogueComponent {
     });
 
     afterNextRender(() => {
+      document.getElementById("shell")?.remove();
       adoptHash();
 
       // A room is current while it crosses a band around the upper third of the viewport.

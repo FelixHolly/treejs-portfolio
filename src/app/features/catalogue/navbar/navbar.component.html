@@ -6,7 +6,6 @@
         Felix Hollndonner
       </a>
 
-      <app-view-switch class="lg:hidden ml-auto mr-2" />
       <button
         type="button"
         (click)="isOpen.set(!isOpen())"
@@ -36,5 +35,8 @@
     <nav class="p-5" aria-label="Rooms">
       <app-nav-items (linkClick)="isOpen.set(false)" />
     </nav>
+    <div class="flex justify-center pb-5">
+      <app-view-switch />
+    </div>
   </div>
 </header>

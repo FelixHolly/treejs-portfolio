@@ -4,6 +4,7 @@ import {
   Color,
   CylinderGeometry,
   Fog,
+  Group,
   Material,
   Mesh,
   MeshBasicMaterial,
@@ -64,6 +65,7 @@ export class GalleryScene implements GalleryView {
   private running = false;
   private paused = false;
   private disposed = false;
+  private compiled = false;
   private measuredFrames = 0;
   private measuredSeconds = 0;
 
@@ -93,18 +95,16 @@ export class GalleryScene implements GalleryView {
 
     this.cancelLion = loadLion(
       options.assets,
-      (lion) => {
-        this.scene.add(lion);
-        this.renderer.shadowMap.needsUpdate = true;
-        this.raiseLights();
-      },
-      () => {
-        this.renderer.shadowMap.needsUpdate = true;
-        this.raiseLights();
-      },
+      (lion) => void this.unveil(lion),
+      () => this.raiseLights(),
     );
 
     this.resize(0);
+    // Shaders compile in the background; a blocking first render would freeze the page for most of a second.
+    this.renderer.compileAsync(this.scene, this.camera).finally(() => {
+      this.compiled = true;
+      this.invalidate();
+    });
   }
 
   setProgress(progress: number): void {
@@ -170,7 +170,7 @@ export class GalleryScene implements GalleryView {
 
   /** Renders only while something is changing; a still gallery costs nothing. */
   private invalidate(): void {
-    if (this.rafId || this.paused || this.disposed) return;
+    if (this.rafId || this.paused || this.disposed || !this.compiled) return;
     if (!this.running) this.lastFrame = performance.now();
     this.rafId = requestAnimationFrame(this.frame);
   }
@@ -202,6 +202,18 @@ export class GalleryScene implements GalleryView {
     this.measure(seconds);
     if (this.running) this.invalidate();
   };
+
+  private async unveil(lion: Group): Promise<void> {
+    try {
+      await this.renderer.compileAsync(lion, this.camera, this.scene);
+    } catch {
+      // A failed precompile only means the statue's first frame compiles on the spot.
+    }
+    if (this.disposed) return;
+    this.scene.add(lion);
+    this.renderer.shadowMap.needsUpdate = true;
+    this.raiseLights();
+  }
 
   private raiseLights(): void {
     if (this.options.reducedMotion) {

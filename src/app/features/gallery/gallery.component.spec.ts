@@ -162,7 +162,7 @@ describe("GalleryComponent", () => {
       fixture.detectChanges();
       const notice = element.querySelector(".notice")!;
       expect(notice.textContent).toContain("running slowly");
-      expect(notice.querySelector("app-view-switch button")?.textContent?.trim()).toBe("Read the catalogue");
+      expect(notice.querySelector("app-view-switch button")?.getAttribute("aria-label")).toBe("Read the catalogue");
 
       notice.querySelector<HTMLButtonElement>('button[aria-label="Dismiss this notice"]')!.click();
       fixture.detectChanges();

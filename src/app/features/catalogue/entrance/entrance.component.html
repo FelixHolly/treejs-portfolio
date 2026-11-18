@@ -1,7 +1,7 @@
 <section class="entrance relative w-full min-h-screen flex flex-col justify-between items-center pt-32 pb-10" id="home">
     @if (lion() !== 'failed') {
         <picture class="lion" [class.lion--ready]="lion() === 'ready'">
-            <source media="(max-width: 800px)" srcset="assets/lion-960.webp" width="960" height="1634">
+            <source media="(max-aspect-ratio: 1/1)" srcset="assets/lion-960.webp" width="960" height="1634">
             <img ngSrc="assets/lion-1600.webp" width="1600" height="1125" priority
                  alt="Statue of a Viennese lion, the Vienna Löwe"
                  (load)="lion.set('ready')" (error)="lion.set('failed')">
@@ -26,5 +26,6 @@
                 <app-icon-arrow-down />
             </a>
         </div>
+        <app-view-switch class="lg:hidden" />
     </div>
 </section>

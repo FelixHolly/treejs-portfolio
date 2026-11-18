@@ -42,7 +42,7 @@ export class GalleryLights {
     this.lionKey.castShadow = true;
     this.lionKey.shadow.mapSize.set(1024, 1024);
     this.lionKey.shadow.bias = -0.0006;
-    this.objects.push(new HemisphereLight(0xd8d2c4, 0x1a1a1e, 1.9));
+    this.objects.push(new HemisphereLight(0xd8d6d2, 0x1a1a1e, 1.9));
     this.addLight(this.lionKey);
     this.addLight(this.lionRim);
 
@@ -85,7 +85,8 @@ export class GalleryLights {
     this.lionRim.intensity = 90 * lionLevel * atEntrance;
 
     for (const piece of this.pieces) {
-      const lit = Math.max(...piece.stops.map((stop) => nearness(progress, stop, 1.6)));
+      let lit = 0;
+      for (const stop of piece.stops) lit = Math.max(lit, nearness(progress, stop, 1.6));
       piece.light.intensity = piece.full * (0.3 + 0.7 * lit);
       piece.light.angle = MathUtils.lerp(piece.wide, piece.tight, nearness(progress, piece.focus, 1));
     }

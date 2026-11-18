@@ -20,18 +20,20 @@ describe("ViewSwitchComponent", () => {
   });
 
   const button = () => fixture.nativeElement.querySelector("button") as HTMLButtonElement | null;
+  const text = () => button()?.textContent?.replace(/\s+/g, " ").trim();
 
   it("offers the gallery from the catalogue", () => {
     fixture.detectChanges();
 
-    expect(button()?.textContent?.trim()).toBe("Enter the gallery");
+    expect(text()).toBe("Enter the gallery");
+    expect(button()?.getAttribute("aria-label")).toBe("Enter the gallery");
   });
 
   it("offers the catalogue from the gallery", () => {
     viewMode.active.set("gallery");
     fixture.detectChanges();
 
-    expect(button()?.textContent?.trim()).toBe("Read the catalogue");
+    expect(text()).toBe("Read the catalogue");
   });
 
   it("does not offer a gallery the browser cannot show", () => {
@@ -46,7 +48,17 @@ describe("ViewSwitchComponent", () => {
     viewMode.active.set("gallery");
     fixture.detectChanges();
 
-    expect(button()?.textContent?.trim()).toBe("Read the catalogue");
+    expect(text()).toBe("Read the catalogue");
+  });
+
+  it("keeps the full label unless asked to be compact, and then still names itself in full", () => {
+    fixture.detectChanges();
+    expect(button()?.querySelector("span")?.classList.contains("max-sm:hidden")).toBeFalse();
+
+    fixture.componentRef.setInput("compact", true);
+    fixture.detectChanges();
+    expect(button()?.querySelector("span")?.classList.contains("max-sm:hidden")).toBeTrue();
+    expect(button()?.getAttribute("aria-label")).toBe("Enter the gallery");
   });
 
   it("switches to the offered view when pressed", () => {

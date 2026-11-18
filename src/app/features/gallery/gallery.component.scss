@@ -26,7 +26,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem clamp(1.25rem, 3vw, 2.5rem) 1.75rem;
-  background: linear-gradient(to bottom, rgba(20, 20, 23, 0.92) 35%, rgba(20, 20, 23, 0));
+  /* Solid behind the bar itself, so the bright letter never shows through it */
+  background: linear-gradient(to bottom, #141417 70%, rgba(20, 20, 23, 0));
   pointer-events: none;
 
   > * {
@@ -36,7 +37,7 @@
   @media (max-width: 899px) {
     gap: 0.5rem;
     padding: 0.75rem;
-    background: rgba(20, 20, 23, 0.94);
+    background: #141417;
   }
 }
 
@@ -84,15 +85,20 @@ main {
   max-width: calc(100vw - 2.5rem);
   margin-left: auto;
   margin-right: clamp(1.25rem, 6vw, 6rem);
-  padding: 1.75rem;
-  background: rgba(20, 20, 23, 0.9);
+  padding: 1.5rem 1.75rem;
+  background: rgba(20, 20, 23, 0.94);
   border: 1px solid rgba(199, 164, 74, 0.28);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
   opacity: 0;
   transform: translateY(14px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: none;
+
+  /* On short screens a wider label needs fewer lines and still fits under the header */
+  @media (min-width: 900px) and (max-height: 800px) {
+    width: clamp(22rem, 36vw, 30rem);
+    padding-block: 1.25rem;
+  }
   scroll-snap-align: start;
 
   @media (max-width: 899px) {
@@ -100,11 +106,13 @@ main {
   }
 }
 
+/* The label waits a beat, so it appears as the camera settles rather than while it is still turning */
 .stop--active .label,
 .label:focus-within {
   opacity: 1;
   transform: none;
   pointer-events: auto;
+  transition: opacity 0.6s ease 0.35s, transform 0.6s ease 0.35s;
 }
 
 .label app-room-label {
@@ -119,14 +127,15 @@ main {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  max-width: none;
   min-height: 100vh;
   min-height: 100svh;
   margin: 0;
   padding: 8rem 1.25rem 2.5rem;
-  background: linear-gradient(to top, rgba(20, 20, 23, 0), rgba(20, 20, 23, 0.8) 10%, rgba(20, 20, 23, 0) 36%);
+  background: none;
   border: 0;
   box-shadow: none;
-  backdrop-filter: none;
+  transition: opacity 0.3s ease;
 }
 
 .entrance-head {
@@ -145,6 +154,17 @@ main {
   width: min(56rem, 100%);
 }
 
+/* The second plaque and the hint cross the lit plinth, so each carries its own dark backing */
+.plaques app-view-switch,
+.hint {
+  background: rgba(20, 20, 23, 0.95);
+}
+
+.hint {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.125rem;
+}
+
 .plaques {
   display: flex;
   flex-wrap: wrap;
@@ -158,7 +178,6 @@ main {
   padding: 0;
   background: none;
   border: 0;
-  backdrop-filter: none;
 }
 
 .work-list {

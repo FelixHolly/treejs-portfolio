@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, viewChild } from "@angular/core";
 
 /**
  * The visitor's torch: a faint warm glow that follows the cursor across
@@ -16,14 +10,13 @@ import {
  */
 @Component({
   selector: "app-torch",
-  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<div class="torch" #glow aria-hidden="true"></div>`,
   styleUrls: ["./torch.component.scss"],
   host: { "(document:mousemove)": "onMouseMove($event)" },
 })
-export class TorchComponent implements AfterViewInit, OnDestroy {
-  @ViewChild("glow", { static: true })
-  glowRef!: ElementRef<HTMLDivElement>;
+export class TorchComponent implements OnDestroy {
+  private readonly glow = viewChild.required<ElementRef<HTMLDivElement>>("glow");
 
   private targetX = 0;
   private targetY = 0;
@@ -32,10 +25,7 @@ export class TorchComponent implements AfterViewInit, OnDestroy {
   private lit = false;
   private rafId = 0;
   private readonly ease =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? 1
-      : 0.1;
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 0.1;
 
   onMouseMove(event: MouseEvent): void {
     this.targetX = event.clientX;
@@ -45,24 +35,22 @@ export class TorchComponent implements AfterViewInit, OnDestroy {
       this.lit = true;
       this.x = this.targetX;
       this.y = this.targetY;
-      this.glowRef.nativeElement.style.opacity = "1";
+      this.glow().nativeElement.style.opacity = "1";
     }
-  }
-
-  ngAfterViewInit(): void {
-    const glow = this.glowRef.nativeElement;
-    const follow = () => {
-      this.rafId = requestAnimationFrame(follow);
-      if (!this.lit) return;
-
-      this.x += (this.targetX - this.x) * this.ease;
-      this.y += (this.targetY - this.y) * this.ease;
-      glow.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) translate(-50%, -50%)`;
-    };
-    follow();
+    if (!this.rafId) this.rafId = requestAnimationFrame(this.follow);
   }
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.rafId);
   }
+
+  /** Runs only while the glow still trails the cursor, so a resting mouse costs no frames. */
+  private readonly follow = (): void => {
+    this.x += (this.targetX - this.x) * this.ease;
+    this.y += (this.targetY - this.y) * this.ease;
+    this.glow().nativeElement.style.transform = `translate3d(${this.x}px, ${this.y}px, 0) translate(-50%, -50%)`;
+
+    const settled = Math.abs(this.targetX - this.x) < 0.5 && Math.abs(this.targetY - this.y) < 0.5;
+    this.rafId = settled ? 0 : requestAnimationFrame(this.follow);
+  };
 }

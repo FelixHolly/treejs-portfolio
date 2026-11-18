@@ -6,6 +6,7 @@ import {
   Group,
   Material,
   Mesh,
+  MeshBasicMaterial,
   MeshLambertMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
@@ -27,9 +28,10 @@ export interface Palette {
 
 export function createPalette(): Palette {
   return {
-    wall: new MeshLambertMaterial({ color: 0x5f5f6a }),
-    wallInside: new MeshLambertMaterial({ color: 0x5f5f6a, side: BackSide }),
-    ceiling: new MeshLambertMaterial({ color: 0x1d1d21 }),
+    wall: new MeshLambertMaterial({ color: 0x646362 }),
+    wallInside: new MeshLambertMaterial({ color: 0x646362, side: BackSide }),
+    // Unlit: a ceiling only ever faces the dark half of the ambient light and would render pure black
+    ceiling: new MeshBasicMaterial({ color: 0x1b1b1f }),
     floor: new MeshStandardMaterial({ color: 0x2b2b30, roughness: 0.42, metalness: 0 }),
     gold: new MeshStandardMaterial({ color: 0xc7a44a, roughness: 0.38, metalness: 0.65 }),
     bone: new MeshLambertMaterial({ color: 0xe8e5de }),

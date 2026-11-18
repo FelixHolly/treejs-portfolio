@@ -34,7 +34,7 @@ import { labelShareOf, LabelSpan, neighbourStop, progressFromScroll, scrollTarge
 import { buildStops } from "./stops";
 
 /** Room the fixed header needs above a label that is taller than the screen. */
-const HEADER_CLEARANCE = 96;
+const HEADER_CLEARANCE = 84;
 const CROSS_FADE_MS = 260;
 /** Breathing room kept between a piece and the label beside it, in pixels. */
 const SIDE_GUTTER = 24;

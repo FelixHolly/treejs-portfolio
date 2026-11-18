@@ -6,7 +6,7 @@
     Felix Hollndonner
   </button>
   <app-floor-plan [current]="currentRoom().id" (visit)="visit($event)" />
-  <app-view-switch />
+  <app-view-switch compact />
 </header>
 
 <main #main id="main" tabindex="-1">
@@ -36,7 +36,7 @@
                 </button>
                 <app-view-switch />
               </div>
-              <p class="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-stone text-center">Scroll, or use the arrow keys, to walk through</p>
+              <p class="hint font-mono text-[0.7rem] uppercase tracking-[0.2em] text-stone text-center">Scroll, or use the arrow keys, to walk through</p>
             </div>
           }
           @case ("developer") {
@@ -71,7 +71,7 @@
           @case ("work") {
             @if (stop.work; as work) {
               <app-wall-label [work]="work" />
-              <button type="button" class="view-switch mt-5" (click)="closerLook(work)">Closer look</button>
+              <button type="button" class="view-switch mt-4" (click)="closerLook(work)">Closer look</button>
             }
           }
           @case ("visitors-book") {

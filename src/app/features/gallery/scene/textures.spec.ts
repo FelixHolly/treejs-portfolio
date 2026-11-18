@@ -13,7 +13,7 @@ function inked(canvas: HTMLCanvasElement, x: number, y: number, width: number, h
 
 describe("nameBoardTexture", () => {
   it("is drawn at the board's own proportions, so the lettering is never stretched", () => {
-    const canvas = nameBoardTexture(["Polyoint AG", "Eurotours"], 2.4).image as HTMLCanvasElement;
+    const canvas = nameBoardTexture(["Polypoint AG", "Eurotours"], 2.4).image as HTMLCanvasElement;
 
     expect(canvas.width / canvas.height).toBeCloseTo(2.4, 1);
   });

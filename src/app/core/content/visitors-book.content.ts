@@ -9,7 +9,7 @@ export const VISITOR_ENTRIES: readonly VisitorEntry[] = [
     quote:
       "Felix H. demonstrated his willingness to learn, flexibility, and strong comprehension skills by quickly adapting to new technologies such as Angular. His technically sound and conscientious approach consistently delivered flawless results.",
     role: "Team Lead",
-    company: "Polyoint AG",
+    company: "Polypoint AG",
   },
   {
     quote:

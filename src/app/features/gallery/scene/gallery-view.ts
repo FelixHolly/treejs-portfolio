@@ -1,6 +1,6 @@
 export interface SceneWork {
   slug: string;
-  kind: "commission" | "study";
+  kind: "commission" | "study" | "self-portrait";
   images: { src: string; portrait: boolean }[];
 }
 

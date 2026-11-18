@@ -168,7 +168,7 @@ describe("GalleryComponent", () => {
       ]);
       expect(options?.works[1].images[0].portrait).toBeTrue();
       expect(options?.frieze).toContain("Angular");
-      expect(options?.visitors).toEqual(["Polyoint AG", "Eurotours"]);
+      expect(options?.visitors).toEqual(["Polypoint AG", "Eurotours"]);
       expect(options?.assets.lionModel).toMatch(/\.glb$/);
       expect(options?.reducedMotion).toBeFalse();
       expect(scene.resize).toHaveBeenCalled();

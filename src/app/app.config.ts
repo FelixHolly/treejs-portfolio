@@ -1,4 +1,4 @@
-import { ApplicationConfig, ErrorHandler, isDevMode, provideExperimentalZonelessChangeDetection } from "@angular/core";
+import { ApplicationConfig, ErrorHandler, isDevMode, provideZonelessChangeDetection } from "@angular/core";
 import { provideRouter, withInMemoryScrolling, withRouterConfig } from "@angular/router";
 import { provideServiceWorker } from "@angular/service-worker";
 
@@ -7,7 +7,7 @@ import { GlobalErrorHandler } from "./core/error-handler/global-error-handler.se
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection(),
+    provideZonelessChangeDetection(),
     // Old deep links (/#projects) must land on their room once the lazy page has rendered
     provideRouter(
       routes,

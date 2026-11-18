@@ -1,5 +1,5 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject } from "@angular/core";
-import { DOCUMENT } from "@angular/common";
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject, DOCUMENT } from "@angular/core";
+
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { NavigationEnd, Router } from "@angular/router";
 import { WorksService } from "../../../core/content/works.service";

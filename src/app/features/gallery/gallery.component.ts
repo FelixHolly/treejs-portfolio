@@ -8,8 +8,9 @@ import {
   inject,
   signal,
   viewChild,
+  DOCUMENT
 } from "@angular/core";
-import { DOCUMENT } from "@angular/common";
+
 import { RouterLink } from "@angular/router";
 import { environment } from "../../../environments/environment";
 import { DEVELOPER } from "../../core/content/developer.content";

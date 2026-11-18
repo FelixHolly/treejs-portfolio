@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from "@angular/core";
-import { DOCUMENT } from "@angular/common";
+import { ChangeDetectionStrategy, Component, inject, signal, DOCUMENT } from "@angular/core";
+
 import { RouterLink } from "@angular/router";
 import { ViewSwitchComponent } from "../../../shared/view-switch/view-switch.component";
 import { NavItemsComponent } from "./nav-items/nav-items.component";

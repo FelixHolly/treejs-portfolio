@@ -1,6 +1,5 @@
 $ink: #141417;
 $paper: #e8e5de;
-$rule: 2rem;
 
 /* The letter: a bone paper sheet under a spotlight, the only light
    surface on the site. Typed correspondence on museum stationery. */
@@ -60,11 +59,6 @@ $rule: 2rem;
     radial-gradient(circle, $paper 2.6px, transparent 3px) -4px -4px / 8px 8px,
     #f7f4ee;
   transform: rotate(4deg);
-
-  @media (max-width: 400px) {
-    width: 56px;
-    height: 72px;
-  }
 }
 
 .stamp-face {
@@ -121,7 +115,6 @@ $rule: 2rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: $ink;
-  transition: background-color 0.2s ease, color 0.2s ease;
 
   &:hover {
     background: $ink;
@@ -138,8 +131,9 @@ $rule: 2rem;
 
 /* Writing paper: one ruled line under every line of text, moving with the text when it scrolls */
 .ruled {
+  --rule: 2rem;
   width: 100%;
-  min-height: $rule * 4;
+  min-height: calc(var(--rule) * 3);
   padding: 0 0.25rem;
   border: 0;
   /* The last line is drawn strongly enough to mark where the field ends */
@@ -148,16 +142,20 @@ $rule: 2rem;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent calc(#{$rule} - 1px),
-    rgba(20, 20, 23, 0.32) calc(#{$rule} - 1px),
-    rgba(20, 20, 23, 0.32) $rule
+    transparent calc(var(--rule) - 1px),
+    rgba(20, 20, 23, 0.32) calc(var(--rule) - 1px),
+    rgba(20, 20, 23, 0.32) var(--rule)
   );
   background-attachment: local;
   font: inherit;
   font-size: 1rem;
-  line-height: $rule;
-  color: $ink;
+  line-height: var(--rule);
+  color: #141417;
   resize: vertical;
+
+  @media (min-height: 861px) {
+    min-height: calc(var(--rule) * 4);
+  }
 }
 
 .signature {
@@ -196,7 +194,6 @@ $rule: 2rem;
 
 .seal {
   animation: press 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-  filter: drop-shadow(0 2px 3px rgba(20, 20, 23, 0.35));
 }
 
 @keyframes press {
@@ -250,4 +247,58 @@ $rule: 2rem;
 .letter-sheet :is(a, button, input, textarea, [tabindex]):focus-visible {
   outline: 2px solid $ink;
   outline-offset: 3px;
+}
+
+/* On a short screen the whole letter, from its heading to its links, fits under the header at once */
+@media (max-height: 860px) and (min-width: 640px) {
+  .letter-body {
+    padding: 1.1rem 2rem 0.75rem;
+
+    .head-text {
+      font-size: 2.25rem;
+      line-height: 1.1;
+    }
+
+    .room-number {
+      margin-bottom: 0.4rem;
+    }
+  }
+
+  .intro {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .letter-form {
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+  }
+
+  .chip {
+    min-height: 2rem;
+  }
+
+  .field-btn {
+    min-height: 2.75rem;
+    padding-block: 0.5rem;
+  }
+
+  .salutation {
+    font-size: 1.4rem;
+  }
+
+  .ruled {
+    --rule: 1.75rem;
+  }
+
+  .signature .field-input {
+    min-height: 2.25rem;
+    padding-block: 0.25rem;
+  }
+
+  .desk-links {
+    margin-top: 0.8rem;
+    padding-top: 0.6rem;
+  }
 }

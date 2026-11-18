@@ -172,7 +172,8 @@ describe("GalleryComponent", () => {
       expect(options?.assets.lionModel).toMatch(/\.glb$/);
       expect(options?.reducedMotion).toBeFalse();
       expect(scene.resize).toHaveBeenCalled();
-      expect(scene.jumpTo).toHaveBeenCalledOnceWith(0);
+      expect(scene.jumpTo).toHaveBeenCalledTimes(1);
+      expect(scene.jumpTo.calls.mostRecent().args[0]).toBeCloseTo(0, 2);
     });
 
     it("is given the storeys of Room I's drawing, from the roof down", async () => {

@@ -248,7 +248,8 @@ export class GalleryComponent {
     // Scroll snapping rests where the keys and the floor plan land: centred, or under the header when too tall.
     labels.forEach((label, index) => {
       const spare = (height - boxes[index].height) / 2;
-      label.style.scrollMarginTop = index === 0 ? "0px" : `${Math.max(spare, HEADER_CLEARANCE)}px`;
+      // The page already keeps HEADER_CLEARANCE free above every snap point (scroll-padding-top)
+      label.style.scrollMarginTop = `${index === 0 ? 0 : Math.max(spare - HEADER_CLEARANCE, 0)}px`;
     });
 
     this.framing = {

@@ -98,9 +98,9 @@ main {
   background: rgba(20, 20, 23, 0.94);
   border: 1px solid rgba(199, 164, 74, 0.28);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  /* Fades only: a label that also moved would be measured, and snapped to, away from where it rests */
   opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.3s ease;
   pointer-events: none;
 
   /* On short screens a wider label needs fewer lines and still fits under the header */
@@ -119,9 +119,8 @@ main {
 .stop--active .label,
 .label:focus-within {
   opacity: 1;
-  transform: none;
   pointer-events: auto;
-  transition: opacity 0.6s ease 0.35s, transform 0.6s ease 0.35s;
+  transition: opacity 0.6s ease 0.35s;
 }
 
 .label app-room-label {

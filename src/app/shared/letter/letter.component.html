@@ -36,7 +36,7 @@
 
                 <div class="flex flex-col gap-2">
                     <label class="salutation" for="letter-message">Dear Felix,<span class="sr-only"> your message</span></label>
-                    <textarea #message id="letter-message" formControlName="message" rows="4" class="ruled"
+                    <textarea #message id="letter-message" formControlName="message" rows="3" class="ruled"
                               [attr.aria-invalid]="showError('message')" [attr.aria-describedby]="showError('message') ? 'letter-message-error' : null"></textarea>
                     @if (showError('message')) {
                         <span id="letter-message-error" class="field-error">Write a line or two first</span>

@@ -1,37 +1,20 @@
-/**
- * Application-level configuration for Angular standalone application.
- *
- * Key architectural decisions:
- * - Zone.js optimization: Event coalescing reduces change detection cycles
- * - Global error handler: Centralizes error handling and user notifications
- * - Service worker: Provides offline capability and asset caching in production
- *
- * Service worker strategy:
- * - Disabled in development for faster iteration and easier debugging
- * - Registers after 30s of stability to avoid impacting initial page load metrics
- * - Caches static assets for offline access and improved repeat visit performance
- */
-import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection, isDevMode } from "@angular/core";
+import { ApplicationConfig, ErrorHandler, isDevMode, provideExperimentalZonelessChangeDetection } from "@angular/core";
 import { provideRouter, withInMemoryScrolling } from "@angular/router";
+import { provideServiceWorker } from "@angular/service-worker";
 
 import { routes } from "./app.routes";
 import { GlobalErrorHandler } from "./core/error-handler/global-error-handler.service";
-import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Event coalescing batches multiple events into single change detection cycle
-    // Reduces overhead in event-heavy scenarios (e.g., mouse movement on 3D canvas)
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideExperimentalZonelessChangeDetection(),
     // Old deep links (/#projects) must land on their room once the lazy page has rendered
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: "enabled" })),
-    // Replace default error handler with custom implementation for user-friendly notifications
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    // Service worker for PWA capabilities (offline access, faster subsequent loads)
-    provideServiceWorker('ngsw-worker.js', {
+    provideServiceWorker("ngsw-worker.js", {
       enabled: !isDevMode(),
-      // Delay registration to avoid blocking initial page load
-      registrationStrategy: 'registerWhenStable:30000'
+      // Registering late keeps the worker out of the first paint
+      registrationStrategy: "registerWhenStable:30000",
     }),
   ],
 };

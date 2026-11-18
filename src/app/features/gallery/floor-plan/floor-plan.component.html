@@ -1,0 +1,21 @@
+<nav class="plan" aria-label="Floor plan">
+  <ol>
+    @for (room of rooms; track room.id) {
+      <li>
+        <button
+          type="button"
+          class="room"
+          [class.room--round]="!room.numeral"
+          [class.room--long]="room.id === 'works'"
+          [class.room--current]="current() === room.id"
+          [attr.aria-current]="current() === room.id ? 'location' : null"
+          (click)="visit.emit(room.id)"
+        >
+          <span aria-hidden="true">{{ room.numeral }}</span>
+          <span class="sr-only">{{ room.numeral ? "Room " + room.numeral + ", " + room.name : room.name }}</span>
+        </button>
+      </li>
+    }
+  </ol>
+  <p class="caption" aria-hidden="true">{{ caption() }}</p>
+</nav>

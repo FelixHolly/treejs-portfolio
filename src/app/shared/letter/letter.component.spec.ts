@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { CORRESPONDENCE } from "../../../core/content/correspondence.content";
-import { EmailService } from "../../../services/email.service";
-import { NotificationService } from "../../../services/notification.service";
-import { CorrespondenceComponent } from "./correspondence.component";
+import { CORRESPONDENCE } from "../../core/content/correspondence.content";
+import { EmailService } from "../../services/email.service";
+import { NotificationService } from "../../services/notification.service";
+import { LetterComponent } from "./letter.component";
 
-describe("CorrespondenceComponent", () => {
-  let fixture: ComponentFixture<CorrespondenceComponent>;
-  let component: CorrespondenceComponent;
+describe("LetterComponent", () => {
+  let fixture: ComponentFixture<LetterComponent>;
+  let component: LetterComponent;
   let element: HTMLElement;
   let email: jasmine.SpyObj<EmailService>;
   let notifications: jasmine.SpyObj<NotificationService>;
@@ -23,7 +23,7 @@ describe("CorrespondenceComponent", () => {
         { provide: NotificationService, useValue: notifications },
       ],
     });
-    fixture = TestBed.createComponent(CorrespondenceComponent);
+    fixture = TestBed.createComponent(LetterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     element = fixture.nativeElement;

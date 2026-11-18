@@ -36,6 +36,14 @@ export const WORKS: readonly Work[] = [
         orientation: "landscape",
       },
     ],
+    detailImages: [
+      {
+        src: "assets/works/kuechenschelle-phone.webp",
+        alt: "The Küchenschelle home page on a phone",
+        caption: "Fig. IV · On a phone",
+        orientation: "portrait",
+      },
+    ],
   },
   {
     slug: "wheelwallet",

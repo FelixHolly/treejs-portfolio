@@ -7,7 +7,6 @@
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
   overflow: hidden;
   width: 100%;
-  max-width: 800px;
 
   /* Gold-dim rule along the top edge, like a letterhead */
   &::before {
@@ -73,7 +72,7 @@
 }
 
 /* Gold on bone paper is too faint for a focus ring; the letter uses ink */
-.terminal :is(a, button, input, textarea):focus-visible {
+.terminal :is(a, button, input, textarea, [tabindex]):focus-visible {
   outline: 2px solid #141417;
   outline-offset: 3px;
 }

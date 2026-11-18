@@ -2,15 +2,15 @@
   @for (item of rooms; track item.id) {
     <li class="nav-li">
       <a
-        [href]="'#' + item.id"
+        [href]="'#' + item.catalogueId"
         class="nav-li_a"
         [class.nav-active]="activeId() === item.id"
         [attr.aria-current]="activeId() === item.id ? 'location' : null"
         (click)="linkClick.emit()"
       >
         {{ item.name }}
-        @if (item.room && activeId() === item.id) {
-          <span class="nav-room" aria-hidden="true">{{ item.room }}</span>
+        @if (item.numeral && activeId() === item.id) {
+          <span class="nav-room" aria-hidden="true">{{ item.numeral }}</span>
         }
       </a>
     </li>

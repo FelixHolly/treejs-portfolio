@@ -1,0 +1,54 @@
+.lightbox {
+  width: min(72rem, 96vw);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  border: 1px solid rgba(199, 164, 74, 0.3);
+  background: #141417;
+  color: #e8e5de;
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  &::backdrop {
+    background: rgba(8, 8, 10, 0.86);
+  }
+}
+
+.panel {
+  padding: clamp(1rem, 3vw, 2.25rem);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid #26262c;
+  border-radius: 9999px;
+  color: #e8e5de;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #c7a44a;
+  }
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.portrait {
+  width: min(100%, 22rem);
+  margin-inline: auto;
+}

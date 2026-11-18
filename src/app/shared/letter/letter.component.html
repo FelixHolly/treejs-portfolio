@@ -1,0 +1,55 @@
+<div class="terminal">
+    <div class="terminal-body">
+        <p class="room-number mb-3">Room IV · Correspondence</p>
+        <h2 class="head-text">Let's talk</h2>
+        <p class="text-base text-graphite/80 mt-3 font-mono">{{ content.intro }}</p>
+
+        <form #letter [formGroup]="form" (ngSubmit)="send()" class="mt-12 flex flex-col space-y-7" novalidate>
+            <div class="flex flex-col gap-3">
+                <label class="field-label" for="letter-name">Full name</label>
+                <input id="letter-name" formControlName="name" class="field-input" autocomplete="name"
+                       [attr.aria-invalid]="showError('name')" [attr.aria-describedby]="showError('name') ? 'letter-name-error' : null">
+                @if (showError('name')) {
+                    <span id="letter-name-error" class="text-red-800 text-sm">Full name is required</span>
+                }
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <label class="field-label" for="letter-email">Email address</label>
+                <input id="letter-email" type="email" formControlName="email" class="field-input" autocomplete="email"
+                       [attr.aria-invalid]="showError('email')" [attr.aria-describedby]="showError('email') ? 'letter-email-error' : null">
+                @if (showError('email')) {
+                    <span id="letter-email-error" class="text-red-800 text-sm">Enter a valid email address</span>
+                }
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <label class="field-label" for="letter-message">Your message</label>
+                <textarea id="letter-message" formControlName="message" rows="5" class="field-input"
+                          [attr.aria-invalid]="showError('message')" [attr.aria-describedby]="showError('message') ? 'letter-message-error' : null"></textarea>
+                @if (showError('message')) {
+                    <span id="letter-message-error" class="text-red-800 text-sm">Message is required</span>
+                }
+            </div>
+
+            <button class="field-btn" type="submit" [disabled]="loading()">
+                {{ loading() ? 'Sending...' : 'Send message' }}
+                <app-icon-arrow-out />
+            </button>
+        </form>
+
+        <ul class="desk-links">
+            @if (content.cvHref; as cv) {
+                <li><a [href]="cv" download>Download CV</a></li>
+            }
+            @for (link of content.links; track link.href) {
+                <li>
+                    <a [href]="link.href" target="_blank" rel="noopener noreferrer">
+                        {{ link.label }}<span class="sr-only"> (opens in a new tab)</span>
+                        <app-icon-arrow-out />
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

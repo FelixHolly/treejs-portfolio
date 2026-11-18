@@ -22,9 +22,12 @@
         </svg>
       </button>
 
-      <nav class="lg:flex hidden" aria-label="Rooms">
-        <app-nav-items />
-      </nav>
+      <div class="lg:flex hidden items-center gap-8">
+        <nav aria-label="Rooms">
+          <app-nav-items />
+        </nav>
+        <app-view-switch />
+      </div>
     </div>
   </div>
 
@@ -32,5 +35,8 @@
     <nav class="p-5" aria-label="Rooms">
       <app-nav-items (linkClick)="isOpen.set(false)" />
     </nav>
+    <div class="flex justify-center pb-5">
+      <app-view-switch />
+    </div>
   </div>
 </header>

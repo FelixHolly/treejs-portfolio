@@ -20,4 +20,6 @@ export interface Work {
   href?: string;
   repo?: string;
   images: [WorkImage, ...WorkImage[]];
+  /** Extra views shown only in the closer look */
+  detailImages?: WorkImage[];
 }

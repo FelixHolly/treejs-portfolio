@@ -202,3 +202,13 @@ select:focus-visible,
     transform: none;
   }
 }
+
+/* Switch between the walkable gallery and the flat catalogue */
+.view-switch {
+  @apply inline-flex items-center min-h-8 px-3 font-mono text-xs uppercase tracking-[0.15em] text-gold border border-gold/50 rounded-sm transition-colors hover:bg-gold/10 hover:text-bone;
+}
+
+/* While the gallery is on screen, scrolling settles gently on each stop's label */
+html.gallery-active {
+  scroll-snap-type: y proximity;
+}

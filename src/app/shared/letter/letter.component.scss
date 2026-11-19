@@ -1,234 +1,217 @@
-$faint: rgba(31, 42, 68, 0.26);
-$firm: rgba(42, 33, 26, 0.62);
+$bone: #e8e5de;
+$ground: rgba(20, 20, 23, 0.88);
+$hairline: rgba(31, 42, 68, 0.2);
+$firm: rgba(42, 33, 26, 0.55);
 $grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .24 0 0 0 0 .16 0 0 0 .22 -.06'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
-/* One writing line: the rule sits a little above the foot of each line of text, where the pen rests on it */
-$rules: linear-gradient(to bottom, transparent calc(var(--rule) - 7px), $faint 0, $faint calc(var(--rule) - 6px), transparent 0) 0 0 / 100% var(--rule);
+/* One writing line: the rule sits a little above the foot of each line of text */
+$rules: linear-gradient(to bottom, transparent calc(var(--line) - 5px), $hairline 0, $hairline calc(var(--line) - 4px), transparent 0) 0 0 / 100% var(--line);
 
-/* The gallery's stationery. Print is upright and brown-black; whatever a pen wrote is italic and blue-black. */
+/* The sheet is the only paper; everything around it is the page's own type on its dark ground */
 :host {
-  --paper: #e8e5de;
-  --print: #2a211a;
-  --print-soft: #5f5246;
+  --paper: #{$bone};
   --pen: #1f2a44;
-  --rule: 2rem;
+  --soft: #5f5246;
+  --line: 1.75rem;
   --grain: #{$grain};
-  position: relative;
   display: block;
-  isolation: isolate;
-  font-family: 'Boska', Georgia, serif;
-  color: var(--print);
+  container-type: inline-size;
+  /* In the gallery the scene lies behind the type around the sheet: this is the page's dark ground again, fading out at its edges */
+  background: $ground;
+  box-shadow: 0 0 2rem 1rem $ground;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #a8a59d;
 }
 
-.letter-sheet {
-  position: relative;
-  padding: 1.75rem 1.25rem 1.25rem;
-  border-radius: 1px;
+.title,
+.sent-title {
+  font-family: 'Boska', Georgia, serif;
+  font-weight: 500;
+  color: $bone;
+}
+
+.title {
+  margin-bottom: 0.8rem;
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.sheet {
+  padding: 1.6rem 2.25rem 1.6rem 2.75rem;
   background: var(--grain), var(--paper);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.45),
     0 20px 40px -16px rgba(0, 0, 0, 0.7);
-
-  @media (min-width: 640px) {
-    padding: 2.25rem 2.5rem 1.5rem;
-  }
-
-  /* The next sheet of the stack, lying a little askew under this one */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: #d5d1c6;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-    transform: rotate(-1deg) translate(2px, 3px);
-  }
-}
-
-.invitation {
-  margin-top: 1rem;
-  font-size: 1.3rem;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.intro {
-  margin-top: 0.3rem;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  color: var(--print-soft);
-}
-
-.letter-form {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
-}
-
-.salutation,
-.closing,
-.ruled,
-.sign input {
-  padding-inline: 0.25rem;
-  font-style: italic;
+  font: 400 1.125rem / var(--line) 'Boska', Georgia, serif;
+  font-variant-numeric: lining-nums;
   color: var(--pen);
 }
 
-.salutation {
-  margin-top: 0.4rem;
-  background: $rules;
-  font-size: 1.5rem;
-  line-height: var(--rule);
+.date {
+  margin-left: 50%;
+}
+
+.dear {
+  display: block;
+  margin-top: 0.6rem;
+}
+
+textarea,
+input {
+  display: block;
+  width: 100%;
+  border-radius: 0;
+
+  &::placeholder {
+    color: var(--soft);
+  }
+
+  /* No box round a line of a letter: the rule the field is written on turns to pen ink and thickens */
+  &:focus-visible {
+    --end: var(--pen);
+    --thick: 2px;
+    border-radius: 0;
+    outline: none;
+  }
 }
 
 /* Writing paper: one rule under every line of text, moving with the text when it scrolls */
-.ruled {
-  width: 100%;
-  min-height: calc(var(--rule) * 3);
-  border-radius: 0;
-  /* The last rule stays put and is drawn firmly enough to mark where the field ends */
+textarea {
+  /* The lines the screen has left for the message once the page's header and the rest of the letter are counted */
+  --room: round(down, 100vh - 31rem, var(--line));
+  min-height: clamp(var(--line) * 3, var(--room), var(--line) * 4);
+  max-height: clamp(var(--line) * 4, var(--room), var(--line) * 8);
+  resize: none;
+  field-sizing: content;
+  /* The last rule stays put and is firm enough to show where the field ends */
   background:
-    linear-gradient($firm, $firm) 0 calc(100% - 6px) / 100% 1px no-repeat,
+    linear-gradient(var(--end, $firm) 0 0) 0 calc(100% - 4px + var(--thick, 0px)) / 100% calc(1px + var(--thick, 0px)) no-repeat,
     $rules local;
-  font-size: 1.125rem;
-  line-height: var(--rule);
-
-  @media (min-height: 861px) {
-    min-height: calc(var(--rule) * 4);
-  }
 }
 
 .closing {
-  margin-top: 0.9rem;
-  font-size: 1.25rem;
-  line-height: 1.4;
+  margin: 0.9rem 0 0 50%;
 }
 
-.signature {
-  display: grid;
-  gap: 0.6rem 2rem;
+input {
+  height: var(--line);
+  border-bottom: 1px solid var(--end, $firm);
+  background: none;
+  box-shadow:
+    0 var(--thick, 0) 0 var(--pen),
+    inset 0 0 0 var(--filled, 0) var(--paper);
 
-  @media (min-width: 560px) {
-    grid-template-columns: 1fr 1fr;
+  /* A browser that fills the line in keeps to the paper and the pen */
+  &:autofill {
+    --filled: 3rem;
+    -webkit-text-fill-color: var(--pen);
   }
 }
 
-.sign {
-  display: flex;
-  flex-direction: column;
-
-  input {
-    min-height: 2.5rem;
-    border-bottom: 1px solid $firm;
-    border-radius: 0;
-    background: none;
-    font-size: 1.125rem;
-
-    /* A browser that fills the line in keeps to the paper and the pen */
-    &:autofill {
-      box-shadow: inset 0 0 0 3rem var(--paper);
-      -webkit-text-fill-color: var(--pen);
-    }
-  }
-
-  label {
-    margin-top: 0.25rem;
-    padding-inline: 0.25rem;
-    font-size: 0.8125rem;
-    color: var(--print-soft);
-  }
+.closing label,
+.error {
+  display: block;
+  font: 400 0.75rem / 1.2 'General Sans', sans-serif;
 }
 
-/* A correction in red pen, under the line it belongs to */
-.error,
-.send-error {
-  padding-inline: 0.25rem;
-  font-size: 0.9375rem;
-  font-style: italic;
-  line-height: 1.4;
-  color: #9b1c1c;
+.closing label {
+  margin: 0.2rem 0 0.35rem;
+  color: var(--soft);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .error {
-  margin-top: 0.25rem;
-}
-
-.send-error {
-  margin-top: 0.75rem;
-}
-
-app-seal-button {
-  margin-block: 0.75rem 0.5rem;
-}
-
-/* After sending: the envelope lies on a slip of the same paper, which says what happens next */
-.letter-sheet.slip {
-  margin: -1rem 0.75rem 0;
-  padding-top: 2.25rem;
-}
-
-.sealed-title {
-  font-size: 1.3rem;
   font-weight: 500;
+  color: #9b1c1c;
+}
+
+.closing .error {
+  margin-top: 0.2rem;
+}
+
+.failed {
+  margin-top: 0.9rem;
+  color: #f08b80;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.9rem;
+}
+
+/* The button follows the signing lines for the keyboard, and stands to the right of the sentence for the eye */
+form .foot {
+  flex-direction: row-reverse;
+}
+
+.foot--sent {
+  flex-wrap: wrap;
+}
+
+.plaque:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.sent {
+  margin-top: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+/* The confirmation takes focus so that it is read out; it is not a control, so it shows no ring */
+.sent:focus-visible {
+  outline: none;
+}
+
+.sent-title {
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
 }
 
 .again {
-  min-height: 1.75rem;
-  margin-top: 0.5rem;
+  min-height: 1.5rem;
+  font-size: 0.9375rem;
+  color: #c7a44a;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 
   &:hover {
-    color: var(--pen);
+    color: $bone;
   }
 }
 
-/* Gold on bone paper is too faint for a focus ring; the letter uses its print ink */
-.letter-sheet :is(button, input, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--print);
-  outline-offset: 3px;
-}
-
-/* On a short screen the whole letter, from its letterhead to its postscript, fits under the header at once */
-@media (max-height: 860px) and (min-width: 640px) {
-  :host {
-    --rule: 1.875rem;
-  }
-
-  .letter-sheet {
-    padding: 1.25rem 2rem 0.9rem;
-  }
-
-  .invitation {
-    margin-top: 0.6rem;
-    font-size: 1.2rem;
-  }
-
-  .intro {
-    font-size: 0.875rem;
-    line-height: 1.45;
-  }
-
-  .letter-form {
-    margin-top: 0.5rem;
+/* A narrow sheet: the closing starts further left to keep its lines long enough, and the button takes the full width */
+@container (max-width: 30rem) {
+  .sheet {
+    padding: 1.4rem 1.25rem 1.5rem 1.5rem;
   }
 
   .closing {
-    margin-top: 0.4rem;
+    margin-left: 34%;
   }
 
-  .sign input {
-    min-height: 2rem;
-  }
-
-  app-seal-button {
-    margin-block: 0.25rem;
+  form .foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 }
 
-/* A finger needs a taller target than the compact desk letter gives a mouse */
+/* A finger needs a taller target than a line of the letter; the writing still rests on its rule */
 @media (pointer: coarse) {
-  .sign input,
+  input {
+    height: 2.75rem;
+    padding-top: 1rem;
+  }
+
   .again {
     min-height: 2.75rem;
   }

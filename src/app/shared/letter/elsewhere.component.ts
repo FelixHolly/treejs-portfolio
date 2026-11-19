@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, input } from "@angular/core";
 import { CorrespondenceLink } from "../../core/content/correspondence.content";
 
-/** The other ways to reach the owner, as the sentence a letter-writer adds under the signature. */
+/** The other ways to reach the owner, as one plain sentence beside the letter. */
 @Component({
-  selector: "app-letter-postscript",
+  selector: "app-letter-elsewhere",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: "block" },
   template: `
-    <p class="postscript">
-      P.S. You can also
+    <p>
+      Or
       @if (cvHref(); as cv) {
         <a [href]="cv" download>download my CV</a><span>, or </span>
       }
@@ -21,9 +20,9 @@ import { CorrespondenceLink } from "../../core/content/correspondence.content";
       }.
     </p>
   `,
-  styleUrl: "./postscript.component.scss",
+  styleUrl: "./elsewhere.component.scss",
 })
-export class PostscriptComponent {
+export class ElsewhereComponent {
   readonly links = input.required<readonly CorrespondenceLink[]>();
   readonly cvHref = input<string | null>(null);
 }

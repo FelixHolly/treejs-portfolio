@@ -10,9 +10,8 @@ describe("LetterComponent", () => {
   let email: jasmine.SpyObj<EmailService>;
   let posted: jasmine.Spy;
 
-  const WRITTEN = { name: "Ada Lovelace", email: "ada@example.com", message: "Hello" };
-  const VALID = { ...WRITTEN, topic: "" };
-  const [ROLE, PROJECT, HELLO] = CORRESPONDENCE.topics;
+  const VALID = { name: "Ada Lovelace", email: "ada@example.com", message: "Hello" };
+  const FIELDS = ["letter-message", "letter-name", "letter-email"];
 
   beforeEach(() => {
     email = jasmine.createSpyObj<EmailService>("EmailService", ["sendContactEmail"]);
@@ -30,38 +29,24 @@ describe("LetterComponent", () => {
     return Array.from(element.querySelectorAll("[id$='-error']")).map((node) => node.textContent!.trim());
   }
 
-  /** What is printed or written there: the seal's monogram is part of its drawing, not of the words. */
   function text(node: Element | null | undefined): string {
-    const copy = node?.cloneNode(true) as Element | undefined;
-    copy?.querySelectorAll("svg").forEach((drawing) => drawing.remove());
-    return (copy?.textContent ?? "").replace(/\s+/g, " ").trim();
+    return (node?.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
-  function button(label: string): HTMLButtonElement {
-    const found = Array.from(element.querySelectorAll("button")).find((candidate) => candidate.textContent!.includes(label));
-    if (!found) throw new Error(`no button labelled "${label}"`);
-    return found;
+  function sheet(): HTMLElement {
+    return element.querySelector<HTMLElement>(".sheet")!;
+  }
+
+  function sendButton(): HTMLButtonElement {
+    return element.querySelector<HTMLButtonElement>("form button[type=submit]")!;
   }
 
   function message(): HTMLTextAreaElement {
     return element.querySelector<HTMLTextAreaElement>("#letter-message")!;
   }
 
-  function radios(): HTMLInputElement[] {
-    return Array.from(element.querySelectorAll<HTMLInputElement>('input[type="radio"]'));
-  }
-
-  function circle(word: string): HTMLElement {
-    const label = Array.from(element.querySelectorAll("app-letter-topics label")).find((candidate) => text(candidate) === word)!;
-    return label.querySelector<HTMLElement>("svg")!;
-  }
-
-  function choose(word: string): HTMLInputElement {
-    const radio = radios().find((candidate) => text(candidate.closest("label")) === word)!;
-    radio.focus();
-    radio.click();
-    fixture.detectChanges();
-    return radio;
+  function follows(earlier: Node, later: Node): boolean {
+    return !!(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
   }
 
   async function send(): Promise<void> {
@@ -76,130 +61,78 @@ describe("LetterComponent", () => {
     await send();
   }
 
-  describe("as a sheet of stationery", () => {
-    it("is headed with a crest, the owner's name and room, and today's date as a letter-writer puts it", () => {
-      const head = element.querySelector("app-letterhead")!;
-      const today = new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date());
-
-      expect(head.querySelector("img")?.getAttribute("alt")).toBe("");
-      expect(text(head)).toContain("Felix Hollndonner");
-      expect(text(head)).toContain("Room IV, Correspondence");
-      expect(text(head.querySelector(".date"))).toBe(today);
-    });
-
-    it("invites the visitor under the section's first and only heading", () => {
+  describe("as a plain typed letter", () => {
+    it("stands under the section's first and only heading, which is not on the paper", () => {
       const headings = element.querySelectorAll("h1, h2, h3, h4");
 
       expect(headings.length).toBe(1);
       expect(headings[0].tagName).toBe("H2");
       expect(text(headings[0])).toBe("Write to me");
-      expect(element.textContent).toContain(CORRESPONDENCE.intro);
+      expect(element.firstElementChild).toBe(headings[0]);
+      expect(sheet().contains(headings[0])).toBeFalse();
     });
 
-    it("opens with the salutation as the message's label, and the signature after it", () => {
+    it("is dated today, as a letter-writer puts it", () => {
+      const today = new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date());
+
+      expect(text(sheet().querySelector(".date"))).toBe(today);
+    });
+
+    it("opens with the salutation as the message's label, and closes with the signing lines", () => {
       const label = element.querySelector('label[for="letter-message"]')!;
       const order = Array.from(element.querySelectorAll("[formControlName]")).map((field) => field.id);
 
       expect(label.textContent).toContain("Dear Felix,");
       expect(label.textContent).toContain("your message");
-      expect(order).toEqual(["letter-message", "letter-name", "letter-email"]);
-      expect(text(element.querySelector(".closing"))).toBe("Kind regards,");
+      expect(order).toEqual(FIELDS);
+      expect(text(sheet().querySelector(".closing p"))).toBe("Kind regards,");
     });
 
-    it("prints each signing line's label under the line it names", () => {
+    it("leaves the invitation where the message will be written", () => {
+      expect(message().placeholder).toBe("Hiring for a role, or want to talk a project through? A few lines are enough.");
+      expect(message().placeholder).toBe(CORRESPONDENCE.invitation);
+    });
+
+    it("prints each signing line's caption under the line it names", () => {
       for (const [id, words, autocomplete] of [
-        ["letter-name", "your name", "name"],
-        ["letter-email", "your email, for my reply", "email"],
+        ["letter-name", "Your name", "name"],
+        ["letter-email", "Your email, so I can reply", "email"],
       ]) {
         const field = element.querySelector<HTMLInputElement>(`#${id}`)!;
         const label = element.querySelector(`label[for="${id}"]`)!;
 
         expect(text(label)).withContext(id).toBe(words);
-        expect(field.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).withContext(id).toBeTruthy();
+        expect(follows(field, label)).withContext(id).toBeTrue();
         expect(field.autocomplete).withContext(id).toBe(autocomplete);
       }
       expect(element.querySelector<HTMLInputElement>("#letter-email")!.type).toBe("email");
     });
 
+    it("has nothing on the paper but the letter itself", () => {
+      expect(sheet().querySelector("img, svg, button, a, h2, [type=radio]")).toBeNull();
+      expect(sheet().querySelectorAll("input, textarea").length).toBe(3);
+      expect(text(sheet())).not.toMatch(/Re:|P\.S\.|circle/);
+      expect(text(sheet())).not.toContain(CORRESPONDENCE.room);
+    });
+
     it("keeps the stamp for the envelope", () => {
       expect(element.querySelector(".stamp")).toBeNull();
+      expect(element.querySelector("app-letter-envelope")).toBeNull();
     });
 
-    it("adds LinkedIn and GitHub as a postscript, no CV until one exists, and never an email address", () => {
-      const postscript = element.querySelector("app-letter-postscript")!;
-      const links = Array.from(postscript.querySelectorAll("a"));
+    it("names the other ways to reach the owner under the sheet: no CV until one exists, and never an email address", () => {
+      const elsewhere = element.querySelector("app-letter-elsewhere")!;
+      const links = Array.from(elsewhere.querySelectorAll("a"));
 
-      expect(text(postscript)).toBe("P.S. You can also find me on LinkedIn (opens in a new tab) or GitHub (opens in a new tab).");
+      expect(text(elsewhere)).toBe("Or find me on LinkedIn (opens in a new tab) or GitHub (opens in a new tab).");
+      expect(follows(sheet(), elsewhere)).toBeTrue();
+      expect(sheet().contains(elsewhere)).toBeFalse();
       expect(links.map((link) => link.getAttribute("href"))).toEqual(CORRESPONDENCE.links.map((link) => link.href));
       expect(links.every((link) => link.target === "_blank" && link.rel === "noopener noreferrer")).toBeTrue();
-      expect(postscript.querySelector("svg")).toBeNull();
       expect(CORRESPONDENCE.cvHref).toBeNull();
-      expect(text(postscript)).not.toContain("CV");
+      expect(text(elsewhere)).not.toContain("CV");
       expect(element.querySelector('a[href^="mailto:"]')).toBeNull();
       expect(element.textContent).not.toMatch(/[\w.]+@[\w-]+\.\w+/);
-    });
-  });
-
-  describe("the Re: line", () => {
-    it("offers the topics as one named group of radios, none chosen and none required", () => {
-      const group = element.querySelector('[role="radiogroup"]')!;
-      const name = element.querySelector(`#${group.getAttribute("aria-labelledby")}`)!;
-
-      expect(text(name)).toContain("Re:");
-      expect(text(name)).toContain("what your letter is about");
-      expect(radios().map((radio) => text(radio.closest("label")))).toEqual(["a role", "a project", "just a hello"]);
-      expect(radios().every((radio) => !radio.checked && !radio.required)).toBeTrue();
-      expect(group.querySelector("button")).toBeNull();
-    });
-
-    it("shares one name between the radios, which is what lets the arrow keys move the choice", () => {
-      expect(new Set(radios().map((radio) => radio.name)).size).toBe(1);
-      expect(radios()[0].name).not.toBe("");
-    });
-
-    it("draws the pen's circle round the chosen topic and no other", () => {
-      choose(PROJECT.word);
-
-      expect(component.form.controls.topic.value).toBe(PROJECT.word);
-      expect(getComputedStyle(circle(PROJECT.word)).opacity).toBe("1");
-      expect(getComputedStyle(circle(ROLE.word)).opacity).toBe("0");
-      expect(getComputedStyle(circle(HELLO.word)).opacity).toBe("0");
-      expect(circle(PROJECT.word).getAttribute("aria-hidden")).toBe("true");
-    });
-
-    it("writes the letter's first words and leaves focus on the radio", () => {
-      const radio = choose(ROLE.word);
-
-      expect(component.form.controls.message.value).toBe(ROLE.opening);
-      expect(message().value).toBe(ROLE.opening);
-      expect(document.activeElement).toBe(radio);
-      expect(email.sendContactEmail).not.toHaveBeenCalled();
-    });
-
-    it("swaps one opening for another as the choice moves, as it does under the arrow keys", () => {
-      choose(ROLE.word);
-      const next = choose(PROJECT.word);
-
-      expect(component.form.controls.message.value).toBe(PROJECT.opening);
-      expect(radios().filter((radio) => radio.checked)).toEqual([next]);
-      expect(document.activeElement).toBe(next);
-    });
-
-    it("never overwrites what the visitor has written themselves", () => {
-      component.form.controls.message.setValue("My own first line");
-
-      choose(ROLE.word);
-
-      expect(component.form.controls.message.value).toBe("My own first line");
-      expect(component.form.controls.topic.value).toBe(ROLE.word);
-    });
-
-    it("treats a message of only spaces as unwritten", () => {
-      component.form.controls.message.setValue("   ");
-
-      choose(HELLO.word);
-
-      expect(component.form.controls.message.value).toBe(HELLO.opening);
     });
   });
 
@@ -212,7 +145,7 @@ describe("LetterComponent", () => {
     it("refuses an empty letter: three errors in reading order, nothing sent, focus on the message", async () => {
       await send();
 
-      expect(errors()).toEqual(["Write a line or two first", "Sign with your name", "Enter a valid email address"]);
+      expect(errors()).toEqual(["Write a line or two first", "Add your name", "Enter a valid email address"]);
       expect(email.sendContactEmail).not.toHaveBeenCalled();
       expect(posted).not.toHaveBeenCalled();
       expect(document.activeElement?.id).toBe("letter-message");
@@ -223,20 +156,41 @@ describe("LetterComponent", () => {
 
       await send();
 
-      expect(errors()).toEqual(["Sign with your name"]);
+      expect(errors()).toEqual(["Add your name"]);
       expect(document.activeElement?.id).toBe("letter-name");
+    });
+
+    it("shows a field's error once the visitor has left it empty, before any attempt to send", () => {
+      const name = element.querySelector<HTMLInputElement>("#letter-name")!;
+
+      name.dispatchEvent(new Event("blur"));
+      fixture.detectChanges();
+
+      expect(errors()).toEqual(["Add your name"]);
     });
 
     it("ties each error to its field for assistive technology, and writes it after the field", async () => {
       await send();
 
-      for (const id of ["letter-message", "letter-name", "letter-email"]) {
+      for (const id of FIELDS) {
         const field = element.querySelector<HTMLElement>(`#${id}`)!;
         const error = element.querySelector(`#${field.getAttribute("aria-describedby")}`)!;
 
         expect(field.getAttribute("aria-invalid")).withContext(id).toBe("true");
         expect(error).withContext(id).not.toBeNull();
-        expect(field.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING).withContext(id).toBeTruthy();
+        expect(follows(field, error)).withContext(id).toBeTrue();
+      }
+    });
+
+    it("writes a signing line's error under its rule and leaves the caption below it", async () => {
+      await send();
+
+      for (const id of ["letter-name", "letter-email"]) {
+        const field = element.querySelector<HTMLElement>(`#${id}`)!;
+        const label = element.querySelector(`label[for="${id}"]`)!;
+
+        expect(field.nextElementSibling?.id).withContext(id).toBe(`${id}-error`);
+        expect(field.nextElementSibling?.nextElementSibling).withContext(id).toBe(label);
       }
     });
 
@@ -244,16 +198,16 @@ describe("LetterComponent", () => {
       component.form.setValue(VALID);
       fixture.detectChanges();
 
-      for (const id of ["letter-message", "letter-name", "letter-email"]) {
+      for (const id of FIELDS) {
         const field = element.querySelector<HTMLElement>(`#${id}`)!;
         expect(field.getAttribute("aria-invalid")).withContext(id).toBe("false");
         expect(field.hasAttribute("aria-describedby")).withContext(id).toBeFalse();
       }
     });
 
-    for (const empty of ["   ", ROLE.opening, PROJECT.opening.trim()]) {
-      it(`does not take "${empty}" for a letter`, async () => {
-        component.form.setValue({ ...VALID, message: empty });
+    for (const blank of ["", "   ", "\n\t "]) {
+      it(`does not take ${JSON.stringify(blank)} for a message`, async () => {
+        component.form.setValue({ ...VALID, message: blank });
 
         await send();
 
@@ -262,15 +216,16 @@ describe("LetterComponent", () => {
       });
     }
 
-    it("does not take a circled topic with only its opening for a letter", async () => {
-      choose(ROLE.word);
-      component.form.patchValue({ name: VALID.name, email: VALID.email });
+    for (const written of ["Hi", "I'm hiring for ", "  a line with space around it  "]) {
+      it(`takes ${JSON.stringify(written)} for a message, as any text is one`, async () => {
+        email.sendContactEmail.and.resolveTo();
+        component.form.setValue({ ...VALID, message: written });
 
-      await send();
+        await send();
 
-      expect(errors()).toEqual(["Write a line or two first"]);
-      expect(email.sendContactEmail).not.toHaveBeenCalled();
-    });
+        expect(email.sendContactEmail).toHaveBeenCalledOnceWith({ ...VALID, message: written });
+      });
+    }
 
     for (const bad of ["plain", "a@", "@b.co", "a b@c.de"]) {
       it(`rejects the malformed address "${bad}"`, async () => {
@@ -284,114 +239,133 @@ describe("LetterComponent", () => {
     }
   });
 
-  describe("the seal", () => {
-    it("is the submit button, named by the words printed beside it", () => {
-      const seal = element.querySelector<HTMLButtonElement>("form button[type=submit]")!;
+  describe("the send button", () => {
+    it("is the site's gold button, under the sheet and not on it, named by its own words", () => {
+      const button = sendButton();
 
-      expect(text(seal)).toBe("Seal and send");
-      expect(seal.hasAttribute("aria-label")).toBeFalse();
-      expect(seal.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
-      expect(seal.disabled).toBeFalse();
-      expect(element.querySelectorAll("form button").length).toBe(1);
+      expect(text(button)).toBe("Send the letter");
+      expect(button.classList.contains("plaque")).toBeTrue();
+      expect(button.hasAttribute("aria-label")).toBeFalse();
+      expect(button.querySelector("svg, img")).toBeNull();
+      expect(button.disabled).toBeFalse();
+      expect(sheet().contains(button)).toBeFalse();
+      expect(follows(sheet(), button)).toBeTrue();
+      expect(element.querySelectorAll("button").length).toBe(1);
+    });
+
+    it("is the next stop for the Tab key after the signing lines, ahead of the links", () => {
+      const stops = Array.from(element.querySelectorAll<HTMLElement>("textarea, input, button, a")).map((stop) => stop.id || stop.tagName);
+
+      expect(stops).toEqual(["letter-message", "letter-name", "letter-email", "BUTTON", "A", "A"]);
+      expect(element.querySelector("[tabindex]")).toBeNull();
+    });
+
+    it("sends the letter when the form is submitted, as Enter in a signing line does", () => {
+      const sent = spyOn(component, "send");
+
+      element.querySelector("form")!.dispatchEvent(new Event("submit"));
+
+      expect(sent).toHaveBeenCalledTimes(1);
     });
 
     it("cannot be pressed twice while a letter is on its way", () => {
       component.loading.set(true);
       fixture.detectChanges();
 
-      const seal = element.querySelector<HTMLButtonElement>("button[type=submit]")!;
-      expect(seal.disabled).toBeTrue();
-      expect(text(seal)).toBe("Sending");
+      expect(sendButton().disabled).toBeTrue();
+      expect(text(sendButton())).toBe("Sending");
     });
   });
 
   describe("sending", () => {
-    it("sends a letter with no topic exactly as it was written", async () => {
+    it("hands the mail service the name, the address and the message exactly as written", async () => {
       await sendValid();
 
-      expect(email.sendContactEmail).toHaveBeenCalledOnceWith(WRITTEN);
-    });
-
-    it("opens the message the owner receives with the circled topic", async () => {
-      email.sendContactEmail.and.resolveTo();
-      choose(PROJECT.word);
-      component.form.patchValue({ ...WRITTEN, message: `${PROJECT.opening}a booking tool.` });
-
-      await send();
-
-      expect(email.sendContactEmail).toHaveBeenCalledOnceWith({
-        ...WRITTEN,
-        message: `Re: a project\n\n${PROJECT.opening}a booking tool.`,
-      });
+      expect(email.sendContactEmail).toHaveBeenCalledOnceWith(VALID);
+      expect(Object.keys(email.sendContactEmail.calls.mostRecent().args[0]).sort()).toEqual(["email", "message", "name"]);
     });
 
     it("emits posted once, then says where the answer will go in place of the sheet", async () => {
       await sendValid();
 
-      const sealed = element.querySelector<HTMLElement>(".sealed")!;
+      const status = element.querySelector<HTMLElement>('[role="status"]')!;
       expect(posted).toHaveBeenCalledTimes(1);
       expect(element.querySelector("form")).toBeNull();
-      expect(sealed.getAttribute("role")).toBe("status");
-      expect(element.querySelector(`#${sealed.getAttribute("aria-labelledby")}`)?.textContent).toContain("on its way");
-      expect(sealed.textContent).toContain("Your letter is on its way.");
-      expect(sealed.textContent).toContain("I will write back to ada@example.com.");
-      expect(document.activeElement).toBe(sealed);
+      expect(sheet()).toBeNull();
+      expect(text(element.querySelector(`#${status.getAttribute("aria-labelledby")}`))).toBe("Your letter is on its way.");
+      expect(status.textContent).toContain("I will write back to ada@example.com.");
+      expect(document.activeElement).toBe(status);
       expect(component.loading()).toBeFalse();
     });
 
-    it("shows the letter as a sealed envelope: addressed, stamped and postmarked", async () => {
+    it("brings the letter back into view, since the envelope is shorter than the sheet was", async () => {
+      const scrolled = spyOn(element, "scrollIntoView");
+
+      await sendValid();
+
+      expect(scrolled).toHaveBeenCalledOnceWith({ block: "nearest" });
+    });
+
+    it("shows the front of an envelope: addressed, stamped and postmarked, with nothing to press", async () => {
       await sendValid();
 
       const envelope = element.querySelector("app-letter-envelope")!;
-      const postage = envelope.querySelector(".postage")!;
+      const stamp = envelope.querySelector(".stamp")!;
       expect(text(envelope.querySelector(".address"))).toBe("An envelope addressed to Felix Hollndonner, Room IV, Correspondence");
-      expect(postage.getAttribute("aria-hidden")).toBe("true");
-      expect(postage.querySelector(".stamp img")?.getAttribute("alt")).toBe("");
-      expect(postage.querySelector("svg.postmark")).not.toBeNull();
-      expect(envelope.querySelector("app-wax-seal svg")?.getAttribute("aria-hidden")).toBe("true");
+      expect(stamp.getAttribute("aria-hidden")).toBe("true");
+      expect(stamp.querySelector("img")?.getAttribute("alt")).toBe("");
+      expect(text(stamp)).toBe("");
+      expect(envelope.querySelector("svg.postmark")?.getAttribute("aria-hidden")).toBe("true");
+      expect(envelope.querySelectorAll("svg").length).toBe(1);
       expect(envelope.querySelector("a, button, input")).toBeNull();
+      expect(follows(envelope, element.querySelector('[role="status"]')!)).toBeTrue();
     });
 
-    it("keeps the section's heading, and the postscript beside the confirmation", async () => {
+    it("keeps the same heading above the envelope, and the other ways to reach the owner below it", async () => {
+      const heading = element.querySelector("h2");
+
       await sendValid();
 
-      expect(text(element.querySelector("h2"))).toBe("Write to me");
-      expect(element.querySelectorAll("app-letter-postscript a").length).toBe(CORRESPONDENCE.links.length);
+      expect(element.querySelector("h2")).toBe(heading);
+      expect(element.querySelectorAll("h1, h2, h3, h4").length).toBe(1);
+      expect(element.querySelectorAll("app-letter-elsewhere a").length).toBe(CORRESPONDENCE.links.length);
       expect(element.textContent!.replace("ada@example.com", "")).not.toMatch(/[\w.]+@[\w-]+\.\w+/);
     });
 
     it("starts a fresh letter from the confirmation, with focus on the message", async () => {
-      email.sendContactEmail.and.resolveTo();
-      choose(ROLE.word);
-      component.form.patchValue(WRITTEN);
-      await send();
+      await sendValid();
+      const again = element.querySelector<HTMLButtonElement>("button")!;
+      expect(text(again)).toBe("Write another letter");
+      expect(again.type).toBe("button");
 
-      button("Write another letter").click();
+      again.click();
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(element.querySelector(".sealed")).toBeNull();
+      expect(element.querySelector('[role="status"]')).toBeNull();
       expect(element.querySelector("app-letter-envelope")).toBeNull();
-      expect(component.form.getRawValue()).toEqual({ topic: "", name: "", email: "", message: "" });
-      expect(radios().some((radio) => radio.checked)).toBeFalse();
+      expect(component.form.getRawValue()).toEqual({ name: "", email: "", message: "" });
       expect(errors()).toEqual([]);
       expect(document.activeElement).toBe(message());
     });
 
-    it("keeps what the visitor wrote when the mail service fails, and says so above the seal", async () => {
+    it("keeps what the visitor wrote when the mail service fails, and says so between the sheet and the button", async () => {
       email.sendContactEmail.and.rejectWith(new Error("network"));
-      const kept = { ...VALID, topic: HELLO.word };
-      component.form.setValue(kept);
+      component.form.setValue(VALID);
 
       await send();
 
       const alert = element.querySelector('form [role="alert"]')!;
-      expect(alert.textContent).toContain("The letter did not go out.");
-      expect(alert.compareDocumentPosition(button("Seal and send")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(component.form.getRawValue()).toEqual(kept);
-      expect(text(radios().find((radio) => radio.checked)?.closest("label"))).toBe(HELLO.word);
-      expect(document.activeElement).toBe(button("Seal and send"));
-      expect(element.querySelector(".sealed")).toBeNull();
+      expect(text(alert)).toBe("The letter did not go out. What you wrote is still here: try again in a moment, or use the links below.");
+      expect(alert.querySelector("svg, img")).toBeNull();
+      expect(sheet().contains(alert)).toBeFalse();
+      expect(follows(sheet(), alert)).toBeTrue();
+      expect(follows(alert, sendButton())).toBeTrue();
+      expect(follows(alert, element.querySelector("app-letter-elsewhere")!)).toBeTrue();
+      expect(component.form.getRawValue()).toEqual(VALID);
+      expect(message().value).toBe(VALID.message);
+      expect(document.activeElement).toBe(sendButton());
+      expect(element.querySelector('[role="status"]')).toBeNull();
       expect(posted).not.toHaveBeenCalled();
       expect(component.loading()).toBeFalse();
     });
@@ -405,7 +379,7 @@ describe("LetterComponent", () => {
       await send();
 
       expect(element.querySelector('[role="alert"]')).toBeNull();
-      expect(element.querySelector(".sealed")).not.toBeNull();
+      expect(element.querySelector('[role="status"]')).not.toBeNull();
       expect(email.sendContactEmail).toHaveBeenCalledTimes(2);
       expect(posted).toHaveBeenCalledTimes(1);
     });

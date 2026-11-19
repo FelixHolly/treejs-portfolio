@@ -1,58 +1,50 @@
+<h2 class="title">Write to me</h2>
 @if (repliesTo(); as address) {
-    <h2 class="sr-only">Write to me</h2>
     <app-letter-envelope [name]="content.addressee" [room]="content.room" />
-    <div class="letter-sheet slip">
-        <div #sealed class="sealed" role="status" tabindex="-1" aria-labelledby="letter-sealed">
-            <p id="letter-sealed" class="sealed-title">Your letter is on its way.</p>
-            <p>I will write back to <span class="break-all">{{ address }}</span>.</p>
-        </div>
+    <div #sent class="sent" role="status" tabindex="-1" aria-labelledby="letter-sent">
+        <p id="letter-sent" class="sent-title">Your letter is on its way.</p>
+        <p>I will write back to <span class="break-all">{{ address }}</span>.</p>
+    </div>
+    <div class="foot foot--sent">
         <button type="button" class="again" (click)="writeAnother()">Write another letter</button>
-        <app-letter-postscript class="mt-2" [links]="content.links" [cvHref]="content.cvHref" />
+        <app-letter-elsewhere [links]="content.links" [cvHref]="content.cvHref" />
     </div>
 } @else {
-    <div class="letter-sheet">
-        <app-letterhead [name]="content.addressee" [room]="content.room" />
-        <h2 class="invitation">Write to me</h2>
-        <p class="intro">{{ content.intro }}</p>
-
-        <form #letter [formGroup]="form" (ngSubmit)="send()" class="letter-form" novalidate>
-            <app-letter-topics [control]="form.controls.topic" [topics]="content.topics" (chose)="startWith($event.opening)" />
-
-            <label class="salutation" for="letter-message">Dear Felix,<span class="sr-only"> your message</span></label>
-            <textarea #message id="letter-message" formControlName="message" rows="3" class="ruled"
+    <form #letter [formGroup]="form" (ngSubmit)="send()" novalidate>
+        <div class="sheet">
+            <p class="date">{{ date }}</p>
+            <label class="dear" for="letter-message">Dear Felix,<span class="sr-only"> your message</span></label>
+            <textarea #message id="letter-message" formControlName="message" rows="3" [placeholder]="content.invitation"
                       [attr.aria-invalid]="showError('message')" [attr.aria-describedby]="showError('message') ? 'letter-message-error' : null"></textarea>
             @if (showError('message')) {
                 <span id="letter-message-error" class="error">Write a line or two first</span>
             }
 
-            <p class="closing">Kind regards,</p>
-            <div class="signature">
-                <div class="sign">
-                    <input id="letter-name" formControlName="name" autocomplete="name"
-                           [attr.aria-invalid]="showError('name')" [attr.aria-describedby]="showError('name') ? 'letter-name-error' : null">
-                    <label for="letter-name">your name</label>
-                    @if (showError('name')) {
-                        <span id="letter-name-error" class="error">Sign with your name</span>
-                    }
-                </div>
-                <div class="sign">
-                    <input id="letter-email" type="email" formControlName="email" autocomplete="email"
-                           [attr.aria-invalid]="showError('email')" [attr.aria-describedby]="showError('email') ? 'letter-email-error' : null">
-                    <label for="letter-email">your email, for my reply</label>
-                    @if (showError('email')) {
-                        <span id="letter-email-error" class="error">Enter a valid email address</span>
-                    }
-                </div>
+            <div class="closing">
+                <p>Kind regards,</p>
+                <input id="letter-name" formControlName="name" autocomplete="name"
+                       [attr.aria-invalid]="showError('name')" [attr.aria-describedby]="showError('name') ? 'letter-name-error' : null">
+                @if (showError('name')) {
+                    <span id="letter-name-error" class="error">Add your name</span>
+                }
+                <label for="letter-name">Your name</label>
+                <input id="letter-email" type="email" formControlName="email" autocomplete="email"
+                       [attr.aria-invalid]="showError('email')" [attr.aria-describedby]="showError('email') ? 'letter-email-error' : null">
+                @if (showError('email')) {
+                    <span id="letter-email-error" class="error">Enter a valid email address</span>
+                }
+                <label for="letter-email">Your email, so I can reply</label>
             </div>
+        </div>
 
-            @if (failed()) {
-                <p class="send-error" role="alert">
-                    The letter did not go out. What you wrote is still here: try again in a moment, or use the links below.
-                </p>
-            }
-            <app-seal-button class="justify-end" [sending]="loading()" />
-        </form>
-
-        <app-letter-postscript [links]="content.links" [cvHref]="content.cvHref" />
-    </div>
+        @if (failed()) {
+            <p class="failed" role="alert">
+                The letter did not go out. What you wrote is still here: try again in a moment, or use the links below.
+            </p>
+        }
+        <div class="foot">
+            <button type="submit" class="plaque shrink-0 justify-center" [disabled]="loading()">{{ loading() ? "Sending" : "Send the letter" }}</button>
+            <app-letter-elsewhere [links]="content.links" [cvHref]="content.cvHref" />
+        </div>
+    </form>
 }

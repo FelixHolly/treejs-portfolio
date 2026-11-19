@@ -1,12 +1,11 @@
 import { NgOptimizedImage } from "@angular/common";
 import { ChangeDetectionStrategy, Component, input } from "@angular/core";
-import { WaxSealComponent } from "./wax-seal.component";
 
-/** A letter that has gone: sealed, stamped, postmarked and addressed to the room it was written in. */
+/** The front of a letter that has gone: stamped, postmarked and addressed to the room it was written in. */
 @Component({
   selector: "app-letter-envelope",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, WaxSealComponent],
+  imports: [NgOptimizedImage],
   templateUrl: "./envelope.component.html",
   styleUrl: "./envelope.component.scss",
 })

@@ -16,5 +16,5 @@ export class WorksComponent {
   private readonly works = inject(WorksService).works();
 
   readonly commissions = computed(() => this.works.filter((work) => work.kind === "commission"));
-  readonly studies = computed(() => this.works.filter((work) => work.kind === "study"));
+  readonly plainFramed = computed(() => this.works.filter((work) => work.kind !== "commission"));
 }

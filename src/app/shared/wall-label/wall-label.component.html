@@ -1,4 +1,4 @@
-<p class="room-number">{{ work().kind === 'commission' ? 'Commission' : 'Study' }}</p>
+<p class="room-number">{{ kindLabel() }}</p>
 <h3 class="font-display text-3xl sm:text-4xl text-bone mt-2">{{ work().title }}</h3>
 <p class="mt-3 font-mono text-xs uppercase tracking-[0.2em] text-stone leading-relaxed">
     <span class="whitespace-nowrap">{{ work().year }}</span>@for (material of work().materials; track material) {<span class="text-gold px-1" aria-hidden="true"> · </span><span class="whitespace-nowrap">{{ material }}</span>}

@@ -1,12 +1,13 @@
 import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 import { buildPoses, buildWaypoints, CameraPath, Framing, Pose } from "./camera-path";
 import { PageFraming, SceneWork } from "./gallery-view";
-import { DOOR, DOOR_XS, EYE, fieldOfView, HALF_DEPTH, HANG_Z, pieceSlots, ROTUNDA } from "./layout";
+import { DOOR, DOOR_XS, END_WALL_X, EYE, fieldOfView, HALF_DEPTH, HANG_Z, pieceSlots, ROTUNDA, WALL_THICKNESS } from "./layout";
 
 const WORKS: SceneWork[] = [
   { slug: "a", kind: "commission", images: [1, 2, 3].map((n) => ({ src: `a${n}`, portrait: false })) },
   { slug: "b", kind: "study", images: [{ src: "b", portrait: true }] },
   { slug: "c", kind: "study", images: [{ src: "c", portrait: true }] },
+  { slug: "d", kind: "self-portrait", images: [{ src: "d", portrait: false }] },
 ];
 
 const BAND: PageFraming["statueBand"] = [0.4, 0.88];
@@ -32,7 +33,7 @@ function pathFor(works: SceneWork[], framing: Framing): { path: CameraPath; pose
 /** True when a point is inside the rotunda, the enfilade, or the doorway joining them. */
 function insideBuilding(point: Vector3): boolean {
   const inRotunda = Math.hypot(point.x - ROTUNDA.x, point.z) < ROTUNDA.radius - 0.2;
-  const inEnfilade = point.x > 4.8 && point.x < 55.6 && Math.abs(point.z) < HALF_DEPTH - 0.15;
+  const inEnfilade = point.x > 4.8 && point.x < END_WALL_X - WALL_THICKNESS / 2 && Math.abs(point.z) < HALF_DEPTH - 0.15;
   return inRotunda || inEnfilade;
 }
 
@@ -42,7 +43,7 @@ function throughADoor(point: Vector3): boolean {
 
 describe("buildPoses", () => {
   it("gives one pose per stop: five rooms plus one per work", () => {
-    expect(pathFor(WORKS, FRAMINGS[0][1]).poses.length).toBe(8);
+    expect(pathFor(WORKS, FRAMINGS[0][1]).poses.length).toBe(9);
     expect(pathFor([], FRAMINGS[0][1]).poses.length).toBe(5);
     expect(pathFor([WORKS[0]], FRAMINGS[0][1]).poses.length).toBe(6);
   });
@@ -55,6 +56,24 @@ describe("buildPoses", () => {
         }
         expect(insideBuilding(pose.position)).withContext(`stop ${index} at ${pose.position.toArray()}`).toBeTrue();
       }
+    });
+  }
+
+  for (const [name, framing] of FRAMINGS) {
+    it(`stands every stop in its own room at ${name}`, () => {
+      const { poses } = pathFor(WORKS, framing);
+      const wall = WALL_THICKNESS / 2;
+      const rooms = [
+        ...WORKS.map(() => [DOOR_XS[1], DOOR_XS[2]]),
+        [DOOR_XS[2], DOOR_XS[3]],
+        [DOOR_XS[3], END_WALL_X],
+      ];
+
+      rooms.forEach(([west, east], index) => {
+        const { x } = poses[3 + index].position;
+        expect(x).withContext(`stop ${3 + index}`).toBeGreaterThan(west + wall);
+        expect(x).withContext(`stop ${3 + index}`).toBeLessThan(east - wall);
+      });
     });
   }
 
@@ -77,6 +96,24 @@ describe("buildPoses", () => {
 
     expect(beside.position.z).toBeGreaterThan(open.position.z);
     expect(beside.position.x).toBeGreaterThan(slots[0].centre.x);
+  });
+
+  it("keeps the wide last frame out of sight from in front of the study before it, on a short wide screen", () => {
+    // 1288x654, where the label and its gutter take 44% of the width
+    const framing = frame(1288 / 654, 0.44);
+    const slots = pieceSlots(WORKS);
+    const study = buildPoses(slots, framing)[5];
+    const wide = slots[3];
+    const camera = new PerspectiveCamera(fieldOfView(framing.aspect), framing.aspect, 0.1, 80);
+    camera.position.copy(study.position);
+    camera.lookAt(study.target);
+    // As far as the scene turns when the mouse rests at the right edge of the screen
+    camera.rotateY(-0.06);
+    camera.updateMatrixWorld();
+
+    const nearEdge = new Vector3(wide.centre.x - wide.span / 2, wide.centre.y, HANG_Z).project(camera);
+
+    expect(nearEdge.x).toBeGreaterThan(1);
   });
 });
 
@@ -179,7 +216,7 @@ describe("CameraPath", () => {
     const { path, poses } = pathFor(WORKS, FRAMINGS[0][1]);
 
     expect(sample(path, -3).position.distanceTo(poses[0].position)).toBeLessThan(1e-6);
-    expect(sample(path, 99).position.distanceTo(poses[7].position)).toBeLessThan(1e-6);
+    expect(sample(path, 99).position.distanceTo(poses[poses.length - 1].position)).toBeLessThan(1e-6);
   });
 
   for (const [name, framing] of FRAMINGS) {

@@ -62,7 +62,7 @@
                     <button type="button" (click)="goTo(target, true)">
                       <span class="font-display text-xl text-bone">{{ work.title }}</span>
                       <span class="sr-only">, </span>
-                      <span class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-gold">{{ work.kind === "commission" ? "Commission" : "Study" }}</span>
+                      <span class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-gold">{{ kindLabel[work.kind] }}</span>
                     </button>
                   </li>
                 }

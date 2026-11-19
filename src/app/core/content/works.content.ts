@@ -85,4 +85,41 @@ export const WORKS: readonly Work[] = [
       },
     ],
   },
+  {
+    slug: "this-gallery",
+    title: "This Gallery",
+    kind: "self-portrait",
+    year: "2026",
+    materials: ["Angular", "Three.js", "TypeScript"],
+    role: "Design and build.",
+    problem:
+      "A portfolio usually tells you its author cares about craft. I wanted one that shows it before you read a word.",
+    built:
+      "A small museum you walk through by scrolling: a building drawn with Three.js inside an Angular app, and a flat catalogue of the same content for phones, reduced motion and slower devices.",
+    outcome:
+      "Every stop has its own link, the keyboard walks the whole route, automated accessibility checks find no violations, and the scene draws nothing while you stand still.",
+    repo: "https://github.com/FelixHolly/treejs-portfolio",
+    images: [
+      {
+        src: "assets/works/this-gallery-entrance.webp",
+        alt: "The entrance of this gallery: the name Felix Hollndonner above a stone lion on a plinth, between plaques to enter the gallery or read the catalogue",
+        caption: "Self-portrait · Entrance",
+        orientation: "landscape",
+      },
+    ],
+    detailImages: [
+      {
+        src: "assets/works/this-gallery-room-1.webp",
+        alt: "Room I of this gallery: a gilded frame holding a section drawing of a web application, beside the label The Developer",
+        caption: "Fig. II · Room I",
+        orientation: "landscape",
+      },
+      {
+        src: "assets/works/this-gallery-room-4.webp",
+        alt: "Room IV of this gallery: a brass letterbox above a writing desk with a lit lamp, beside a sheet of letter paper headed Write to me",
+        caption: "Fig. III · Room IV",
+        orientation: "landscape",
+      },
+    ],
+  },
 ];

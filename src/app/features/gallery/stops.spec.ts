@@ -10,6 +10,7 @@ describe("buildStops", () => {
       "works/kuechenschelle",
       "works/wheelwallet",
       "works/reloo",
+      "works/this-gallery",
       "visitors-book",
       "correspondence",
     ]);
@@ -18,8 +19,8 @@ describe("buildStops", () => {
   it("keeps every work stop in Room II and hands it its work", () => {
     const works = buildStops(WORKS).filter((stop) => stop.kind === "work");
 
-    expect(works.map((stop) => stop.room.numeral)).toEqual(["II", "II", "II"]);
-    expect(works.map((stop) => stop.work?.slug)).toEqual(["kuechenschelle", "wheelwallet", "reloo"]);
+    expect(works.map((stop) => stop.room.numeral)).toEqual(["II", "II", "II", "II"]);
+    expect(works.map((stop) => stop.work?.slug)).toEqual(["kuechenschelle", "wheelwallet", "reloo", "this-gallery"]);
   });
 
   it("still has its five rooms when nothing hangs", () => {

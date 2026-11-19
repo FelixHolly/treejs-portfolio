@@ -260,38 +260,3 @@ export function writtenPageTexture(): CanvasTexture {
   texture.anisotropy = 4;
   return texture;
 }
-
-/** Where a room's name sits on its canvas: the numeral, the rule under it and the name, by their middles. */
-const ROOM_NAME = { width: 1536, height: 640, numeral: 150, rule: 282, ruleHalf: 62, name: 438 } as const;
-/** The canvas's width over its height; the surface it is mapped on keeps to it. */
-export const ROOM_NAME_ASPECT = ROOM_NAME.width / ROOM_NAME.height;
-
-export function roomNameTexture(numeral: string, name: string): CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = ROOM_NAME.width;
-  canvas.height = ROOM_NAME.height;
-
-  const context = canvas.getContext("2d");
-  if (context) {
-    const { width } = canvas;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-
-    context.font = '400 132px "JetBrains Mono", monospace';
-    context.fillStyle = "#c7a44a";
-    spaced(context, "0.14em");
-    // Letter spacing trails the last letter too, which would set the numeral left of the rule
-    context.fillText(numeral.toUpperCase(), width / 2 + 132 * 0.07, ROOM_NAME.numeral, width - 160);
-    context.fillRect(width / 2 - ROOM_NAME.ruleHalf, ROOM_NAME.rule, ROOM_NAME.ruleHalf * 2, 5);
-
-    context.font = '500 196px "Boska", Georgia, serif';
-    context.fillStyle = "#e8e5de";
-    spaced(context, "0.01em");
-    context.fillText(name, width / 2, ROOM_NAME.name, width - 80);
-  }
-
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 8;
-  return texture;
-}

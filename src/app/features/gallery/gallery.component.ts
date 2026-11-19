@@ -31,6 +31,8 @@ import { WallLabelComponent } from "../../shared/wall-label/wall-label.component
 import { FloorPlanComponent } from "./floor-plan/floor-plan.component";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { LightboxComponent } from "./lightbox/lightbox.component";
+import { RoomTitleCue } from "./room-title/room-title-cue";
+import { RoomTitleComponent } from "./room-title/room-title.component";
 import { GalleryView, OPEN_BAND, PageFraming } from "./scene/gallery-view";
 import { labelShareOf, LabelSpan, neighbourStop, progressFromScroll, scrollTargetFor } from "./scroll-progress";
 import { buildStops, GalleryStop } from "./stops";
@@ -79,6 +81,7 @@ function sameFraming(a: PageFraming, b: PageFraming): boolean {
     LetterComponent,
     LightboxComponent,
     RoomLabelComponent,
+    RoomTitleComponent,
     ViewSwitchComponent,
     WallLabelComponent,
   ],
@@ -101,6 +104,7 @@ export class GalleryComponent {
   readonly stops = buildStops(this.works);
   readonly last = this.stops.length - 1;
   readonly onward = this.stops.map((_, index) => onwardText(this.stops, index));
+  readonly title = new RoomTitleCue(this.stops.map((stop) => stop.room));
   readonly developer = DEVELOPER;
   readonly entries = VISITOR_ENTRIES;
   readonly year = new Date().getFullYear();
@@ -202,6 +206,7 @@ export class GalleryComponent {
     this.fadeTarget = this.activeIndex();
 
     const onScroll = () => this.syncFromScroll();
+    const onScrollEnd = () => this.title.settle();
     const onResize = () => {
       this.measure();
       this.scene?.resize(this.framing);
@@ -235,6 +240,7 @@ export class GalleryComponent {
     const onFocus = (event: FocusEvent) => this.followFocus(event);
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", onScrollEnd);
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointermove", onPointer, { passive: true });
@@ -280,6 +286,7 @@ export class GalleryComponent {
       destroyed = true;
       root.classList.remove("gallery-active");
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", onScrollEnd);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointermove", onPointer);
@@ -290,6 +297,7 @@ export class GalleryComponent {
       window.removeEventListener("popstate", onBack);
       this.document.removeEventListener("visibilitychange", onVisibility);
       window.clearTimeout(this.fadeTimer);
+      this.title.dispose();
       window.clearTimeout(sceneTimer);
       window.cancelAnimationFrame(sceneFrame);
       resizeObserver.disconnect();
@@ -381,6 +389,7 @@ export class GalleryComponent {
       this.crossFadeTo(index);
     } else {
       this.scene?.setProgress(this.progress);
+      this.title.follow(this.progress);
     }
     if (index !== this.activeIndex()) this.arrive(index);
   }
@@ -440,7 +449,9 @@ export class GalleryComponent {
     if (!window || !span) return;
 
     const top = index === 0 ? 0 : scrollTargetFor(span, window.innerHeight, HEADER_CLEARANCE);
-    window.scrollTo({ top, behavior: this.reducedMotion ? "instant" : behavior });
+    const walked = behavior === "smooth" && !this.reducedMotion;
+    if (walked) this.title.walkTo(index);
+    window.scrollTo({ top, behavior: walked ? "smooth" : "instant" });
   }
 
   private onKey(event: KeyboardEvent): void {

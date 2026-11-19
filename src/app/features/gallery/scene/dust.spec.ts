@@ -1,24 +1,77 @@
 import { AdditiveBlending, Scene, Vector3 } from "three";
-import { Dust, DUST, dustLevel } from "./dust";
+import { Dust, DUST, dustLevel, DustMoment, dustPresence } from "./dust";
 import { ROTUNDA } from "./layout";
 
 const DARK = 0.3;
 const FRAME = 0.1;
 
 describe("dustLevel", () => {
+  const lit: DustMoment = { rise: 1, progress: 0, presence: 1, reducedMotion: false, allowed: true };
+
   it("comes up with the lights", () => {
-    expect(dustLevel(0, 0)).toBe(0);
-    expect(dustLevel(0.5, 0)).toBe(0.5);
-    expect(dustLevel(1, 0)).toBe(1);
+    expect(dustLevel({ ...lit, rise: 0 })).toBe(0);
+    expect(dustLevel({ ...lit, rise: 0.5 })).toBe(0.5);
+    expect(dustLevel(lit)).toBe(1);
+    expect(dustLevel({ ...lit, rise: 1.4 })).toBe(1);
   });
 
-  it("holds for the first seconds, then fades to nothing by eight seconds after the lights have risen", () => {
-    expect(dustLevel(1, DUST.fadesFrom)).toBe(1);
-    expect(dustLevel(1, 6)).toBeGreaterThan(0);
-    expect(dustLevel(1, 6)).toBeLessThan(dustLevel(1, 5));
-    expect(DUST.gone).toBe(8);
-    expect(dustLevel(1, DUST.gone)).toBe(0);
-    expect(dustLevel(1, 20)).toBe(0);
+  it("is full at the entrance and thins evenly to nothing by two fifths of the way to Room I", () => {
+    expect(DUST.thinsBy).toBe(0.4);
+    expect(dustLevel({ ...lit, progress: 0.04 })).toBeCloseTo(0.9, 6);
+    expect(dustLevel({ ...lit, progress: 0.1 })).toBeCloseTo(0.75, 6);
+    expect(dustLevel({ ...lit, progress: 0.2 })).toBeCloseTo(0.5, 6);
+    expect(dustLevel({ ...lit, progress: 0.3 })).toBeCloseTo(0.25, 6);
+    expect(dustLevel({ ...lit, progress: 0.4 })).toBe(0);
+    expect(dustLevel({ ...lit, progress: 0.45 })).toBe(0);
+    expect(dustLevel({ ...lit, progress: 6 })).toBe(0);
+  });
+
+  it("is the same on the way back as on the way out", () => {
+    for (const progress of [0.3, 0.2, 0.1, 0]) {
+      expect(dustLevel({ ...lit, progress })).toBeCloseTo(1 - progress / 0.4, 6);
+    }
+  });
+
+  it("follows how awake the dust is", () => {
+    expect(dustLevel({ ...lit, presence: 0 })).toBe(0);
+    expect(dustLevel({ ...lit, presence: 0.5, progress: 0.2 })).toBeCloseTo(0.25, 6);
+  });
+
+  it("is nothing under reduced motion and once quality has stepped down", () => {
+    expect(dustLevel({ ...lit, reducedMotion: true })).toBe(0);
+    expect(dustLevel({ ...lit, allowed: false })).toBe(0);
+  });
+});
+
+describe("dustPresence", () => {
+  /** The presence after `seconds` more of a visitor already idle for `idle` seconds, in frames. */
+  function after(presence: number, idle: number, seconds: number): number {
+    for (let passed = 0; passed < seconds - 1e-9; passed += FRAME) presence = dustPresence(presence, (idle += FRAME), FRAME);
+    return presence;
+  }
+
+  it("stays whole for a minute without the visitor doing anything", () => {
+    expect(DUST.idleAfter).toBe(60);
+    expect(after(1, 0, 59.8)).toBe(1);
+  });
+
+  it("then settles over about four seconds", () => {
+    expect(after(1, 60, 2)).toBeCloseTo(0.5, 1);
+    expect(after(1, 60, 3.8)).toBeGreaterThan(0);
+    expect(after(1, 60, 4.2)).toBe(0);
+    expect(after(0, 200, 5)).toBe(0);
+  });
+
+  it("comes back over about a second and a half once the visitor stirs", () => {
+    expect(after(0, 0, 0.7)).toBeCloseTo(0.5, 1);
+    expect(after(0, 0, 1.3)).toBeLessThan(1);
+    expect(after(0, 0, 1.6)).toBe(1);
+  });
+
+  it("turns round from wherever it had got to, without a jump", () => {
+    const half = after(1, 60, 2);
+
+    expect(dustPresence(half, 0, FRAME)).toBeCloseTo(half + FRAME / DUST.wakes, 6);
   });
 });
 
@@ -34,8 +87,16 @@ describe("Dust", () => {
     return dust.objects[0].material.uniforms["level"].value;
   }
 
+  /** A cloud whose lights have risen, with the visitor at the entrance. */
+  function drifting(): Dust {
+    const dust = new Dust(false);
+    dust.update(FRAME, 0, DARK, true);
+    run(dust, 1, 1);
+    return dust;
+  }
+
   it("is one cloud of a few dozen points, added to the light and drawn without any image", () => {
-    const dust = new Dust(true);
+    const dust = new Dust(false);
     const [points] = dust.objects;
 
     expect(dust.objects.length).toBe(1);
@@ -49,7 +110,7 @@ describe("Dust", () => {
   });
 
   it("hangs every mote inside the key light's beam, above the floor and round the statue", () => {
-    const position = new Dust(true).objects[0].geometry.getAttribute("position");
+    const position = new Dust(false).objects[0].geometry.getAttribute("position");
     const lamp = new Vector3(ROTUNDA.x - 4.4, 6.6, -3.6);
     const axis = new Vector3(ROTUNDA.x, 2.5, 0).sub(lamp).normalize();
 
@@ -62,120 +123,170 @@ describe("Dust", () => {
   });
 
   it("scatters the motes the same way every time", () => {
-    const first = new Dust(true).objects[0].geometry.getAttribute("position").array;
-    const second = new Dust(true).objects[0].geometry.getAttribute("position").array;
+    const first = new Dust(false).objects[0].geometry.getAttribute("position").array;
+    const second = new Dust(false).objects[0].geometry.getAttribute("position").array;
 
     expect(Array.from(first)).toEqual(Array.from(second));
   });
 
-  it("waits, asking for no frames, until the statue's lights begin to rise", () => {
-    const dust = new Dust(true);
+  it("fades a mote out as the camera comes up to it, between two metres and sixty centimetres", () => {
+    const { vertexShader } = new Dust(false).objects[0].material;
+
+    expect(DUST.near).toBe(0.6);
+    expect(DUST.clear).toBe(2);
+    expect(vertexShader).toContain("smoothstep(0.60, 2.00, -seen.z)");
+    expect(vertexShader).toMatch(/vLight = [^;]*clearOfCamera/);
+  });
+
+  it("waits, asking for no frames and drawing nothing, until the statue's lights begin to rise", () => {
+    const dust = new Dust(false);
 
     expect(run(dust, 1, DARK)).toBeFalse();
     expect(level(dust)).toBe(0);
-    expect(dust.settled).toBeFalse();
+    expect(dust.objects[0].visible).toBeFalse();
   });
 
   it("comes up with the lights and keeps asking for frames while it drifts", () => {
-    const dust = new Dust(true);
+    const dust = new Dust(false);
     dust.update(FRAME, 0, DARK, true);
 
     expect(dust.update(FRAME, 0, 0.65, true)).toBeTrue();
     expect(level(dust)).toBeCloseTo(0.5, 5);
     expect(run(dust, 1, 1)).toBeTrue();
     expect(level(dust)).toBe(1);
+    expect(dust.objects[0].visible).toBeTrue();
   });
 
   it("moves: its clock runs on while it drifts", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
-    run(dust, 2, 1);
+    const dust = drifting();
+    run(dust, 1, 1);
 
     expect(dust.objects[0].material.uniforms["time"].value).toBeCloseTo(2, 5);
   });
 
-  it("has faded and been taken down eight seconds after the lights finished rising, and asks for nothing more", () => {
-    const scene = new Scene();
-    const dust = new Dust(true);
-    scene.add(...dust.objects);
-    const [points] = dust.objects;
-    const freed = jasmine.createSpy("freed");
-    points.geometry.addEventListener("dispose", freed);
-    points.material.addEventListener("dispose", freed);
-    dust.update(FRAME, 0, DARK, true);
+  it("is still drifting, whole, long after the eight seconds it used to last", () => {
+    const dust = drifting();
 
-    expect(run(dust, 6, 1)).toBeTrue();
-    expect(level(dust)).toBeLessThan(0.5);
-    expect(run(dust, 2.1, 1)).toBeFalse();
-
-    expect(dust.settled).toBeTrue();
-    expect(dust.objects).toEqual([]);
-    expect(scene.children).toEqual([]);
-    expect(freed).toHaveBeenCalledTimes(2);
-    expect(dust.update(FRAME, 0, 1, true)).toBeFalse();
+    expect(run(dust, 40, 1)).toBeTrue();
+    expect(level(dust)).toBe(1);
   });
 
-  it("fades quickly as soon as the visitor walks on", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
-    run(dust, 1, 1);
+  it("thins as the visitor walks towards Room I, is gone and asks for nothing from two fifths of the way", () => {
+    const dust = drifting();
 
-    expect(dust.update(FRAME, 0.2, 1, true)).toBeTrue();
-    expect(level(dust)).toBeLessThan(1);
-    expect(run(dust, DUST.leaving, 1, 0.6)).toBeFalse();
-    expect(dust.settled).toBeTrue();
+    expect(dust.update(FRAME, 0.1, 1, true)).toBeTrue();
+    expect(level(dust)).toBeCloseTo(0.75, 5);
+    expect(dust.update(FRAME, 0.25, 1, true)).toBeTrue();
+    expect(level(dust)).toBeCloseTo(0.375, 5);
+    expect(dust.update(FRAME, 0.45, 1, true)).toBeFalse();
+    expect(dust.objects[0].visible).toBeFalse();
+    expect(run(dust, 5, 1, 4)).toBeFalse();
   });
 
-  it("keeps fading once the visitor has set off, even if they step straight back", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
-    run(dust, 1, 1);
-    dust.update(FRAME, 0.2, 1, true);
+  it("is there again, as it was, when the visitor walks back to the entrance", () => {
+    const dust = drifting();
+    run(dust, 300, 1, 5);
 
-    expect(run(dust, DUST.leaving, 1, 0)).toBeFalse();
-    expect(dust.settled).toBeTrue();
+    expect(dust.update(FRAME, 0.3, 1, true)).toBeTrue();
+    expect(level(dust)).toBeCloseTo(0.25, 5);
+    expect(dust.update(FRAME, 0, 1, true)).toBeTrue();
+    expect(level(dust)).toBe(1);
+    expect(dust.objects[0].visible).toBeTrue();
   });
 
-  it("never starts again on a return to the entrance", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
-    run(dust, 9, 1);
+  it("comes up for a visitor who arrived somewhere else and walks to the entrance later", () => {
+    const dust = new Dust(false);
+    dust.update(FRAME, 4, DARK, true);
 
     expect(run(dust, 3, 1, 4)).toBeFalse();
-    expect(run(dust, 3, 1, 0)).toBeFalse();
-    expect(dust.objects).toEqual([]);
+    expect(dust.update(FRAME, 0, 1, true)).toBeTrue();
+    expect(level(dust)).toBe(1);
   });
 
-  it("never starts for a visitor who arrives somewhere other than the entrance", () => {
+  it("settles after a minute without the visitor stirring, and then asks for no more frames", () => {
+    const dust = drifting();
+
+    expect(run(dust, 58, 1)).toBeTrue();
+    expect(level(dust)).toBe(1);
+    expect(run(dust, 3, 1)).toBeTrue();
+    expect(level(dust)).toBeLessThan(1);
+    expect(level(dust)).toBeGreaterThan(0);
+    expect(run(dust, 3, 1)).toBeFalse();
+    expect(level(dust)).toBe(0);
+    expect(dust.objects[0].visible).toBeFalse();
+    expect(run(dust, 30, 1)).toBeFalse();
+  });
+
+  it("never settles while the visitor keeps stirring", () => {
+    const dust = drifting();
+    for (let minute = 0; minute < 5; minute++) {
+      run(dust, 50, 1);
+      dust.stir();
+    }
+
+    expect(run(dust, 50, 1)).toBeTrue();
+    expect(level(dust)).toBe(1);
+  });
+
+  it("comes back over about a second and a half when a settled visitor stirs", () => {
+    const dust = drifting();
+    run(dust, 70, 1);
+    dust.stir();
+
+    expect(dust.update(FRAME, 0, 1, true)).toBeTrue();
+    expect(level(dust)).toBeLessThan(0.2);
+    run(dust, 0.6, 1);
+    expect(level(dust)).toBeCloseTo(0.47, 1);
+    expect(run(dust, 1, 1)).toBeTrue();
+    expect(level(dust)).toBe(1);
+  });
+
+  it("does not count the minute while the visitor is elsewhere", () => {
+    const dust = drifting();
+    run(dust, 600, 1, 5);
+
+    expect(run(dust, 30, 1)).toBeTrue();
+    expect(level(dust)).toBe(1);
+  });
+
+  it("is not made at all under reduced motion", () => {
     const dust = new Dust(true);
 
-    expect(dust.update(FRAME, 4, DARK, true)).toBeFalse();
-    expect(dust.settled).toBeTrue();
-    expect(run(dust, 2, 1, 0)).toBeFalse();
+    expect(dust.objects).toEqual([]);
+    expect(run(dust, 1, 1)).toBeFalse();
+    expect(() => dust.stir()).not.toThrow();
+    expect(() => dust.dispose()).not.toThrow();
   });
 
-  it("is not made at all under reduced motion, at a lower quality tier or on a second look", () => {
-    const dust = new Dust(false);
+  it("is off, drawing nothing and asking for nothing, once quality has stepped down", () => {
+    const dust = drifting();
 
-    expect(dust.objects).toEqual([]);
-    expect(dust.settled).toBeTrue();
-    expect(run(dust, 1, 1)).toBeFalse();
+    expect(dust.update(FRAME, 0, 1, false)).toBeFalse();
+    expect(dust.objects[0].visible).toBeFalse();
+    expect(run(dust, 5, 1, 0, false)).toBeFalse();
   });
 
   it("never starts when quality has already stepped down by the time the lights rise", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
+    const dust = new Dust(false);
+    dust.update(FRAME, 0, DARK, false);
 
-    expect(dust.update(FRAME, 0, 0.6, false)).toBeFalse();
-    expect(dust.settled).toBeTrue();
+    expect(run(dust, 3, 1, 0, false)).toBeFalse();
+    expect(dust.objects[0].visible).toBeFalse();
   });
 
-  it("goes as soon as quality steps down while it drifts", () => {
-    const dust = new Dust(true);
-    dust.update(FRAME, 0, DARK, true);
-    run(dust, 1, 1);
+  it("lives as long as the scene and frees its points when that is disposed", () => {
+    const scene = new Scene();
+    const dust = drifting();
+    scene.add(...dust.objects);
+    const freed = jasmine.createSpy("freed");
+    dust.objects[0].geometry.addEventListener("dispose", freed);
+    dust.objects[0].material.addEventListener("dispose", freed);
+    run(dust, 80, 1);
+    run(dust, 5, 1, 6);
 
-    expect(run(dust, DUST.leaving + FRAME, 1, 0, false)).toBeFalse();
-    expect(dust.settled).toBeTrue();
+    expect(scene.children.length).toBe(1);
+    expect(freed).not.toHaveBeenCalled();
+    dust.dispose();
+    expect(freed).toHaveBeenCalledTimes(2);
   });
 });

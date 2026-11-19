@@ -1,8 +1,8 @@
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, MathUtils, Points, ShaderMaterial, Vector2, Vector3 } from "three";
 import { ROTUNDA } from "./layout";
 
-/** How the dust comes and goes, in seconds after the statue's lights have risen, and how far a visitor walks before it is gone. */
-export const DUST = { motes: 44, fadesFrom: 3.5, gone: 8, leaving: 0.6, walkedOn: 0.05 } as const;
+/** Gone `thinsBy` stops towards Room I; settles over `settles` seconds after `idleAfter` idle ones, back over `wakes`; a mote fades from `clear` to `near` metres off the camera. */
+export const DUST = { motes: 44, thinsBy: 0.4, idleAfter: 60, settles: 4, wakes: 1.5, near: 0.6, clear: 2 } as const;
 /** The statue's key light, as `lights.ts` hangs it: the motes drift in its beam, the only place dust would show. */
 const BEAM = { from: [ROTUNDA.x - 4.4, 6.6, -3.6], to: [ROTUNDA.x, 2.5, 0], angle: 0.44, near: 0.58, far: 1.04, fill: 0.55 } as const;
 const WARM = 0xffd9a0;
@@ -20,7 +20,9 @@ const VERTEX = /* glsl */ `
     vec4 seen = modelViewMatrix * vec4(drifted, 1.0);
     gl_Position = projectionMatrix * seen;
     gl_PointSize = max(mote.y * halfHeight * projectionMatrix[1][1] / -seen.z, 3.0);
-    vLight = mote.z * level * (0.7 + 0.3 * sin(t * 1.7));
+    // Walked through, a mote would swell into a blob: it fades out as the camera comes up to it
+    float clearOfCamera = smoothstep(${DUST.near.toFixed(2)}, ${DUST.clear.toFixed(2)}, -seen.z);
+    vLight = mote.z * level * clearOfCamera * (0.7 + 0.3 * sin(t * 1.7));
   }
 `;
 
@@ -75,27 +77,44 @@ function motes(): BufferGeometry {
   return geometry;
 }
 
-/** How much of the dust shows, 0..1: `rise` follows the lights up, `risen` counts the seconds since they got there. */
-export function dustLevel(rise: number, risen: number): number {
-  return MathUtils.clamp(rise, 0, 1) * (1 - MathUtils.smoothstep(risen, DUST.fadesFrom, DUST.gone));
+export interface DustMoment {
+  /** How far the statue's lights have risen, 0 to 1. */
+  rise: number;
+  /** Where the visitor is on the route, in stops. */
+  progress: number;
+  /** How awake the dust is, 0 to 1: see `dustPresence`. */
+  presence: number;
+  reducedMotion: boolean;
+  /** False once quality has stepped down. */
+  allowed: boolean;
 }
 
-// Dust motes in the statue's key light for the first seconds after it comes up, and never again:
-// once settled the points are taken down, so a still hall goes back to drawing nothing.
+/** How much of the dust shows, 0 to 1: it comes up with the lights and thins as the visitor walks away from the statue. */
+export function dustLevel({ rise, progress, presence, reducedMotion, allowed }: DustMoment): number {
+  if (reducedMotion || !allowed) return 0;
+  const atEntrance = MathUtils.clamp(1 - progress / DUST.thinsBy, 0, 1);
+  return MathUtils.clamp(rise, 0, 1) * atEntrance * MathUtils.clamp(presence, 0, 1);
+}
+
+/** The dust's presence `seconds` on: it settles once the visitor has done nothing for a minute, and wakes when they stir. */
+export function dustPresence(presence: number, idle: number, seconds: number): number {
+  const step = idle < DUST.idleAfter ? seconds / DUST.wakes : -seconds / DUST.settles;
+  return MathUtils.clamp(presence + step, 0, 1);
+}
+
+// Dust motes in the statue's key light, for as long as the visitor is at the entrance and doing something.
+// Settled, or with the visitor elsewhere, it asks for no frames, so a still hall goes back to drawing nothing.
 export class Dust {
   readonly objects: Points<BufferGeometry, ShaderMaterial>[] = [];
-  private state: "waiting" | "drifting" | "settled";
   /** The statue's level before its lights come up, taken from the first frame. */
   private dark?: number;
   private time = 0;
-  private risen = 0;
-  private leaving = false;
-  private level = 0;
+  private idle = 0;
+  private presence = 1;
 
-  /** `shown` is false where dust has no place: reduced motion, a lower quality tier, a second look in one visit. */
-  constructor(shown: boolean) {
-    this.state = shown ? "waiting" : "settled";
-    if (!shown) return;
+  /** `reducedMotion` is the one case with no dust at all, and nothing made for it. */
+  constructor(private readonly reducedMotion: boolean) {
+    if (reducedMotion) return;
 
     const points = new Points(
       motes(),
@@ -117,46 +136,42 @@ export class Dust {
     points.onBeforeRender = (renderer) => {
       points.material.uniforms["halfHeight"].value = renderer.getDrawingBufferSize(size).y / 2;
     };
+    points.visible = false;
     this.objects.push(points);
   }
 
-  get settled(): boolean {
-    return this.state === "settled";
+  /** The visitor moved the mouse, scrolled or pressed a key. */
+  stir(): void {
+    this.idle = 0;
   }
 
   /** `lionLevel` runs up to 1 as the lights rise; `allowed` is false once quality has stepped down. True while the dust needs frames. */
   update(seconds: number, progress: number, lionLevel: number, allowed: boolean): boolean {
-    if (this.state === "settled") return false;
+    const [points] = this.objects;
+    if (!points) return false;
     const dark = (this.dark ??= lionLevel);
-    const away = progress > DUST.walkedOn || !allowed;
-
-    if (this.state === "waiting") {
-      if (away) return this.settle();
-      if (lionLevel <= dark) return false;
-      this.state = "drifting";
+    const rise = (lionLevel - dark) / Math.max(1 - dark, 0.0001);
+    const moment = { rise, progress, reducedMotion: this.reducedMotion, allowed };
+    // Where no dust could show, time stands still for it: the minute is counted at the entrance only
+    if (dustLevel({ ...moment, presence: 1 }) <= 0) {
+      points.visible = false;
+      return false;
     }
 
     this.time += seconds;
-    if (lionLevel >= 1) this.risen += seconds;
-    this.leaving ||= away;
-    const rise = (lionLevel - dark) / Math.max(1 - dark, 0.0001);
-    this.level = this.leaving ? this.level - seconds / DUST.leaving : dustLevel(rise, this.risen);
-    if (this.risen >= DUST.gone || (this.leaving && this.level <= 0)) return this.settle();
-
-    const { uniforms } = this.objects[0].material;
-    uniforms["time"].value = this.time;
-    uniforms["level"].value = this.level;
-    return true;
+    this.idle += seconds;
+    this.presence = dustPresence(this.presence, this.idle, seconds);
+    const level = dustLevel({ ...moment, presence: this.presence });
+    points.visible = level > 0;
+    points.material.uniforms["time"].value = this.time;
+    points.material.uniforms["level"].value = level;
+    return level > 0;
   }
 
-  private settle(): false {
-    this.state = "settled";
+  dispose(): void {
     for (const points of this.objects) {
-      points.removeFromParent();
       points.geometry.dispose();
       points.material.dispose();
     }
-    this.objects.length = 0;
-    return false;
   }
 }

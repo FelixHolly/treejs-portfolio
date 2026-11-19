@@ -1,16 +1,13 @@
 import { SceneWork } from "./gallery-view";
 import {
   DESK,
-  DOOR,
   DOOR_XS,
   END_WALL_X,
   ENFILADE,
   EYE,
   fieldOfView,
-  HALF_DEPTH,
   LECTERN,
   LETTERBOX,
-  MEDALLION,
   PEDESTAL_RADIUS,
   pieceSlots,
   PORTRAIT,
@@ -229,13 +226,6 @@ describe("the building", () => {
     expect(SKILL_PLAQUES.y - SKILL_WALL.height / 2).toBeGreaterThan(0.6);
     expect(SKILL_PLAQUES.y + SKILL_WALL.height / 2).toBeLessThan(WALL_HEIGHT - 2);
     expect(Math.abs(SKILL_PLAQUES.y - EYE)).toBeLessThan(0.35);
-  });
-
-  it("hangs the seal on the wall beside the door to Room II, clear of the door and the corner", () => {
-    expect(MEDALLION.x).toBeLessThan(DOOR_XS[1]);
-    expect(DOOR_XS[1] - MEDALLION.x).toBeLessThan(0.5);
-    expect(MEDALLION.z + MEDALLION.radius).toBeLessThan(-DOOR.width / 2 - 0.2);
-    expect(MEDALLION.z - MEDALLION.radius).toBeGreaterThan(-HALF_DEPTH);
   });
 
   it("stands the lectern and the writing desk in the middle of their own rooms", () => {

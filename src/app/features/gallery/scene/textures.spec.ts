@@ -5,8 +5,6 @@ import {
   lampshadeTexture,
   nameBoardTexture,
   plaqueTexture,
-  ROOM_NAME_ASPECT,
-  roomNameTexture,
   walnutTexture,
   writtenPageTexture,
 } from "./textures";
@@ -266,89 +264,5 @@ describe("the furniture's drawn surfaces", () => {
     expect(ink(canvas.width - 20, 0, 20, canvas.height)).toBe(0);
     expect(ink(0, 0, canvas.width, 50)).toBe(0);
     expect(ink(0, canvas.height - 50, canvas.width, 50)).toBe(0);
-  });
-});
-
-describe("roomNameTexture", () => {
-  const canvasOf = (numeral: string, name: string) => roomNameTexture(numeral, name).image as HTMLCanvasElement;
-  /** Of the fully lettered pixels in a band of the canvas: their mean colour, where their middle lies across it, and their share of the band. */
-  function lettering(canvas: HTMLCanvasElement, y: number, height: number): { colour: number[]; middle: number; share: number } {
-    const { data } = canvas.getContext("2d")!.getImageData(0, y, canvas.width, height);
-    const sum = [0, 0, 0];
-    let across = 0;
-    let count = 0;
-    for (let index = 0; index < data.length; index += 4) {
-      if (data[index + 3] < 250) continue;
-      for (let channel = 0; channel < 3; channel++) sum[channel] += data[index + channel];
-      across += (index / 4) % canvas.width;
-      count += 1;
-    }
-    const pixelCount = Math.max(count, 1);
-    return { colour: sum.map((value) => value / pixelCount), middle: across / pixelCount, share: count / (canvas.width * height) };
-  }
-  /** True where nothing at all is drawn in a strip of the canvas. */
-  const bare = (canvas: HTMLCanvasElement, x: number, width: number) =>
-    canvas
-      .getContext("2d")!
-      .getImageData(x, 0, width, canvas.height)
-      .data.every((value) => value === 0);
-
-  it("is drawn at the proportions its wall lettering keeps, sharp enough for a screen of double density", () => {
-    const canvas = canvasOf("I", "The Developer");
-
-    expect(canvas.width / canvas.height).toBeCloseTo(ROOM_NAME_ASPECT, 6);
-    expect(canvas.width).toBeGreaterThanOrEqual(1536);
-  });
-
-  it("letters on nothing: the wall shows between the letters", () => {
-    const canvas = canvasOf("II", "The Works");
-    const { data } = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height);
-    let clear = 0;
-    for (let index = 3; index < data.length; index += 4) if (data[index] === 0) clear += 1;
-
-    expect(clear / (data.length / 4)).toBeGreaterThan(0.8);
-    expect(data[3]).toBe(0);
-  });
-
-  it("sets the numeral in gold over a gold rule, and the name under them in bone", () => {
-    const canvas = canvasOf("III", "Visitors' Book");
-    const numeral = lettering(canvas, 90, 120);
-    const rule = lettering(canvas, 282, 5);
-    const name = lettering(canvas, 340, 200);
-
-    expect(numeral.share).toBeGreaterThan(0.005);
-    expect(numeral.colour[0]).toBeCloseTo(199, -1);
-    expect(numeral.colour[2]).toBeCloseTo(74, -1);
-    expect(rule.share).toBeGreaterThan(0.05);
-    expect(rule.colour[2]).toBeCloseTo(74, -1);
-    expect(name.share).toBeGreaterThan(0.02);
-    expect(name.colour[0]).toBeCloseTo(232, -1);
-    expect(name.colour[2]).toBeCloseTo(222, -1);
-    expect(lettering(canvas, 232, 40).share).toBe(0);
-    expect(lettering(canvas, 296, 30).share).toBe(0);
-  });
-
-  it("centres numeral, rule and name on one axis, whatever the numeral's letter spacing", () => {
-    const rooms = [
-      ["I", "The Developer"],
-      ["III", "Visitors' Book"],
-      ["IV", "Correspondence"],
-    ];
-
-    for (const [numeral, name] of rooms) {
-      const canvas = canvasOf(numeral, name);
-
-      expect(Math.abs(lettering(canvas, 90, 120).middle - canvas.width / 2)).withContext(numeral).toBeLessThan(8);
-      expect(Math.abs(lettering(canvas, 282, 5).middle - canvas.width / 2)).withContext(numeral).toBeLessThan(1);
-      expect(Math.abs(lettering(canvas, 340, 200).middle - canvas.width / 2)).withContext(name).toBeLessThan(24);
-    }
-  });
-
-  it("squeezes a name too long for the wall instead of running off it", () => {
-    const long = canvasOf("IV", "A room whose name goes on for a good deal longer than a wall is wide");
-
-    expect(lettering(long, 340, 200).share).toBeGreaterThan(0.02);
-    expect(bare(long, 0, 30)).toBeTrue();
-    expect(bare(long, long.width - 30, 30)).toBeTrue();
   });
 });

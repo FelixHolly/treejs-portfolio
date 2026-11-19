@@ -1,7 +1,6 @@
 import {
   BackSide,
   CatmullRomCurve3,
-  CircleGeometry,
   CylinderGeometry,
   Group,
   Material,
@@ -10,13 +9,12 @@ import {
   MeshLambertMaterial,
   PlaneGeometry,
   Texture,
-  TorusGeometry,
   TubeGeometry,
   Vector3,
 } from "three";
 import { Palette, slab } from "./building";
 import { glow } from "./atmosphere";
-import { FrameSlot, HANG_Z, MEDALLION } from "./layout";
+import { FrameSlot, HANG_Z } from "./layout";
 
 /** What a frame puts round its picture: the mat's width, the moulding's, and how far the moulding stands off the wall. */
 function frameProfile(slot: FrameSlot): { mat: number; bar: number; depth: number } {
@@ -154,21 +152,6 @@ export function letteredBoard(x: number, y: number, width: number, height: numbe
     slab(bar, height, 0.04, -(width / 2 + bar / 2), 0, 0, palette.gold),
     slab(bar, height, 0.04, width / 2 + bar / 2, 0, 0, palette.gold),
   );
-  return group;
-}
-
-/** The FH monogram as a wall relief; the lettering is added once the fonts are ready. */
-export function medallion(palette: Palette): Group {
-  const group = new Group();
-  group.position.set(MEDALLION.x - 0.03, MEDALLION.y, MEDALLION.z);
-  group.rotation.y = -Math.PI / 2;
-
-  const outer = new Mesh(new TorusGeometry(MEDALLION.radius, 0.022, 10, 96), palette.gold);
-  const inner = new Mesh(new TorusGeometry(MEDALLION.radius - 0.12, 0.008, 8, 96), palette.gold);
-  const field = new Mesh(new CircleGeometry(MEDALLION.radius - 0.02, 64), new MeshLambertMaterial({ color: 0x26262c }));
-  field.position.z = -0.015;
-
-  group.add(outer, inner, field);
   return group;
 }
 

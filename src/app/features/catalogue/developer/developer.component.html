@@ -1,7 +1,7 @@
 <section class="c-space my-24" id="about">
     <app-room-label numeral="I" title="The Developer" appReveal />
 
-    <div class="flex flex-col gap-4 max-w-2xl mx-auto" appReveal [revealDelay]="120">
+    <div class="flex flex-col gap-4 measure mx-auto" appReveal [revealDelay]="120">
         <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
         @for (paragraph of developer.bio; track paragraph) {
             <p class="grid-subtext">{{ paragraph }}</p>
@@ -13,7 +13,7 @@
         <ul class="grid gap-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
             @for (group of developer.skills; track group.area) {
                 <li data-skill-group class="border-t border-gold/40 pt-4">
-                    <h4 class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-gold">{{ group.area }}</h4>
+                    <h4 class="font-mono text-xs uppercase tracking-[0.16em] text-gold">{{ group.area }}</h4>
                     <ul class="mt-3 grid gap-x-6 gap-y-1 min-[480px]:grid-cols-2 sm:grid-cols-1 font-display text-xl text-bone">
                         @for (tool of group.tools; track tool) {
                             <li>{{ tool }}</li>
@@ -24,7 +24,7 @@
         </ul>
     </div>
 
-    <p class="mt-12 sm:mt-14 max-w-2xl mx-auto grid-subtext" appReveal>
+    <p class="mt-12 sm:mt-14 measure mx-auto grid-subtext" appReveal>
         <span class="block font-mono uppercase tracking-[0.2em] text-xs text-gold mb-3">{{ developer.location }}</span>
         {{ developer.viennaLine }}
     </p>

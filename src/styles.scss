@@ -116,7 +116,7 @@ select:focus-visible,
   }
 
   .exhibit-caption {
-    @apply font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone text-center mt-3;
+    @apply font-mono text-xs uppercase tracking-[0.14em] text-stone text-center mt-3;
   }
 
   .nav-ul {
@@ -247,4 +247,13 @@ html.gallery-active {
 /* Walking with the keys moves focus to the stop's heading for screen readers; a heading is not a control, so it shows no ring */
 html.gallery-active main :is(h1, h2, h3)[tabindex="-1"]:focus-visible {
   outline: none !important;
+}
+
+/* A reading column of about 68 characters: ch counts in zeros, and General Sans' zero is wider than its average letter */
+:root {
+  --measure: 52ch;
+}
+
+.measure {
+  max-width: var(--measure);
 }

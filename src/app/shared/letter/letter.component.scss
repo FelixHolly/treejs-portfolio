@@ -78,7 +78,7 @@ $paper: #e8e5de;
     left: 4px;
     bottom: 1px;
     font-family: 'Boska', Georgia, serif;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     letter-spacing: 0.08em;
     color: $paper;
   }
@@ -111,7 +111,7 @@ $paper: #e8e5de;
   padding: 0 0.85rem;
   border: 1px solid rgba(20, 20, 23, 0.55);
   border-radius: 0.125rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: $ink;
@@ -122,11 +122,15 @@ $paper: #e8e5de;
   }
 }
 
-.salutation {
+.salutation,
+.sealed-title {
   font-family: 'Boska', Georgia, serif;
-  font-style: italic;
   font-size: 1.6rem;
   line-height: 1.2;
+}
+
+.salutation {
+  font-style: italic;
 }
 
 /* Writing paper: one ruled line under every line of text, moving with the text when it scrolls */
@@ -205,9 +209,6 @@ $paper: #e8e5de;
 
 .sealed-title {
   margin-top: 0.5rem;
-  font-family: 'Boska', Georgia, serif;
-  font-size: 1.6rem;
-  line-height: 1.2;
 }
 
 .sealed-text {
@@ -300,5 +301,13 @@ $paper: #e8e5de;
   .desk-links {
     margin-top: 0.8rem;
     padding-top: 0.6rem;
+  }
+}
+
+/* A finger needs a taller target than the compact desk letter gives a mouse */
+@media (pointer: coarse) {
+  .chip,
+  .desk-links a {
+    min-height: 2.75rem;
   }
 }

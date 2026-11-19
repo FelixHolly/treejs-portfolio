@@ -24,6 +24,8 @@ export interface WorkImage {
   alt: string;
   caption: string;
   orientation: "landscape" | "portrait";
+  /** Width over height as CSS `aspect-ratio`, for a picture that is neither a 16:10 screen nor a tall phone capture. */
+  aspect?: string;
 }
 
 export interface Work {

@@ -42,6 +42,7 @@ export const WORKS: readonly Work[] = [
         alt: "The Küchenschelle home page on a phone",
         caption: "Fig. IV · On a phone",
         orientation: "portrait",
+        aspect: "780 / 1328",
       },
     ],
     caseStudy: [

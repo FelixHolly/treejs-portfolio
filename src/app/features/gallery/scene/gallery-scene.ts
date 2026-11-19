@@ -10,6 +10,7 @@ import {
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
+  Raycaster,
   Scene,
   ShaderMaterial,
   SRGBColorSpace,
@@ -20,9 +21,10 @@ import {
   WebGLRenderer,
 } from "three";
 import { ROOMS } from "../../../core/place/places";
-import { RotundaAtmosphere } from "./atmosphere";
+import { PointedLight, RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
+import { Dust } from "./dust";
 import { FramedPicture, framedPicture, hang, medallion, letteredBoard, pictureLight } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
 import { FilmScreen } from "./film-screen";
@@ -45,6 +47,7 @@ import {
 } from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
+import { partitionWalls, pieceTargets, PieceTarget, stopHit } from "./picking";
 import { hangPortrait, portraitMaterial } from "./portrait";
 import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
 import { ShaderWarmup } from "./shader-warmup";
@@ -61,6 +64,8 @@ const DISPLAY_FRAMES = 20;
 /** Higher is a quicker glide towards the scroll position. */
 const GLIDE = 4.5;
 const LOOK = { yaw: 0.06, pitch: 0.035, ease: 6 } as const;
+/** Further than this from where it is going, in stops, the camera is walking and pieces slide under a resting mouse. */
+const WALKING = 0.004;
 const INTRO_MS = 2200;
 const EMPTY_PLINTH_LEVEL = 0.3;
 /** The board of names above the visitors' book: its width, and the height each name adds. */
@@ -72,6 +77,8 @@ function displayRatio(width: number, height: number): number {
 
 // What this visit has already stepped down to: a scene opened again starts there instead of stumbling again.
 let reached = QUALITY_LADDER[0];
+// The dust is a first impression: a scene opened again in the same visit comes up without it.
+let dusted = false;
 
 export class GalleryScene implements GalleryView {
   private readonly renderer: WebGLRenderer;
@@ -89,12 +96,22 @@ export class GalleryScene implements GalleryView {
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
   private readonly pointer = new Vector2();
   private readonly look = new Vector2();
+  private readonly aim = new Vector2();
+  private readonly raycaster = new Raycaster();
+  private readonly walls = partitionWalls();
   private readonly cancelLion: () => void;
   private readonly filmPlace?: FilmPlacement;
 
   private path!: CameraPath;
   private mail!: Post;
   private film?: FilmScreen;
+  private targets: PieceTarget[] = [];
+  private pointedLight!: PointedLight;
+  private dust!: Dust;
+  private aiming = false;
+  private pointed: number | null = null;
+  /** Where on the route the pointer was last tested: a camera that has moved since needs it tested again. */
+  private aimedAt = 0;
   private filmHeld = false;
   private progress = 0;
   private target = 0;
@@ -177,6 +194,23 @@ export class GalleryScene implements GalleryView {
     if (this.options.reducedMotion) return;
     this.pointer.set(x, y);
     this.invalidate();
+  }
+
+  pointAt(x: number, y: number): void {
+    this.aim.set(x, -y);
+    this.aiming = true;
+    this.point(this.pieceUnderAim());
+  }
+
+  pointAway(): void {
+    this.aiming = false;
+    this.point(null);
+  }
+
+  click(x: number, y: number): void {
+    this.aim.set(x, -y);
+    const stop = this.pieceUnderAim();
+    if (stop !== null) this.options.onChosen(stop);
   }
 
   resize(framing: PageFraming): void {
@@ -267,6 +301,8 @@ export class GalleryScene implements GalleryView {
     const rising = this.advanceIntro(now);
     const posting = this.mail.update(now);
     const filming = this.runFilm();
+    const brightening = this.followPointer(seconds);
+    const drifting = this.dust.update(seconds, this.progress, this.lionLevel, this.quality.allowsCostlyEffects);
 
     this.path.sample(this.progress, this.pose);
     this.camera.position.copy(this.pose.position);
@@ -278,9 +314,42 @@ export class GalleryScene implements GalleryView {
     const mirroring = this.mirror.render(this.renderer, this.scene, this.camera, seconds);
     this.renderer.render(this.scene, this.camera);
 
-    this.running = gliding || looking || rising || posting || filming || mirroring;
+    this.running = gliding || looking || rising || posting || filming || mirroring || brightening || drifting;
     if (this.running) this.invalidate();
   };
+
+  private walking(): boolean {
+    return Math.abs(this.target - this.progress) > WALKING;
+  }
+
+  private pieceUnderAim(): number | null {
+    if (this.walking()) return null;
+    this.aimedAt = this.progress;
+    // Aimed from where the look-around comes to rest, not from where its easing has got to
+    this.path.sample(this.progress, this.pose);
+    this.camera.position.copy(this.pose.position);
+    this.camera.lookAt(this.pose.target);
+    this.camera.rotateY(-this.pointer.x * LOOK.yaw);
+    this.camera.rotateX(-this.pointer.y * LOOK.pitch);
+    this.camera.updateMatrixWorld();
+    this.raycaster.setFromCamera(this.aim, this.camera);
+    return stopHit(this.raycaster.ray, this.targets, this.walls);
+  }
+
+  private point(stop: number | null): void {
+    if (stop === this.pointed) return;
+    this.pointed = stop;
+    this.pointedLight.point(stop);
+    this.options.onPointed(stop);
+    this.invalidate();
+  }
+
+  /** Nothing is pointed at during a walk; the resting mouse is tested once more when the camera stands again. */
+  private followPointer(seconds: number): boolean {
+    if (this.walking()) this.point(null);
+    else if (this.aiming && Math.abs(this.progress - this.aimedAt) > WALKING) this.point(this.pieceUnderAim());
+    return this.pointedLight.update(seconds);
+  }
 
   private canvasSize(): [width: number, height: number] {
     return [this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight];
@@ -378,6 +447,15 @@ export class GalleryScene implements GalleryView {
       letterbox(this.palette),
       this.mail.envelope,
     );
+
+    const names = this.options.visitors.length;
+    const boardHeight = NAME_BOARD.margin * 2 + NAME_BOARD.line * names;
+    const board = { x: LECTERN.x, y: NAME_BOARD.bottom + boardHeight / 2, width: NAME_BOARD.width, height: boardHeight };
+    this.targets = pieceTargets(this.slots, names ? board : undefined);
+    this.pointedLight = new PointedLight(this.targets);
+    this.dust = new Dust(!dusted && !this.options.reducedMotion && this.quality.allowsCostlyEffects);
+    dusted = true;
+    this.scene.add(...this.pointedLight.objects, ...this.dust.objects);
 
     this.slots.forEach((slot, work) => {
       slot.frames.forEach((frame, index) => {

@@ -43,7 +43,7 @@ describe("GalleryComponent", () => {
   let placeLeftBehind: string | undefined;
 
   async function open(sceneFails = false): Promise<void> {
-    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
+    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "pointAt", "pointAway", "click", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
     factory = jasmine.createSpy("factory").and.callFake((_canvas: HTMLCanvasElement, received: GalleryViewOptions) => {
       options = received;
       return sceneFails ? Promise.reject(new Error("no WebGL")) : Promise.resolve(scene);
@@ -944,7 +944,7 @@ describe("GalleryComponent", () => {
     it("tells a scene that arrives late that the visitor already paused the film", async () => {
       let deliver!: (view: GalleryView) => void;
       await open();
-      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
+      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "pointAt", "pointAway", "click", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
       factory.and.returnValue(new Promise<GalleryView>((resolve) => (deliver = resolve)));
       fixture.destroy();
       element.remove();
@@ -967,7 +967,7 @@ describe("GalleryComponent", () => {
     it("holds the film in a scene that arrives after the closer look was opened", async () => {
       let deliver!: (view: GalleryView) => void;
       await open();
-      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
+      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "pointAt", "pointAway", "click", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
       factory.and.returnValue(new Promise<GalleryView>((resolve) => (deliver = resolve)));
       fixture.destroy();
       element.remove();
@@ -1036,6 +1036,243 @@ describe("GalleryComponent", () => {
       expect(options?.films).toBeTrue();
       expect(options?.works.every((work) => work.film === undefined)).toBeTrue();
       expect(control()).toBeNull();
+    });
+  });
+
+  describe("pointing at a piece with the mouse", () => {
+    beforeEach(() => open());
+
+    const main = () => element.querySelector("main")!;
+    const labelText = (stop: number) => element.querySelector(`[data-stop="${stop}"] [data-label] p`)!;
+    const dialog = () => element.querySelector("dialog")!;
+
+    function mouse(type: string, target: Element, at: [number, number] = [200, 150], pointerType = "mouse"): void {
+      target.dispatchEvent(new PointerEvent(type, { pointerType, bubbles: true, button: 0, clientX: at[0], clientY: at[1] }));
+    }
+
+    function clickAt(target: Element, at: [number, number] = [200, 150], pointerType = "mouse"): void {
+      mouse("pointerdown", target, at, pointerType);
+      mouse("click", target, at, pointerType);
+    }
+
+    function pointed(stop: number | null): void {
+      options!.onPointed(stop);
+      fixture.detectChanges();
+    }
+
+    async function chosen(stop: number): Promise<void> {
+      options!.onChosen(stop);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    it("tells the scene where the mouse is while it is over the bare scene", () => {
+      const width = document.documentElement.clientWidth;
+
+      mouse("pointermove", main(), [width / 4, window.innerHeight / 2]);
+
+      expect(scene.pointAt).toHaveBeenCalledOnceWith(-0.5, 0);
+      expect(scene.pointAway).not.toHaveBeenCalled();
+    });
+
+    it("counts the empty stretch of a stop and the canvas itself as the scene", () => {
+      mouse("pointermove", element.querySelector('[data-stop="3"]')!);
+      mouse("pointermove", element.querySelector("canvas")!);
+
+      expect(scene.pointAt).toHaveBeenCalledTimes(2);
+    });
+
+    it("points away once the mouse is over a label's text, a control or the header", () => {
+      for (const target of [labelText(1), element.querySelector(".plaque")!, element.querySelector(".wordmark")!, element.querySelector("h1")!]) {
+        scene.pointAway.calls.reset();
+        mouse("pointermove", target);
+
+        expect(scene.pointAway).withContext(target.className || target.tagName).toHaveBeenCalledTimes(1);
+      }
+      expect(scene.pointAt).not.toHaveBeenCalled();
+    });
+
+    it("points away when the mouse leaves the window", () => {
+      document.documentElement.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "mouse" }));
+
+      expect(scene.pointAway).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores touch altogether", () => {
+      mouse("pointermove", main(), [200, 150], "touch");
+      clickAt(main(), [200, 150], "touch");
+
+      expect(scene.pointAt).not.toHaveBeenCalled();
+      expect(scene.pointAway).not.toHaveBeenCalled();
+      expect(scene.click).not.toHaveBeenCalled();
+    });
+
+    it("shows a pointer cursor while the scene reports a piece under the mouse, and the usual one otherwise", () => {
+      expect(element.classList.contains("cursor-pointer")).toBeFalse();
+
+      pointed(6);
+      expect(element.classList.contains("cursor-pointer")).toBeTrue();
+
+      pointed(null);
+      expect(element.classList.contains("cursor-pointer")).toBeFalse();
+    });
+
+    it("shows the same cursor over the piece the visitor already stands at", () => {
+      arriveAt(1);
+      pointed(1);
+
+      expect(element.classList.contains("cursor-pointer")).toBeTrue();
+    });
+
+    it("keeps the canvas out of the way of assistive technology and the Tab key", () => {
+      const canvas = element.querySelector("canvas")!;
+
+      expect(canvas.getAttribute("aria-hidden")).toBe("true");
+      expect(canvas.hasAttribute("tabindex")).toBeFalse();
+      expect(canvas.getAttribute("role")).toBeNull();
+    });
+
+    it("passes a click on the bare scene to the scene, at the place it happened", () => {
+      const width = document.documentElement.clientWidth;
+
+      clickAt(main(), [width * 0.75, window.innerHeight * 0.25]);
+
+      // A click happens at whole pixels
+      expect(scene.click).toHaveBeenCalledTimes(1);
+      expect(scene.click.calls.mostRecent().args[0]).toBeCloseTo(0.5, 2);
+      expect(scene.click.calls.mostRecent().args[1]).toBeCloseTo(-0.5, 2);
+    });
+
+    it("leaves clicks on labels, their controls and the header to them", () => {
+      clickAt(labelText(1));
+      clickAt(element.querySelector(".wordmark")!);
+      element.querySelector<HTMLButtonElement>('[data-stop="3"] .work-list button')!.click();
+
+      expect(scene.click).not.toHaveBeenCalled();
+    });
+
+    it("does not take the end of a text selection for a click: a press that began in a label, or travelled", () => {
+      mouse("pointerdown", labelText(1), [600, 300]);
+      mouse("click", main(), [400, 300]);
+
+      mouse("pointerdown", main(), [400, 300]);
+      mouse("click", main(), [440, 300]);
+
+      expect(scene.click).not.toHaveBeenCalled();
+    });
+
+    it("needs a fresh press for every click", () => {
+      mouse("pointerdown", main());
+      mouse("click", main());
+      mouse("click", main());
+
+      expect(scene.click).toHaveBeenCalledTimes(1);
+    });
+
+    it("walks to a chosen piece exactly as the controls do: the scroll, the heading's focus and a history entry", async () => {
+      arriveAt(3);
+      scrollTo.calls.reset();
+
+      await chosen(6);
+
+      expect(scrollTo).toHaveBeenCalled();
+      expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+      expect(document.activeElement).toBe(element.querySelector('[data-stop="6"] h3'));
+      expect(location.hash).toBe("#works/reloo");
+      expect(dialog().open).toBeFalse();
+    });
+
+    it("walks to the skills when their plaques are chosen from the portrait", async () => {
+      arriveAt(1);
+      scrollTo.calls.reset();
+
+      await chosen(2);
+
+      expect(scrollTo).toHaveBeenCalled();
+      expect(document.activeElement).toBe(element.querySelector('[data-stop="2"] h3'));
+    });
+
+    it("opens the closer look when the visitor already stands at the chosen work, with focus on its close button", async () => {
+      arriveAt(4);
+      scrollTo.calls.reset();
+
+      await chosen(4);
+
+      expect(dialog().open).toBeTrue();
+      expect(dialog().querySelector("h2")?.textContent?.trim()).toBe("Küchenschelle");
+      expect(document.activeElement?.closest("dialog")).toBe(dialog());
+      expect(document.activeElement?.tagName).toBe("BUTTON");
+      expect(scrollTo).not.toHaveBeenCalled();
+      expect(scene.pointAway).toHaveBeenCalled();
+
+      dialog().close();
+    });
+
+    it("opens no closer look for a work the visitor is not standing at", async () => {
+      arriveAt(4);
+
+      await chosen(5);
+
+      expect(dialog().open).toBeFalse();
+      expect(document.activeElement).toBe(element.querySelector('[data-stop="5"] h3'));
+    });
+
+    it("does nothing when a piece without a closer look is chosen from its own stop", async () => {
+      arriveAt(2);
+      scrollTo.calls.reset();
+
+      await chosen(2);
+
+      expect(scrollTo).not.toHaveBeenCalled();
+      expect(dialog().open).toBeFalse();
+    });
+
+    it("enters the gallery when the statue is chosen at the entrance, and walks back to it from anywhere else", async () => {
+      await chosen(0);
+      expect(document.activeElement).toBe(element.querySelector('[data-stop="1"] h2'));
+
+      arriveAt(1);
+      scrollTo.calls.reset();
+      await chosen(0);
+
+      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
+      expect(document.activeElement).toBe(element.querySelector('[data-stop="0"] h1'));
+    });
+
+    it("ignores a stop the route does not have", async () => {
+      await chosen(99);
+
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
+
+    describe("while the closer look is open", () => {
+      beforeEach(async () => {
+        arriveAt(4);
+        element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        scrollTo.calls.reset();
+        scene.pointAway.calls.reset();
+      });
+
+      afterEach(() => dialog().close());
+
+      it("points at nothing and passes no click on", () => {
+        mouse("pointermove", main());
+        clickAt(main());
+
+        expect(scene.pointAt).not.toHaveBeenCalled();
+        expect(scene.pointAway).toHaveBeenCalledTimes(1);
+        expect(scene.click).not.toHaveBeenCalled();
+      });
+
+      it("ignores a piece the scene still reports as chosen", async () => {
+        await chosen(6);
+        await chosen(4);
+
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(dialog().querySelector("h2")?.textContent?.trim()).toBe("Küchenschelle");
+      });
     });
   });
 

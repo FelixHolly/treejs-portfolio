@@ -15,10 +15,10 @@ import {
   pieceSlots,
   ROOM_ONE_X,
   ROTUNDA,
+  SKILL_PLAQUE_HEIGHT,
   SKILL_PLAQUES,
-  SKILL_WALL_SPAN,
-  skillPlaqueHeight,
-  skillPlaqueXs,
+  SKILL_WALL,
+  skillPlaqueSlots,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
@@ -152,34 +152,46 @@ describe("the building", () => {
     expect(ROTUNDA.height).toBeGreaterThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 2);
   });
 
-  it("hangs Room I's plaques between its two doors, centred in the room under its frieze", () => {
-    const xs = skillPlaqueXs();
+  it("hangs Room I's four plaques two by two between its doors, centred in the room under its frieze", () => {
+    const slots = skillPlaqueSlots();
+    const xs = slots.map((slot) => slot.x);
+    const ys = slots.map((slot) => slot.y);
 
     expect(ROOM_ONE_X).toBeCloseTo((DOOR_XS[0] + DOOR_XS[1]) / 2, 6);
-    expect(xs.length).toBe(SKILL_PLAQUES.count);
-    expect((xs[0] + xs[xs.length - 1]) / 2).toBeCloseTo(ROOM_ONE_X, 6);
-    expect(xs[0] - SKILL_PLAQUES.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
-    expect(xs[xs.length - 1] + SKILL_PLAQUES.width / 2).toBeLessThan(DOOR_XS[1] - 1);
-    expect(xs[xs.length - 1] + SKILL_PLAQUES.width / 2 - (xs[0] - SKILL_PLAQUES.width / 2)).toBeCloseTo(SKILL_WALL_SPAN, 6);
+    expect(slots.length).toBe(4);
+    expect(slots.length).toBe(SKILL_PLAQUES.count);
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(ROOM_ONE_X, 6);
+    expect((Math.min(...ys) + Math.max(...ys)) / 2).toBeCloseTo(SKILL_PLAQUES.y, 6);
+    expect(Math.min(...xs) - SKILL_PLAQUES.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
+    expect(Math.max(...xs) + SKILL_PLAQUES.width / 2).toBeLessThan(DOOR_XS[1] - 1);
+    expect(Math.max(...xs) - Math.min(...xs) + SKILL_PLAQUES.width).toBeCloseTo(SKILL_WALL.width, 6);
+    expect(Math.max(...ys) - Math.min(...ys) + SKILL_PLAQUE_HEIGHT).toBeCloseTo(SKILL_WALL.height, 6);
   });
 
-  it("hangs the plaques side by side with even gaps, never overlapping", () => {
-    const xs = skillPlaqueXs();
+  it("reads the plaques like a page: two in the upper row, left then right, and two straight under them", () => {
+    const [first, second, third, fourth] = skillPlaqueSlots();
 
-    for (let index = 1; index < xs.length; index++) {
-      const gap = xs[index] - SKILL_PLAQUES.width / 2 - (xs[index - 1] + SKILL_PLAQUES.width / 2);
-      expect(gap).toBeCloseTo(SKILL_PLAQUES.gap, 6);
-      expect(gap).toBeGreaterThan(0.08);
-    }
+    expect(second.x).toBeGreaterThan(first.x);
+    expect(second.y).toBe(first.y);
+    expect(third.y).toBeLessThan(first.y);
+    expect(third.x).toBe(first.x);
+    expect(fourth.x).toBe(second.x);
+    expect(fourth.y).toBe(third.y);
   });
 
-  it("makes every plaque as tall as the longest list needs, at eye height and well under the frieze", () => {
-    const height = skillPlaqueHeight(4);
+  it("leaves the same gap between the plaques across and down, never overlapping", () => {
+    const [first, second, third] = skillPlaqueSlots();
 
-    expect(height).toBeGreaterThan(skillPlaqueHeight(2));
-    expect(skillPlaqueHeight(0)).toBe(skillPlaqueHeight(1));
-    expect(SKILL_PLAQUES.y - height / 2).toBeGreaterThan(1);
-    expect(SKILL_PLAQUES.y + height / 2).toBeLessThan(WALL_HEIGHT - 2);
+    expect(second.x - first.x - SKILL_PLAQUES.width).toBeCloseTo(SKILL_PLAQUES.gap, 6);
+    expect(first.y - third.y - SKILL_PLAQUE_HEIGHT).toBeCloseTo(SKILL_PLAQUES.gap, 6);
+    expect(SKILL_PLAQUES.gap).toBeGreaterThan(0.08);
+  });
+
+  it("makes every plaque tall enough for six tools, the block around eye height, off the floor and well under the frieze", () => {
+    expect(SKILL_PLAQUES.lines).toBe(6);
+    expect(SKILL_PLAQUE_HEIGHT).toBeCloseTo(SKILL_PLAQUES.head + 6 * SKILL_PLAQUES.line + SKILL_PLAQUES.foot, 6);
+    expect(SKILL_PLAQUES.y - SKILL_WALL.height / 2).toBeGreaterThan(0.6);
+    expect(SKILL_PLAQUES.y + SKILL_WALL.height / 2).toBeLessThan(WALL_HEIGHT - 2);
     expect(Math.abs(SKILL_PLAQUES.y - EYE)).toBeLessThan(0.35);
   });
 

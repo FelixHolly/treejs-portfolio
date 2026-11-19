@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from "three";
 import { PageFraming } from "./gallery-view";
-import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, ROTUNDA, SKILL_PLAQUES, SKILL_WALL_SPAN } from "./layout";
+import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, ROTUNDA, SKILL_PLAQUES, SKILL_WALL } from "./layout";
 
 export interface Pose {
   position: Vector3;
@@ -23,8 +23,10 @@ const OVERVIEW = { x: 16.6, z: 3 } as const;
 /** The statue as the arriving visitor meets it: its width, how far its head and front paws stand out towards them, and how near they may come. */
 const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.5 } as const;
 
-/** Room I's plaques: how far above their middle the view aims, and the width their frames add to the row. */
-const SKILL_VIEW = { rise: 0.02, margin: 0.06 } as const;
+/** Room I's plaques: how far above their middle the view aims, so the block clears the header; what their frames add to it; and the room a turn of the head needs to either side. */
+const SKILL_VIEW = { rise: 0.1, margin: 0.06, aside: 0.2 } as const;
+/** A hanging as tall as Room I's fills at most this much of the screen's height. */
+const TALL_FILL = 0.72;
 
 /** Half the height of what the camera sees one metre away. */
 function lens(aspect: number): number {
@@ -35,9 +37,10 @@ function halfWidth(distance: number, aspect: number): number {
   return distance * lens(aspect) * aspect;
 }
 
-/** Stands square to the hanging wall, far enough back to fit the piece into the space beside the label. */
-function wallPose(x: number, y: number, span: number, nearest: number, framing: Framing): Pose {
-  const toFit = span / (FILL * (1 - framing.labelShare) * 2 * lens(framing.aspect) * framing.aspect);
+/** Stands square to the hanging wall, far enough back to fit the piece beside the label and its `tall` metres into the height. */
+function wallPose(x: number, y: number, span: number, nearest: number, framing: Framing, tall = 0): Pose {
+  const tan = lens(framing.aspect);
+  const toFit = Math.max(span / (FILL * (1 - framing.labelShare) * 2 * tan * framing.aspect), tall / (TALL_FILL * 2 * tan));
   const back = MathUtils.clamp(toFit, nearest, FARTHEST);
   const shift = framing.labelShare * halfWidth(back, framing.aspect);
   return { position: new Vector3(x + shift, EYE, HANG_Z + back), target: new Vector3(x + shift, y, HANG_Z) };
@@ -101,7 +104,14 @@ function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
 export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[] {
   return [
     statuePose(framing),
-    wallPose(SKILL_PLAQUES.x, SKILL_PLAQUES.y + SKILL_VIEW.rise, SKILL_WALL_SPAN + SKILL_VIEW.margin, 3.4, framing),
+    wallPose(
+      SKILL_PLAQUES.x,
+      SKILL_PLAQUES.y + SKILL_VIEW.rise,
+      SKILL_WALL.width + SKILL_VIEW.aside,
+      3.4,
+      framing,
+      SKILL_WALL.height + SKILL_VIEW.margin,
+    ),
     overviewPose(slots, framing),
     ...slots.map((slot) => wallPose(slot.centre.x, slot.centre.y, slot.span, slot.distance, framing)),
     wallPose(LECTERN.x, 1.3, 3, 4.2, framing),

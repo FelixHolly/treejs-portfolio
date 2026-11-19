@@ -81,7 +81,7 @@ export function nameBoardTexture(names: readonly string[], aspect: number): Canv
 }
 
 /** Where a plaque's parts sit on its 1024 pixel wide canvas: the heading, the rule under it, and the band the lines share. */
-const PLAQUE = { heading: 150, rule: 222, ruleHalf: 64, linesFrom: 270, foot: 96, inset: 84 } as const;
+const PLAQUE = { heading: 96, rule: 146, ruleHalf: 56, linesFrom: 178, foot: 58, inset: 84 } as const;
 
 /**
  * A plaque: a heading in small capitals over a gold rule, then its lines one under another.
@@ -92,7 +92,7 @@ export function plaqueTexture(heading: string, lines: readonly string[], rows: n
     const fit = width - PLAQUE.inset * 2;
     const band = Math.max(rows, 1);
 
-    context.font = '400 60px "JetBrains Mono", monospace';
+    context.font = '400 54px "JetBrains Mono", monospace';
     context.fillStyle = "#d9b85c";
     spaced(context, "0.08em");
     context.fillText(heading.toUpperCase(), width / 2, PLAQUE.heading, fit);
@@ -101,7 +101,7 @@ export function plaqueTexture(heading: string, lines: readonly string[], rows: n
     const shown = lines.slice(0, band);
     const pitch = (height - PLAQUE.linesFrom - PLAQUE.foot) / band;
     const first = PLAQUE.linesFrom + ((band - shown.length) * pitch) / 2;
-    context.font = `500 ${Math.round(Math.min(pitch * 0.62, 140))}px "Boska", Georgia, serif`;
+    context.font = `500 ${Math.round(Math.min(pitch * 0.78, 140))}px "Boska", Georgia, serif`;
     context.fillStyle = "#e8e5de";
     spaced(context, "0.01em");
     shown.forEach((line, index) => {

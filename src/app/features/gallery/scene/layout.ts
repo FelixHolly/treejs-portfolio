@@ -27,20 +27,23 @@ export const END_WALL_X = 61.6;
 export const ROOM_ONE_X = 10.4;
 /** The FH seal hangs on the far wall of Room I, beside the door to Room II, facing the visitor coming in. */
 export const MEDALLION = { x: DOOR_XS[1] - WALL_THICKNESS / 2, y: 2.05, z: -2.3, radius: 0.68 } as const;
-/** The skill plaques in Room I, hung side by side around `x`. A plaque is `head`, a `line` per tool of the longest list, and `foot` tall. */
-export const SKILL_PLAQUES = { x: ROOM_ONE_X, y: 1.85, count: 3, width: 0.96, gap: 0.12, head: 0.25, line: 0.2, foot: 0.09 } as const;
-/** The width of the whole row of plaques. */
-export const SKILL_WALL_SPAN = SKILL_PLAQUES.count * SKILL_PLAQUES.width + (SKILL_PLAQUES.count - 1) * SKILL_PLAQUES.gap;
+/** The skill plaques in Room I, hung `columns` to a row in a block around `x` and `y`. A plaque is `head`, a `line` for each of `lines` tools, and `foot` tall. */
+export const SKILL_PLAQUES = { x: ROOM_ONE_X, y: 1.85, count: 4, columns: 2, lines: 6, width: 1.36, gap: 0.14, head: 0.236, line: 0.133, foot: 0.077 } as const;
+export const SKILL_PLAQUE_HEIGHT = SKILL_PLAQUES.head + SKILL_PLAQUES.line * SKILL_PLAQUES.lines + SKILL_PLAQUES.foot;
+const SKILL_ROWS = Math.ceil(SKILL_PLAQUES.count / SKILL_PLAQUES.columns);
+/** The width and height of the whole block of plaques. */
+export const SKILL_WALL = {
+  width: SKILL_PLAQUES.columns * SKILL_PLAQUES.width + (SKILL_PLAQUES.columns - 1) * SKILL_PLAQUES.gap,
+  height: SKILL_ROWS * SKILL_PLAQUE_HEIGHT + (SKILL_ROWS - 1) * SKILL_PLAQUES.gap,
+} as const;
 
-/** Where each plaque's middle hangs along the wall, from the visitor's left. */
-export function skillPlaqueXs(): number[] {
-  const step = SKILL_PLAQUES.width + SKILL_PLAQUES.gap;
-  return Array.from({ length: SKILL_PLAQUES.count }, (_, index) => SKILL_PLAQUES.x + (index - (SKILL_PLAQUES.count - 1) / 2) * step);
-}
-
-/** The height every plaque shares, set by the longest list of tools. */
-export function skillPlaqueHeight(rows: number): number {
-  return SKILL_PLAQUES.head + SKILL_PLAQUES.line * Math.max(rows, 1) + SKILL_PLAQUES.foot;
+/** Where each plaque's middle hangs on the wall, read like a page: left to right, then the row below. */
+export function skillPlaqueSlots(): { x: number; y: number }[] {
+  const { x, y, count, columns, width, gap } = SKILL_PLAQUES;
+  return Array.from({ length: count }, (_, index) => ({
+    x: x + ((index % columns) - (columns - 1) / 2) * (width + gap),
+    y: y + ((SKILL_ROWS - 1) / 2 - Math.floor(index / columns)) * (SKILL_PLAQUE_HEIGHT + gap),
+  }));
 }
 export const LECTERN = { x: 49.2, z: -3.25 } as const;
 export const DESK = { x: 57.4, z: -3.2 } as const;

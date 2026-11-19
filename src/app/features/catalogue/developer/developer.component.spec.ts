@@ -35,6 +35,25 @@ describe("DeveloperComponent", () => {
     );
   });
 
+  it("shows four groups: two by two from a tablet up, four across on a wide screen, one to a row on a phone", () => {
+    const groups = element.querySelectorAll("[data-skill-group]");
+    const grid = groups[0].parentElement!;
+
+    expect(groups.length).toBe(4);
+    expect(texts("[data-skill-group] h4")).toEqual(["Frontend", "Backend", "Data and operations", "Quality"]);
+    expect(grid.classList.contains("sm:grid-cols-2")).toBeTrue();
+    expect(grid.classList.contains("lg:grid-cols-4")).toBeTrue();
+    expect(grid.classList.contains("grid-cols-2")).toBeFalse();
+  });
+
+  it("lists a group's tools one to a line on a phone, where two columns would break the longest names", () => {
+    for (const list of Array.from(element.querySelectorAll("[data-skill-group] ul"))) {
+      expect(list.classList.contains("grid-cols-2")).toBeFalse();
+      expect(list.classList.contains("min-[480px]:grid-cols-2")).toBeTrue();
+      expect(list.classList.contains("sm:grid-cols-1")).toBeTrue();
+    }
+  });
+
   it("puts the skills after the about text and gives them a heading of their own for screen readers", () => {
     const bio = element.querySelector("p.grid-subtext")!;
     const heading = Array.from(element.querySelectorAll("h3")).find((node) => node.textContent?.trim() === "Skills")!;

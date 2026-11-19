@@ -41,13 +41,13 @@ describe("nameBoardTexture", () => {
 });
 
 describe("plaqueTexture", () => {
-  const TOOLS = ["Angular", "TypeScript", "NgRx", "Tailwind"];
-  const ASPECT = 0.84;
-  const canvasOf = (heading: string, lines: readonly string[], rows = 4) => plaqueTexture(heading, lines, rows, ASPECT).image as HTMLCanvasElement;
+  const TOOLS = ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"];
+  const ASPECT = 1.22;
+  const canvasOf = (heading: string, lines: readonly string[], rows = 6) => plaqueTexture(heading, lines, rows, ASPECT).image as HTMLCanvasElement;
   /** The ink in each of the `rows` lines the band under the rule is cut into. */
   const band = (canvas: HTMLCanvasElement, rows: number) => {
-    const pitch = (canvas.height - 270 - 96) / rows;
-    return Array.from({ length: rows }, (_, row) => inked(canvas, 90, Math.round(270 + pitch * row), canvas.width - 180, Math.floor(pitch)));
+    const pitch = (canvas.height - 178 - 58) / rows;
+    return Array.from({ length: rows }, (_, row) => inked(canvas, 90, Math.round(178 + pitch * row), canvas.width - 180, Math.floor(pitch)));
   };
 
   it("is drawn at the plaque's own proportions, sharp enough for a screen of double density", () => {
@@ -60,29 +60,38 @@ describe("plaqueTexture", () => {
   it("letters the heading at the top with a rule under it, above the first line", () => {
     const canvas = canvasOf("Frontend", TOOLS);
 
-    expect(inked(canvas, 90, 120, canvas.width - 180, 60)).toBeGreaterThan(0.01);
-    expect(inked(canvas, canvas.width / 2 - 60, 222, 120, 3)).toBe(1);
-    expect(inked(canvas, 40, 190, canvas.width - 80, 24)).toBe(0);
-    expect(inked(canvas, 40, 232, canvas.width - 80, 30)).toBe(0);
+    expect(inked(canvas, 90, 66, canvas.width - 180, 60)).toBeGreaterThan(0.01);
+    expect(inked(canvas, canvas.width / 2 - 50, 146, 100, 3)).toBe(1);
+    expect(inked(canvas, 40, 128, canvas.width - 80, 14)).toBe(0);
+    expect(inked(canvas, 40, 152, canvas.width - 80, 24)).toBe(0);
   });
 
   it("letters one line for each tool", () => {
-    const lines = band(canvasOf("Frontend", TOOLS), 4);
+    const lines = band(canvasOf("Frontend", TOOLS), 6);
 
-    expect(lines.length).toBe(4);
+    expect(lines.length).toBe(6);
     for (const line of lines) expect(line).toBeGreaterThan(0.01);
   });
 
+  it("keeps the longest area and the longest tools clear of the gold line inside the plaque's edge", () => {
+    const canvas = canvasOf("Data and operations", ["Playwright and Cypress", "Accessibility testing", "SCSS and Tailwind"]);
+
+    expect(inked(canvas, 34, 34, 50, canvas.height - 68)).toBe(0);
+    expect(inked(canvas, canvas.width - 84, 34, 50, canvas.height - 68)).toBe(0);
+  });
+
   it("sets a shorter list in the middle of a plaque sized for a longer one, at the same size of letter", () => {
-    const full = canvasOf("Frontend", ["Java", "Java", "Java", "Java"]);
+    const full = canvasOf("Frontend", ["Java", "Java", "Java", "Java", "Java", "Java"]);
     const short = canvasOf("Backend", ["Java", "Java"]);
-    const [first, second, third, fourth] = band(short, 4);
+    const lines = band(short, 6);
 
     expect(short.height).toBe(full.height);
-    expect(first).toBe(0);
-    expect(fourth).toBe(0);
-    expect(second).toBeCloseTo(band(full, 4)[1], 6);
-    expect(third).toBeCloseTo(band(full, 4)[2], 6);
+    expect(lines[0]).toBe(0);
+    expect(lines[1]).toBe(0);
+    expect(lines[4]).toBe(0);
+    expect(lines[5]).toBe(0);
+    expect(lines[2]).toBeCloseTo(band(full, 6)[2], 6);
+    expect(lines[3]).toBeCloseTo(band(full, 6)[3], 6);
   });
 
   it("squeezes a long heading and a long line onto the plaque instead of running off it", () => {
@@ -98,9 +107,9 @@ describe("plaqueTexture", () => {
     const over = canvasOf("Frontend", [...TOOLS, "One too many"]);
     const empty = canvasOf("Frontend", [], 0);
 
-    expect(band(over, 4)).toEqual(band(canvasOf("Frontend", TOOLS), 4));
-    expect(inked(empty, 40, 270, empty.width - 80, empty.height - 320)).toBe(0);
-    expect(inked(empty, 90, 120, empty.width - 180, 60)).toBeGreaterThan(0.01);
+    expect(band(over, 6)).toEqual(band(canvasOf("Frontend", TOOLS), 6));
+    expect(inked(empty, 40, 178, empty.width - 80, empty.height - 228)).toBe(0);
+    expect(inked(empty, 90, 66, empty.width - 180, 60)).toBeGreaterThan(0.01);
   });
 });
 

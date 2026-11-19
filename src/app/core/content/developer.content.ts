@@ -10,8 +10,9 @@ export const DEVELOPER = {
   frieze: ["Angular", "TypeScript", "Java", "Spring Boot", "Tailwind", "NgRx", "Docker"],
   /** Skills by area: one plaque each on Room I's wall, one column each in the catalogue. */
   skills: [
-    { area: "Frontend", tools: ["Angular", "TypeScript", "NgRx", "Tailwind"] },
-    { area: "Backend", tools: ["Java", "Spring Boot"] },
-    { area: "Data and operations", tools: ["PostgreSQL", "Docker"] },
+    { area: "Frontend", tools: ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"] },
+    { area: "Backend", tools: ["Java", "Spring Boot", "Spring Security", "JPA and Hibernate", "REST APIs", "Python"] },
+    { area: "Data and operations", tools: ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "S3"] },
+    { area: "Quality", tools: ["Vitest and Jest", "Playwright and Cypress", "JUnit", "Accessibility testing", "Nx monorepos"] },
   ],
 } as const;

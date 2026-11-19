@@ -9,7 +9,6 @@ import {
   fieldOfView,
   HALF_DEPTH,
   HANG_Z,
-  MEDALLION,
   pieceSlots,
   PORTRAIT,
   ROTUNDA,
@@ -280,18 +279,6 @@ describe("the skills pose", () => {
       expect((block.left + block.right) / 2).toBeCloseTo((1 - framing.labelShare) / 2, 1);
     });
 
-  }
-
-  // An ultrawide sees the whole room, the far wall with it
-  for (const [name, framing] of WINDOWS.filter(([, window]) => window.aspect < 3)) {
-    it(`keeps the seal on the far wall out of sight at ${name}, however the mouse turns the view`, () => {
-      for (const yaw of [0, -0.06]) {
-        const camera = cameraAt(framing, yaw);
-        const nearEdge = new Vector3(MEDALLION.x, MEDALLION.y, MEDALLION.z - MEDALLION.radius - 0.05).project(camera);
-
-        expect(nearEdge.x).withContext(`yaw ${yaw}`).toBeGreaterThan(1);
-      }
-    });
   }
 
   it("letters the tools about 14 px tall in the owner's 1288x654 window, and the headings large enough to read", () => {

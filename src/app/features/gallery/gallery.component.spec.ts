@@ -1276,6 +1276,167 @@ describe("GalleryComponent", () => {
     });
   });
 
+  describe("a room's title over the walk", () => {
+    const card = () => element.querySelector<HTMLElement>("app-room-title")!;
+    const lettering = () => [card().querySelector(".numeral")?.textContent, card().querySelector(".name")?.textContent];
+    const shown = () => card().classList.contains("shown");
+    const labelsShowing = () => element.querySelectorAll(".stop--active").length;
+
+    /** Reports the scroll position `share` of the way from one stop's label to the next one's, as `arriveAt` does for a stop. */
+    function stride(from: number, share: number): void {
+      const box = (index: number) => element.querySelector(`[data-stop="${index}"] [data-label]`)!.getBoundingClientRect();
+      const left = from === 0 ? 0 : box(from).bottom - 0.4 * window.innerHeight;
+      const reached = box(from + 1).top - 0.6 * window.innerHeight;
+      scrollY ??= spyOnProperty(window, "scrollY");
+      scrollY.and.returnValue(left + (reached - left) * share);
+      window.dispatchEvent(new Event("scroll"));
+      fixture.detectChanges();
+    }
+
+    function wait(ms: number): void {
+      jasmine.clock().tick(ms);
+      fixture.detectChanges();
+    }
+
+    describe("for a visitor who walks", () => {
+      beforeEach(async () => {
+        await open();
+        jasmine.clock().install();
+        jasmine.clock().mockDate(new Date(2026, 0, 1));
+      });
+
+      afterEach(() => jasmine.clock().uninstall());
+
+      it("lies over the scene and under the header, out of reach of assistive technology, the Tab key and the mouse", () => {
+        expect(card().getAttribute("aria-hidden")).toBe("true");
+        expect(card().querySelector("a, button, [tabindex]")).toBeNull();
+        expect(getComputedStyle(card()).pointerEvents).toBe("none");
+        expect(Number(getComputedStyle(card()).zIndex)).toBeLessThan(Number(getComputedStyle(element.querySelector(".hud")!).zIndex));
+        expect(shown()).toBeFalse();
+      });
+
+      it("shows Room II's on the walk from the skills, with no label beside it, and has gone before the label comes", () => {
+        arriveAt(2);
+        expect(shown()).toBeFalse();
+        expect(labelsShowing()).toBe(1);
+
+        stride(2, 0.2);
+        expect(shown()).toBeFalse();
+
+        stride(2, 0.5);
+        expect(shown()).toBeTrue();
+        expect(lettering()).toEqual(["II", "The Works"]);
+        expect(labelsShowing()).toBe(0);
+
+        wait(2000);
+        arriveAt(3);
+        expect(shown()).toBeFalse();
+        expect(element.querySelector(".stop--active")?.getAttribute("data-stop")).toBe("3");
+      });
+
+      it("shows the room walked back into", () => {
+        arriveAt(3);
+        stride(2, 0.5);
+
+        expect(shown()).toBeTrue();
+        expect(lettering()).toEqual(["I", "The Developer"]);
+      });
+
+      it("shows nothing between the stops of one room, nor on the way back into the hall", () => {
+        arriveAt(1);
+        stride(1, 0.5);
+        expect(shown()).toBeFalse();
+        expect(labelsShowing()).toBe(1);
+
+        arriveAt(1);
+        stride(0, 0.5);
+        expect(shown()).toBeFalse();
+      });
+
+      it("on a jump across the rooms holds every label from the start, and titles only the room the jump ends in", () => {
+        const last = fixture.componentInstance.last;
+        element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+        fixture.detectChanges();
+        const letter = element.querySelector<HTMLElement>(`[data-stop="${last}"] [data-label]`)!;
+
+        expect(labelsShowing()).toBe(0);
+        // The letter's heading took the focus as the walk set off, which alone would show its label
+        expect(letter.contains(document.activeElement)).toBeTrue();
+        expect(getComputedStyle(letter).opacity).toBe("0");
+        expect(getComputedStyle(letter).pointerEvents).toBe("none");
+
+        for (let from = 0; from < last - 1; from++) {
+          stride(from, 0.5);
+          expect(shown()).withContext(`stride ${from}`).toBeFalse();
+        }
+        stride(last - 1, 0.5);
+        expect(lettering()).toEqual(["IV", "Correspondence"]);
+        expect(shown()).toBeTrue();
+
+        arriveAt(last);
+        expect(shown()).toBeTrue();
+        expect(labelsShowing()).toBe(0);
+
+        wait(1700);
+        expect(shown()).toBeTrue();
+        expect(labelsShowing()).toBe(0);
+        expect(getComputedStyle(letter).opacity).toBe("0");
+
+        wait(100);
+        expect(shown()).toBeFalse();
+        expect(labelsShowing()).toBe(1);
+        expect(letter.classList.contains("!opacity-0")).toBeFalse();
+        expect(letter.contains(document.activeElement)).toBeTrue();
+      });
+
+      it("lets the labels show again when a jump is broken off on the way", () => {
+        element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+        arriveAt(4);
+        expect(labelsShowing()).toBe(0);
+
+        window.dispatchEvent(new Event("scrollend"));
+        fixture.detectChanges();
+        expect(shown()).toBeFalse();
+        expect(element.querySelector(".stop--active")?.getAttribute("data-stop")).toBe("4");
+      });
+    });
+
+    it("is not shown on arriving at an address deep in the gallery", async () => {
+      history.replaceState(null, "", "#visitors-book");
+      scrollTo.and.callThrough();
+
+      await open();
+
+      expect(fixture.componentInstance.activeIndex()).toBe(fixture.componentInstance.last - 1);
+      expect(shown()).toBeFalse();
+      expect(card().textContent?.trim()).toBe("");
+      expect(labelsShowing()).toBe(1);
+    });
+
+    it("is left out for a visitor who asked for less motion: the page cuts straight to the stop and its label", async () => {
+      environment.reducedMotion = true;
+      await open();
+      jasmine.clock().install();
+
+      arriveAt(2);
+      stride(2, 0.45);
+      expect(shown()).toBeFalse();
+      stride(2, 0.6);
+      expect(shown()).toBeFalse();
+      expect(labelsShowing()).toBe(1);
+
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      fixture.detectChanges();
+      expect(labelsShowing()).toBe(1);
+      arriveAt(fixture.componentInstance.last);
+      wait(2000);
+      jasmine.clock().uninstall();
+
+      expect(shown()).toBeFalse();
+      expect(card().textContent?.trim()).toBe("");
+    });
+  });
+
   describe("reduced motion", () => {
     beforeEach(() => {
       environment.reducedMotion = true;

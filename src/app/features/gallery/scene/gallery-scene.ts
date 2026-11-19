@@ -20,12 +20,11 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { ROOMS } from "../../../core/place/places";
 import { PointedLight, RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
 import { Dust } from "./dust";
-import { FramedPicture, framedPicture, hang, medallion, letteredBoard, pictureLight } from "./exhibits";
+import { FramedPicture, framedPicture, hang, letteredBoard, pictureLight } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
 import { FilmScreen } from "./film-screen";
 import { FloorMirror } from "./floor-mirror";
@@ -37,7 +36,6 @@ import {
   HANG_Z,
   LECTERN,
   LETTERBOX,
-  MEDALLION,
   pieceSlots,
   PieceSlot,
   portraitSlot,
@@ -53,7 +51,6 @@ import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
 import { ShaderWarmup } from "./shader-warmup";
 import { Post } from "./post";
 import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
-import { roomNames } from "./wayfinding";
 
 const BACKGROUND = 0x141417;
 const MAX_PIXEL_RATIO = 2;
@@ -77,8 +74,6 @@ function displayRatio(width: number, height: number): number {
 
 // What this visit has already stepped down to: a scene opened again starts there instead of stumbling again.
 let reached = QUALITY_LADDER[0];
-// The dust is a first impression: a scene opened again in the same visit comes up without it.
-let dusted = false;
 
 export class GalleryScene implements GalleryView {
   private readonly renderer: WebGLRenderer;
@@ -179,6 +174,7 @@ export class GalleryScene implements GalleryView {
 
   setProgress(progress: number): void {
     this.target = progress;
+    this.dust.stir();
     this.requestPictures();
     this.invalidate();
   }
@@ -193,6 +189,7 @@ export class GalleryScene implements GalleryView {
   setPointer(x: number, y: number): void {
     if (this.options.reducedMotion) return;
     this.pointer.set(x, y);
+    this.dust.stir();
     this.invalidate();
   }
 
@@ -255,6 +252,7 @@ export class GalleryScene implements GalleryView {
     this.cancelLion();
     this.film?.dispose();
     this.mirror.dispose();
+    this.dust.dispose();
 
     this.scene.traverse((object) => {
       const mesh = object as Mesh;
@@ -441,7 +439,6 @@ export class GalleryScene implements GalleryView {
     this.portrait.group.add(pictureLight(this.portrait.slot, this.palette));
     this.scene.add(
       this.portrait.group,
-      medallion(this.palette),
       lectern(this.palette, visitorsBook),
       desk,
       letterbox(this.palette),
@@ -453,8 +450,7 @@ export class GalleryScene implements GalleryView {
     const board = { x: LECTERN.x, y: NAME_BOARD.bottom + boardHeight / 2, width: NAME_BOARD.width, height: boardHeight };
     this.targets = pieceTargets(this.slots, names ? board : undefined);
     this.pointedLight = new PointedLight(this.targets);
-    this.dust = new Dust(!dusted && !this.options.reducedMotion && this.quality.allowsCostlyEffects);
-    dusted = true;
+    this.dust = new Dust(this.options.reducedMotion);
     this.scene.add(...this.pointedLight.objects, ...this.dust.objects);
 
     this.slots.forEach((slot, work) => {
@@ -524,16 +520,6 @@ export class GalleryScene implements GalleryView {
     const lettering = (texture: Texture) =>
       new MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false });
 
-    const monogram = new Mesh(
-      new PlaneGeometry(0.92, 0.54),
-      lettering(
-        inscriptionTexture({ text: "FH", font: '500 250px "Boska", Georgia, serif', color: "#e8e5de", width: 560, height: 330, spacing: "0.12em" }),
-      ),
-    );
-    monogram.position.set(MEDALLION.x - 0.04, MEDALLION.y, MEDALLION.z + 0.03);
-    monogram.rotation.y = -Math.PI / 2;
-    this.scene.add(monogram);
-
     const engraved = new Mesh(
       new PlaneGeometry(0.46, 0.1),
       lettering(
@@ -556,8 +542,6 @@ export class GalleryScene implements GalleryView {
       const lettered = nameBoardTexture(names, NAME_BOARD.width / height);
       this.scene.add(letteredBoard(LECTERN.x, NAME_BOARD.bottom + height / 2, NAME_BOARD.width, height, lettered, this.palette));
     }
-
-    this.scene.add(...roomNames(ROOMS.filter((room) => room.numeral)));
 
     this.invalidate();
   }

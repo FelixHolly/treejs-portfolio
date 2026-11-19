@@ -1,0 +1,87 @@
+:host {
+  position: fixed;
+  inset: 0;
+  /* Over the labels' layer, under the header */
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  /* The header's height, so the title sits in the middle of the scene that shows */
+  padding: 4.5rem 0 0;
+  pointer-events: none;
+  opacity: 0;
+  /* Mostly gone within the 0.35s a label waits before it starts to show */
+  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+:host(.shown) {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.card {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.8rem, 2vh, 1.2rem);
+  max-width: 100vw;
+  padding: clamp(2.5rem, 9vh, 5rem) clamp(1.5rem, 9vw, 9rem);
+  /* A soft shade with no edge: the title reads over a lit wall as well as a dark doorway */
+  background: radial-gradient(closest-side, rgba(12, 12, 14, 0.78), rgba(12, 12, 14, 0.5) 55%, rgba(12, 12, 14, 0));
+  text-align: center;
+  text-shadow: 0 2px 22px rgba(12, 12, 14, 0.95);
+}
+
+.numeral {
+  /* Letter spacing trails the last letter too; the indent sets the numeral back over the rule */
+  padding-left: 0.3em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.75rem);
+  letter-spacing: 0.3em;
+  line-height: 1;
+  color: #c7a44a;
+}
+
+.rule {
+  width: 3.5rem;
+  height: 1px;
+  background: rgba(199, 164, 74, 0.8);
+  transform: scaleX(0.35);
+  transition: transform 0.5s ease;
+}
+
+:host(.shown) .rule {
+  transform: none;
+  transition: transform 0.9s ease 0.1s;
+}
+
+/* One room's title giving way to the next: only then are there two cards */
+.arrives:not(:only-child) {
+  animation: title-in 0.25s ease both;
+}
+
+.leaves {
+  animation: title-out 0.25s ease both;
+}
+
+@keyframes title-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes title-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.name {
+  font-family: 'Boska', Georgia, serif;
+  font-size: clamp(2.25rem, 1.3rem + 4vw, 4.5rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: #e8e5de;
+  text-wrap: balance;
+}

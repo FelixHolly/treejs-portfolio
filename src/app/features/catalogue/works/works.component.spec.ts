@@ -73,7 +73,7 @@ describe("WorksComponent", () => {
 
       expect(details.open).toBeFalse();
       expect(details.firstElementChild?.tagName).toBe("SUMMARY");
-      expect(details.querySelector("summary")?.textContent?.trim()).toBe("How it was built");
+      expect(details.querySelector("summary")?.textContent?.trim()).toBe("Read the case study");
       expect(label.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(label.contains(details)).toBeFalse();
     });

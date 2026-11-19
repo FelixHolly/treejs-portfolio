@@ -1,3 +1,4 @@
+import { provideLocationMocks } from "@angular/common/testing";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
@@ -22,6 +23,11 @@ function sceneStarted(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => setTimeout(() => setTimeout(resolve, 0), 0)));
 }
 
+// Chrome drops history calls once a page makes too many in a few seconds, so the address is only reset when a spec changed it.
+function clearHash(): void {
+  if (location.hash) history.replaceState(null, "", location.pathname);
+}
+
 describe("GalleryComponent", () => {
   let fixture: ComponentFixture<GalleryComponent>;
   let element: HTMLElement;
@@ -29,6 +35,8 @@ describe("GalleryComponent", () => {
   let scene: jasmine.SpyObj<GalleryView>;
   let factory: jasmine.Spy<GallerySceneFactory>;
   let options: GalleryViewOptions | undefined;
+  /** A hanging other than the real one, for the specs that need it; provided afresh so it cannot outlive its spec. */
+  let collection: Work[] | undefined;
   let scrollTo: jasmine.Spy;
   let scrollY: jasmine.Spy | undefined;
   let placeLeftBehind: string | undefined;
@@ -42,9 +50,12 @@ describe("GalleryComponent", () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        // The page drives the real address bar itself; a router listening to it too would rewrite the URL between specs
+        provideLocationMocks(),
         { provide: ViewEnvironment, useValue: environment },
         { provide: GALLERY_SCENE_FACTORY, useValue: factory },
         { provide: EmailService, useValue: jasmine.createSpyObj<EmailService>("EmailService", ["sendContactEmail"]) },
+        ...(collection ? [{ provide: WorksService, useValue: { works: () => collection } }] : []),
       ],
     });
     if (placeLeftBehind) TestBed.inject(PlaceService).current.set(placeLeftBehind);
@@ -75,9 +86,10 @@ describe("GalleryComponent", () => {
   beforeEach(() => {
     environment = new FakeViewEnvironment();
     options = undefined;
+    collection = undefined;
     scrollY = undefined;
     placeLeftBehind = undefined;
-    history.replaceState(null, "", location.pathname);
+    clearHash();
     window.scrollTo({ top: 0, behavior: "instant" });
     scrollTo = spyOn(window, "scrollTo");
   });
@@ -85,7 +97,7 @@ describe("GalleryComponent", () => {
   afterEach(() => {
     fixture.destroy();
     element.remove();
-    history.replaceState(null, "", location.pathname);
+    clearHash();
   });
 
   describe("what is on the page", () => {
@@ -645,7 +657,7 @@ describe("GalleryComponent", () => {
       }));
 
     async function summaryOf(works: Work[]): Promise<string | undefined> {
-      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      collection = works;
       await open();
       return element.querySelector('[data-stop="2"] .grid-subtext')?.textContent?.trim();
     }
@@ -891,7 +903,7 @@ describe("GalleryComponent", () => {
     it("offers the control for the one film the scene plays, not for a second work's", async () => {
       const film = { src: "assets/works/other.webm", description: "Another film." };
       const works = WORKS.map((work, index): Work => (index === 1 ? { ...work, film } : work));
-      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      collection = works;
       await open();
 
       expect(element.querySelectorAll(".film-toggle").length).toBe(1);
@@ -918,7 +930,7 @@ describe("GalleryComponent", () => {
 
     it("offers no control when no work has a film", async () => {
       const works = WORKS.map((work): Work => ({ ...work, film: undefined }));
-      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      collection = works;
       await open();
 
       expect(options?.films).toBeTrue();

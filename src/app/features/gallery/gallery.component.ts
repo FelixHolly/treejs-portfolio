@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   signal,
@@ -11,13 +12,14 @@ import {
   DOCUMENT
 } from "@angular/core";
 
+import { Title } from "@angular/platform-browser";
 import { RouterLink } from "@angular/router";
 import { environment } from "../../../environments/environment";
 import { DEVELOPER } from "../../core/content/developer.content";
 import { VISITOR_ENTRIES } from "../../core/content/visitors-book.content";
 import { Work } from "../../core/content/work.model";
 import { WorksService } from "../../core/content/works.service";
-import { placeFromHash } from "../../core/place/places";
+import { BASE_TITLE, placeFromHash, titleFor } from "../../core/place/places";
 import { PlaceService } from "../../core/place/place.service";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
@@ -31,7 +33,7 @@ import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { LightboxComponent } from "./lightbox/lightbox.component";
 import { GalleryView, OPEN_BAND, PageFraming } from "./scene/gallery-view";
 import { labelShareOf, LabelSpan, neighbourStop, progressFromScroll, scrollTargetFor } from "./scroll-progress";
-import { buildStops } from "./stops";
+import { buildStops, GalleryStop } from "./stops";
 
 /** Room the fixed header needs above a label that is taller than the screen. */
 const HEADER_CLEARANCE = 84;
@@ -47,6 +49,13 @@ const SIDE_GUTTER = 24;
 /** Keys must not step the walk while the visitor is typing or operating a control. */
 const INTERACTIVE = "input, textarea, select, button, a, dialog, [contenteditable]";
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
+
+/** Empty at the entrance, which has its own plaque for this, and at the last stop, which leads nowhere. */
+function onwardText(stops: readonly GalleryStop[], index: number): string {
+  const next = stops[index + 1];
+  if (index === 0 || !next) return "";
+  return next.work ? `Next: ${next.work.title}` : `Continue to Room ${next.room.numeral}, ${next.room.name}`;
+}
 
 function sameFraming(a: PageFraming, b: PageFraming): boolean {
   return a.labelShare === b.labelShare && a.statueBand[0] === b.statueBand[0] && a.statueBand[1] === b.statueBand[1];
@@ -80,6 +89,8 @@ export class GalleryComponent {
   private readonly lightbox = viewChild.required(LightboxComponent);
 
   readonly stops = buildStops(this.works);
+  readonly last = this.stops.length - 1;
+  readonly onward = this.stops.map((_, index) => onwardText(this.stops, index));
   readonly developer = DEVELOPER;
   readonly entries = VISITOR_ENTRIES;
   readonly year = new Date().getFullYear();
@@ -107,6 +118,11 @@ export class GalleryComponent {
   constructor() {
     this.viewMode.active.set("gallery");
     const destroyRef = inject(DestroyRef);
+    const title = inject(Title);
+    const workTitles = Object.fromEntries(this.works.map((work) => [work.slug, work.title]));
+    effect(() => title.setTitle(titleFor(this.place.current(), workTitles)));
+    // The privacy page sets no title of its own
+    destroyRef.onDestroy(() => title.setTitle(BASE_TITLE));
     afterNextRender(() => this.start(destroyRef));
   }
 
@@ -147,6 +163,8 @@ export class GalleryComponent {
     this.measure();
     this.restoreFromHash("instant");
     this.syncFromScroll();
+    // The shared place outlives a page: coming back to the entrance must not keep the room last visited
+    this.place.current.set(this.stops[this.activeIndex()].place);
     this.fadeTarget = this.activeIndex();
 
     const onScroll = () => this.syncFromScroll();
@@ -355,10 +373,9 @@ export class GalleryComponent {
     // A click inside the open lightbox can leave focus on the page body.
     if (this.document.querySelector("dialog[open]")) return;
 
-    const last = this.stops.length - 1;
     if (event.key === "Home" || event.key === "End") {
       event.preventDefault();
-      this.goTo(event.key === "Home" ? 0 : last, true);
+      this.goTo(event.key === "Home" ? 0 : this.last, true);
       return;
     }
 
@@ -368,7 +385,7 @@ export class GalleryComponent {
 
     const next = neighbourStop(this.progress, index, direction);
     // Past either end the browser scrolls as usual, which reaches the exit plaque.
-    if (next < 0 || next > last) return;
+    if (next < 0 || next > this.last) return;
 
     event.preventDefault();
     this.goTo(next, true);

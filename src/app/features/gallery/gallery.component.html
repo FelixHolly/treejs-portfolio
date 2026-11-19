@@ -3,11 +3,16 @@
 
 <a href="#main" class="skip-link" (click)="skipToMain($event)">Skip to main content</a>
 <header class="hud">
-  <button type="button" class="wordmark" aria-label="Felix Hollndonner, back to the entrance" (click)="goTo(0, true)">
+  <button type="button" class="wordmark justify-self-start" aria-label="Felix Hollndonner, back to the entrance" (click)="goTo(0, true)">
     Felix Hollndonner
   </button>
   <app-floor-plan [current]="currentRoom().id" (visit)="visit($event)" />
-  <app-view-switch compact />
+  <div class="flex items-center gap-2 justify-self-end">
+    @if (activeIndex() !== last) {
+      <button type="button" class="to-letter max-[899px]:hidden inline-flex items-center min-h-8 px-2 font-mono text-xs uppercase tracking-[0.15em] whitespace-nowrap text-gold transition-colors hover:text-bone" (click)="goTo(last, true)">Write to me</button>
+    }
+    <app-view-switch compact />
+  </div>
 </header>
 
 <main #main id="main" tabindex="-1">
@@ -72,7 +77,6 @@
           @case ("work") {
             @if (stop.work; as work) {
               <app-wall-label [work]="work" />
-              <button type="button" class="view-switch mt-4" (click)="closerLook(work)">Closer look</button>
             }
           }
           @case ("visitors-book") {
@@ -89,6 +93,20 @@
           @case ("correspondence") {
             <app-letter (posted)="letterPosted()" />
           }
+        }
+        @if (stop.work || onward[index]) {
+          <div class="label-foot flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3">
+            @if (stop.work; as work) {
+              <button type="button" class="view-switch" (click)="closerLook(work)">Closer look</button>
+            }
+            @if (onward[index]; as next) {
+              <!-- The negative margin lets the 24px target reach into the space around it, so the row is only as tall as its text needs -->
+              <button type="button" class="onward inline-flex items-center gap-1.5 min-h-6 -my-1 ml-auto font-mono text-[0.7rem] text-right text-gold transition-colors hover:text-bone" (click)="goTo(index + 1, true)">
+                {{ next }}
+                <app-icon-arrow-down />
+              </button>
+            }
+          </div>
         }
       </div>
     </section>

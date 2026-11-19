@@ -30,9 +30,10 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 50;
-  display: flex;
+  /* Equal columns either side keep the floor plan in the middle for as long as both sides fit their share */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 1rem clamp(1.25rem, 3vw, 2.5rem) 1.75rem;
   /* Solid behind the bar itself, so the bright letter never shows through it */
@@ -102,12 +103,6 @@ main {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
-
-  /* On short screens a wider label needs fewer lines and still fits under the header */
-  @media (min-width: 900px) and (max-height: 800px) {
-    width: clamp(22rem, 36vw, 30rem);
-    padding-block: 1.25rem;
-  }
   scroll-snap-align: start;
 
   @media (max-width: 899px) {
@@ -127,6 +122,19 @@ main {
   align-items: flex-start;
   margin-bottom: 1.25rem;
   text-align: left;
+}
+
+/* On short screens a wider label needs fewer lines, and tighter margins give back the line its way on takes */
+@media (min-width: 900px) and (max-height: 800px) {
+  .label {
+    width: clamp(22rem, 36vw, 30rem);
+    padding-block: 1rem;
+  }
+
+  .label app-room-label {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
 }
 
 .stop--entrance .label {
@@ -260,8 +268,8 @@ main {
 }
 
 .entry + .entry {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
   border-top: 1px solid #26262c;
 }
 

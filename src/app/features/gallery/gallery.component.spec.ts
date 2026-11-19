@@ -264,13 +264,14 @@ describe("GalleryComponent", () => {
       expect(scene.jumpTo.calls.mostRecent().args[0]).toBeCloseTo(0, 2);
     });
 
-    it("is given one skill area for each plaque on Room I's wall, sized for four tools at most", async () => {
+    it("is given one skill area for each plaque on Room I's wall, none with more tools than a plaque has lines", async () => {
       await open();
 
       expect(options?.skills.length).toBe(SKILL_PLAQUES.count);
-      expect(options?.skills.map((group) => group.area)).toEqual(["Frontend", "Backend", "Data and operations"]);
-      expect(options?.skills[0].tools).toEqual(["Angular", "TypeScript", "NgRx", "Tailwind"]);
-      expect(Math.max(...(options?.skills ?? []).map((group) => group.tools.length))).toBeLessThanOrEqual(4);
+      expect(options?.skills).toBe(DEVELOPER.skills);
+      expect(options?.skills.map((group) => group.area)).toEqual(["Frontend", "Backend", "Data and operations", "Quality"]);
+      expect(options?.skills[0].tools).toEqual(["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"]);
+      expect(Math.max(...(options?.skills ?? []).map((group) => group.tools.length))).toBe(SKILL_PLAQUES.lines);
     });
 
     it("is told where the entrance text leaves room for the statue: under the name, above the foot", async () => {

@@ -13,8 +13,7 @@ import {
   pieceSlots,
   ROTUNDA,
   SKILL_PLAQUES,
-  skillPlaqueHeight,
-  skillPlaqueXs,
+  SKILL_WALL,
   WALL_THICKNESS,
 } from "./layout";
 
@@ -141,7 +140,6 @@ describe("the Room I pose", () => {
     ["1024x768", frame(1024 / 768, 0.45)],
     ...FRAMINGS.filter(([, framing]) => framing.labelShare > 0 && framing.aspect > 1),
   ];
-  const HEIGHT = skillPlaqueHeight(4);
   /** The header's share of the height of the shortest window the gallery is checked at. */
   const HEADER = 84 / 654;
 
@@ -155,29 +153,38 @@ describe("the Room I pose", () => {
     return camera;
   }
 
-  /** The corners of the whole row of plaques, as shares of the screen from its left and top. */
-  function rowOnScreen(camera: PerspectiveCamera): { left: number; right: number; top: number; bottom: number } {
-    const xs = skillPlaqueXs();
-    const corner = (x: number, y: number) => new Vector3(x, y, HANG_Z).project(camera);
-    const topLeft = corner(xs[0] - SKILL_PLAQUES.width / 2, SKILL_PLAQUES.y + HEIGHT / 2);
-    const bottomRight = corner(xs[xs.length - 1] + SKILL_PLAQUES.width / 2, SKILL_PLAQUES.y - HEIGHT / 2);
+  /** The corners of the whole block of plaques, as shares of the screen from its left and top. */
+  function blockOnScreen(camera: PerspectiveCamera): { left: number; right: number; top: number; bottom: number } {
+    const corner = (across: number, up: number) =>
+      new Vector3(SKILL_PLAQUES.x + (across * SKILL_WALL.width) / 2, SKILL_PLAQUES.y + (up * SKILL_WALL.height) / 2, HANG_Z).project(camera);
+    const topLeft = corner(-1, 1);
+    const bottomRight = corner(1, -1);
     return { left: (topLeft.x + 1) / 2, right: (bottomRight.x + 1) / 2, top: (1 - topLeft.y) / 2, bottom: (1 - bottomRight.y) / 2 };
   }
 
   for (const [name, framing] of WINDOWS) {
-    it(`shows all three plaques left of the label and under the header at ${name}`, () => {
-      const row = rowOnScreen(cameraAt(framing));
+    it(`shows all four plaques left of the label and under the header at ${name}`, () => {
+      const block = blockOnScreen(cameraAt(framing));
 
-      expect(row.left).toBeGreaterThan(0.02);
-      expect(row.right).toBeLessThan(1 - framing.labelShare);
-      expect(row.top).toBeGreaterThan(HEADER + 0.03);
-      expect(row.bottom).toBeLessThan(0.9);
+      expect(block.left).toBeGreaterThan(0.02);
+      expect(block.right).toBeLessThan(1 - framing.labelShare - 0.02);
+      expect(block.top).toBeGreaterThan(HEADER + 0.03);
+      expect(block.bottom).toBeLessThan(0.9);
     });
 
-    it(`sets the row in the middle of the space the label leaves at ${name}`, () => {
-      const row = rowOnScreen(cameraAt(framing));
+    it(`keeps the block left of the label at ${name} when the mouse turns the view either way`, () => {
+      for (const yaw of [0.06, -0.06]) {
+        const block = blockOnScreen(cameraAt(framing, yaw));
 
-      expect((row.left + row.right) / 2).toBeCloseTo((1 - framing.labelShare) / 2, 1);
+        expect(block.left).withContext(`yaw ${yaw}`).toBeGreaterThan(0);
+        expect(block.right).withContext(`yaw ${yaw}`).toBeLessThan(1 - framing.labelShare);
+      }
+    });
+
+    it(`sets the block in the middle of the space the label leaves at ${name}`, () => {
+      const block = blockOnScreen(cameraAt(framing));
+
+      expect((block.left + block.right) / 2).toBeCloseTo((1 - framing.labelShare) / 2, 1);
     });
 
   }
@@ -194,15 +201,27 @@ describe("the Room I pose", () => {
     });
   }
 
-  it("letters the tools at least 15 px tall in the owner's 1288x654 window", () => {
-    const row = rowOnScreen(cameraAt(WINDOWS[0][1]));
-    const pixelsPerMetre = ((row.bottom - row.top) * 654) / HEIGHT;
+  it("letters the tools about 14 px tall in the owner's 1288x654 window, and the headings large enough to read", () => {
+    const block = blockOnScreen(cameraAt(WINDOWS[0][1]));
+    const pixelsPerMetre = ((block.bottom - block.top) * 654) / SKILL_WALL.height;
+    // A tool is lettered at 0.78 of its line and Boska's capitals stand 0.715 of that; a heading is 54 of the plaque's 1024 pixels
+    const capitals = pixelsPerMetre * SKILL_PLAQUES.line * 0.78 * 0.715;
+    const heading = (pixelsPerMetre * SKILL_PLAQUES.width * 54) / 1024;
 
-    // A tool's capital letters stand about 0.43 of its line high
-    expect(pixelsPerMetre * SKILL_PLAQUES.line * 0.43).toBeGreaterThan(15);
+    expect(capitals).toBeGreaterThan(14);
+    expect(heading).toBeGreaterThan(13.5);
   });
 
-  it("stands square to the wall in front of the row, in Room I", () => {
+  it("steps back for the block's height where the screen is wide, and for its width where the label leaves little", () => {
+    const back = (framing: Framing) => buildPoses(pieceSlots(WORKS), framing)[1].position.z - HANG_Z;
+    const tan = Math.tan(MathUtils.degToRad(25));
+
+    expect(back(frame(1288 / 654, 0.44))).toBeCloseTo(back(frame(3.5, 0.2)), 6);
+    expect((SKILL_WALL.height + 0.06) / (2 * tan * back(frame(1288 / 654, 0.44)))).toBeCloseTo(0.72, 3);
+    expect(back(frame(1024 / 768, 0.45))).toBeGreaterThan(back(frame(1288 / 654, 0.44)) + 1);
+  });
+
+  it("stands square to the wall in front of the block, in Room I", () => {
     const pose = buildPoses(pieceSlots(WORKS), frame(1.6, 0))[1];
 
     expect(pose.position.x).toBeCloseTo(SKILL_PLAQUES.x, 6);

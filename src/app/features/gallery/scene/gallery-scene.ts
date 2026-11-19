@@ -41,9 +41,9 @@ import {
   PieceSlot,
   ROOM_ONE_X,
   ROTUNDA,
+  SKILL_PLAQUE_HEIGHT,
   SKILL_PLAQUES,
-  skillPlaqueHeight,
-  skillPlaqueXs,
+  skillPlaqueSlots,
 } from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
@@ -393,13 +393,11 @@ export class GalleryScene implements GalleryView {
     engraved.position.set(LETTERBOX.x, LETTERBOX.y + 0.02, HANG_Z + LETTERBOX.depth + 0.004);
     this.scene.add(engraved);
 
-    const skills = this.options.skills.slice(0, SKILL_PLAQUES.count);
-    const rows = Math.max(...skills.map((group) => group.tools.length));
-    const plaqueHeight = skillPlaqueHeight(rows);
-    const plaqueXs = skillPlaqueXs();
-    skills.forEach((group, index) => {
-      const lettered = plaqueTexture(group.area, group.tools, rows, SKILL_PLAQUES.width / plaqueHeight);
-      this.scene.add(letteredBoard(plaqueXs[index], SKILL_PLAQUES.y, SKILL_PLAQUES.width, plaqueHeight, lettered, this.palette));
+    const plaqueSlots = skillPlaqueSlots();
+    this.options.skills.slice(0, SKILL_PLAQUES.count).forEach((group, index) => {
+      const lettered = plaqueTexture(group.area, group.tools, SKILL_PLAQUES.lines, SKILL_PLAQUES.width / SKILL_PLAQUE_HEIGHT);
+      const { x, y } = plaqueSlots[index];
+      this.scene.add(letteredBoard(x, y, SKILL_PLAQUES.width, SKILL_PLAQUE_HEIGHT, lettered, this.palette));
     });
 
     const names = this.options.visitors;

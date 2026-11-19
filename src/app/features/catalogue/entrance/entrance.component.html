@@ -15,17 +15,22 @@
         </h1>
     </div>
 
-    <div class="z-10 w-full max-w-4xl flex flex-col items-center gap-5 c-space">
+    <div class="z-10 w-full max-w-4xl flex flex-col items-center gap-4 c-space">
         <div class="plinth-rule intro-item intro-rule"></div>
-        <div class="intro-item intro-row flex flex-col sm:flex-row items-center sm:justify-between w-full gap-3">
-            <p class="font-mono text-xs sm:text-sm text-stone tracking-wider">
+        <div class="foot intro-item intro-row">
+            <p class="stack font-mono text-xs sm:text-sm text-stone tracking-wider">
                 Angular · TypeScript · Java · Spring Boot
             </p>
-            <a routerLink="/" fragment="works" queryParamsHandling="preserve" class="inline-flex items-center gap-2 min-h-6 font-mono text-xs sm:text-sm text-gold tracking-wider hover:text-bone transition-colors">
-                View the works
-                <app-icon-arrow-down />
-            </a>
+            <div class="actions">
+                <a routerLink="/" fragment="works" queryParamsHandling="preserve" appSectionLink class="plaque">
+                    View the works
+                    <app-icon-arrow-down />
+                </a>
+                <a routerLink="/" fragment="contact" queryParamsHandling="preserve" appSectionLink class="plaque plaque-outline">
+                    Write to me
+                </a>
+                <app-gallery-door class="lg:hidden" />
+            </div>
         </div>
-        <app-view-switch class="lg:hidden" />
     </div>
 </section>

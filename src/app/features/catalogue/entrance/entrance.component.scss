@@ -26,6 +26,84 @@
   opacity: 1;
 }
 
+.foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* Whatever is laid over the statue carries its own dark backing, so it reads on any stone behind it */
+.stack,
+.plaque-outline {
+  background: rgba(20, 20, 23, 0.96);
+}
+
+/* The backing reaches into the gutter, so the line keeps to one row on a narrow phone */
+.stack {
+  margin-inline: -0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.125rem;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+
+  .plaque {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding-inline: 0.75rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 640px) {
+    width: auto;
+
+    .plaque {
+      flex: none;
+      padding-inline: 1.25rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+    }
+  }
+}
+
+/* Tighter type keeps both rows whole at 320px; were they to wrap, the taller block would climb over the lion's face */
+@media (max-width: 22.49rem) {
+  .stack {
+    font-size: 0.7rem;
+    letter-spacing: 0;
+  }
+
+  .actions .plaque {
+    padding-inline: 0.5rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+.plaque-outline {
+  border: 1px solid rgba(199, 164, 74, 0.7);
+  color: #c7a44a;
+
+  &:hover {
+    background: #26262c;
+    color: #e8e5de;
+  }
+}
+
 .intro-item {
   animation: settle 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }

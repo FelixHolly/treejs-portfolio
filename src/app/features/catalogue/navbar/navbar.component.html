@@ -1,42 +1,56 @@
 <a href="#main" class="skip-link" (click)="skipToMain($event)">Skip to main content</a>
-<header class="fixed top-0 left-0 right-0 z-50 bg-graphite/90 backdrop-blur-sm border-b border-graphite-700/60">
-  <div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-center py-5 mx-auto c-space">
-      <a routerLink="/" fragment="home" queryParamsHandling="preserve" class="font-display text-bone text-2xl tracking-wide hover:text-gold transition-colors">
-        Felix Hollndonner
-      </a>
+<div #pageTop class="page-top" aria-hidden="true"></div>
 
+<header class="fixed top-0 left-0 right-0 z-50 bg-graphite/95 backdrop-blur-sm border-b border-graphite-700/60" [class.slim]="slim()">
+  <div class="bar-row max-w-7xl mx-auto c-space">
+    <a routerLink="/" fragment="home" queryParamsHandling="preserve" appSectionLink class="wordmark font-display text-bone tracking-wide whitespace-nowrap hover:text-gold transition-colors">
+      <span class="wordmark-short">FH<span class="sr-only">, </span></span><span class="wordmark-full">Felix Hollndonner</span>
+    </a>
+
+    <div class="flex items-center gap-2 lg:gap-4">
+      <nav class="max-lg:hidden lg:mr-3" aria-label="Main">
+        <app-nav-items />
+      </nav>
+      <a routerLink="/" fragment="contact" queryParamsHandling="preserve" appSectionLink class="bar-write" [class.bar-write--away]="atLetter()">
+        <span class="plaque bar-plaque">Write to me</span>
+      </a>
+      <app-view-switch class="max-lg:hidden" />
       <button
         type="button"
-        (click)="isOpen.set(!isOpen())"
-        class="text-stone hover:text-bone lg:hidden flex w-11 h-11 items-center justify-center"
-        aria-controls="mobile-nav"
-        [attr.aria-label]="isOpen() ? 'Close navigation menu' : 'Open navigation menu'"
-        [attr.aria-expanded]="isOpen()">
+        class="lg:hidden flex w-11 h-11 -mr-2.5 items-center justify-center text-stone hover:text-bone transition-colors"
+        aria-label="Menu"
+        aria-haspopup="dialog"
+        aria-controls="site-menu"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="openMenu()">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-          @if (isOpen()) {
-            <path d="M6 18 18 6M6 6l12 12" />
-          } @else {
-            <path d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
-          }
+          <path d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
         </svg>
       </button>
-
-      <div class="lg:flex hidden items-center gap-8">
-        <nav aria-label="Rooms">
-          <app-nav-items />
-        </nav>
-        <app-view-switch />
-      </div>
-    </div>
-  </div>
-
-  <div id="mobile-nav" class="lg:hidden" [class.hidden]="!isOpen()">
-    <nav class="p-5" aria-label="Rooms">
-      <app-nav-items (linkClick)="isOpen.set(false)" />
-    </nav>
-    <div class="flex justify-center pb-5">
-      <app-view-switch />
     </div>
   </div>
 </header>
+
+<dialog #menu id="site-menu" class="nav-sheet" [class.slim]="slim()" aria-labelledby="site-menu-title" (close)="menuOpen.set(false)">
+  <div class="bar-row c-space border-b border-graphite-700/60">
+    <h2 id="site-menu-title" class="eyebrow">Menu</h2>
+    <button type="button" class="flex w-11 h-11 -mr-2.5 items-center justify-center text-stone hover:text-bone transition-colors" aria-label="Close the menu" (click)="closeMenu()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <nav class="c-space" aria-label="Main">
+    <app-nav-items sheet (linkClick)="closeMenu()" />
+  </nav>
+
+  <div class="sheet-foot c-space">
+    @if (!atLetter()) {
+      <a routerLink="/" fragment="contact" queryParamsHandling="preserve" appSectionLink class="plaque" (click)="closeMenu()">
+        Write to me
+      </a>
+    }
+    <app-gallery-door (click)="closeMenu()" />
+  </div>
+</dialog>

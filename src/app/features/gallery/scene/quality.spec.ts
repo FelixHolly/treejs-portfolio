@@ -1,13 +1,15 @@
 import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
 
 const FAST = 1 / 60;
-const [SHARPEST, , , LOWEST_RATIO, SHADOWLESS] = QUALITY_LADDER;
-const LAST = QUALITY_LADDER.length - 1;
+const [MIRRORING, ...PLAIN] = QUALITY_LADDER;
+const [SHARPEST, , , LOWEST_RATIO, SHADOWLESS] = PLAIN;
+const LAST = PLAIN.length - 1;
 
-function watch(startAt = 0) {
+/** Watches the tiers below the mirroring one, where every step is about the pace alone, unless given the whole `ladder`. */
+function watch(startAt = 0, ladder: readonly QualityTier[] = PLAIN) {
   const steps: QualityTier[] = [];
   const tooSlow = jasmine.createSpy("tooSlow");
-  const controller = new QualityController(QUALITY_LADDER, startAt, (tier) => steps.push(tier), tooSlow);
+  const controller = new QualityController(ladder, startAt, (tier) => steps.push(tier), tooSlow);
 
   /** One frame, drawn at the tier's ratio or at what the display has if that is less. */
   const frame = (seconds: number, displayRatio = 2) =>
@@ -25,24 +27,29 @@ function watch(startAt = 0) {
 
 describe("QUALITY_LADDER", () => {
   it("brings the pixel ratio down first and takes the statue's shadow last", () => {
-    expect(QUALITY_LADDER.map((tier) => tier.pixelRatio)).toEqual([2, 1.5, 1.25, 1, 1]);
-    expect(QUALITY_LADDER.map((tier) => tier.statueShadow)).toEqual([true, true, true, true, false]);
+    expect(PLAIN.map((tier) => tier.pixelRatio)).toEqual([2, 1.5, 1.25, 1, 1]);
+    expect(PLAIN.map((tier) => tier.statueShadow)).toEqual([true, true, true, true, false]);
+  });
+
+  it("mirrors the room in the floor at the top only, and gives nothing else up with it", () => {
+    expect(QUALITY_LADDER.map((tier) => tier.reflections)).toEqual([true, false, false, false, false, false]);
+    expect({ ...MIRRORING, reflections: false }).toEqual(SHARPEST);
   });
 });
 
 describe("QualityController", () => {
   describe("where it starts", () => {
     it("starts at the top, where costly effects are allowed", () => {
-      const { controller } = watch();
+      const { controller } = watch(0, QUALITY_LADDER);
 
-      expect(controller.tier).toBe(SHARPEST);
+      expect(controller.tier).toBe(MIRRORING);
       expect(controller.allowsCostlyEffects).toBeTrue();
     });
 
     it("starts lower when the visit has already settled there, and allows no costly effects", () => {
-      const { controller } = watch(2);
+      const { controller } = watch(1, QUALITY_LADDER);
 
-      expect(controller.tier).toBe(QUALITY_LADDER[2]);
+      expect(controller.tier).toBe(SHARPEST);
       expect(controller.allowsCostlyEffects).toBeFalse();
     });
 
@@ -81,7 +88,7 @@ describe("QualityController", () => {
       expect(steps).toEqual([]);
 
       frame(0.03);
-      expect(steps).toEqual([QUALITY_LADDER[1]]);
+      expect(steps).toEqual([PLAIN[1]]);
     });
 
     it("waits for eight frames however slow they are", () => {
@@ -114,8 +121,8 @@ describe("QualityController", () => {
       frames(4 + 34, 0.03);
       run(FAST, 300);
 
-      expect(steps).toEqual([QUALITY_LADDER[1]]);
-      expect(controller.tier).toBe(QUALITY_LADDER[1]);
+      expect(steps).toEqual([PLAIN[1]]);
+      expect(controller.tier).toBe(PLAIN[1]);
       expect(controller.allowsCostlyEffects).toBeFalse();
     });
 
@@ -135,7 +142,7 @@ describe("QualityController", () => {
 
       run(0.025, 60);
 
-      expect(steps).toEqual(QUALITY_LADDER.slice(1));
+      expect(steps).toEqual(PLAIN.slice(1));
       expect(tooSlow).not.toHaveBeenCalled();
     });
 
@@ -145,7 +152,7 @@ describe("QualityController", () => {
       // 50 ms where 22 would do: 44% of the pixels, a ratio of 1.33
       run(0.05, 1.5);
 
-      expect(steps).toEqual([QUALITY_LADDER[2]]);
+      expect(steps).toEqual([PLAIN[2]]);
     });
 
     it("drops every ratio at once when the pace is far off, but the shadow in a step of its own", () => {
@@ -180,7 +187,45 @@ describe("QualityController", () => {
       // 1.5 after 1.6 would drop 12%
       run(0.025, 1.5, 1.6);
 
-      expect(steps).toEqual([QUALITY_LADDER[2]]);
+      expect(steps).toEqual([PLAIN[2]]);
+    });
+  });
+
+  describe("the mirroring floor", () => {
+    it("goes first and alone, however far off the pace is", () => {
+      const { controller, steps, run } = watch(0, QUALITY_LADDER);
+
+      run(0.25, 3.5);
+
+      expect(steps).toEqual([SHARPEST]);
+      expect(controller.allowsCostlyEffects).toBeFalse();
+    });
+
+    it("goes even where the display leaves no pixel ratio to bring down", () => {
+      const { steps, run } = watch(0, QUALITY_LADDER);
+
+      run(0.025, 1.5, 1);
+
+      expect(steps).toEqual([SHARPEST]);
+    });
+
+    it("costs nothing else when the pace recovers without it", () => {
+      const { controller, steps, frames, run } = watch(0, QUALITY_LADDER);
+
+      frames(4 + 34, 0.03);
+      run(FAST, 300);
+
+      expect(steps).toEqual([SHARPEST]);
+      expect(controller.tier.pixelRatio).toBe(MIRRORING.pixelRatio);
+    });
+
+    it("is followed by the ratios when the pace stays off without it", () => {
+      const { steps, tooSlow, run } = watch(0, QUALITY_LADDER);
+
+      run(0.025, 60);
+
+      expect(steps).toEqual(PLAIN);
+      expect(tooSlow).not.toHaveBeenCalled();
     });
   });
 
@@ -328,7 +373,7 @@ describe("QualityController", () => {
 
       run(0.05, 120);
 
-      expect(steps).toEqual([QUALITY_LADDER[2], LOWEST_RATIO, SHADOWLESS]);
+      expect(steps).toEqual([PLAIN[2], LOWEST_RATIO, SHADOWLESS]);
       expect(tiersWhenTold).toEqual([SHADOWLESS]);
     });
 

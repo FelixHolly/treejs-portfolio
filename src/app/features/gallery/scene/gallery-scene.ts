@@ -26,6 +26,7 @@ import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
 import { FramedPicture, framedPicture, hang, medallion, letteredBoard, pictureLight } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
 import { FilmScreen } from "./film-screen";
+import { FloorMirror } from "./floor-mirror";
 import { lectern, letterbox, writingDesk } from "./furniture";
 import { GalleryView, GalleryViewOptions, OPEN_BAND, PageFraming } from "./gallery-view";
 import {
@@ -84,6 +85,7 @@ export class GalleryScene implements GalleryView {
   private readonly portrait: FramedPicture<ShaderMaterial>;
   private readonly lights: GalleryLights;
   private readonly atmosphere = new RotundaAtmosphere();
+  private readonly mirror = new FloorMirror(this.palette.floor);
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
   private readonly pointer = new Vector2();
   private readonly look = new Vector2();
@@ -149,6 +151,7 @@ export class GalleryScene implements GalleryView {
     );
 
     this.lights.setStatueShadow(this.quality.tier.statueShadow);
+    this.mirror.enabled = this.quality.allowsCostlyEffects;
     this.resize({ labelShare: 0, statueBand: OPEN_BAND });
     // Shaders compile in the background; a blocking first render would freeze the page for most of a second.
     this.renderer.compileAsync(this.scene, this.camera).finally(() => {
@@ -217,6 +220,7 @@ export class GalleryScene implements GalleryView {
     cancelAnimationFrame(this.rafId);
     this.cancelLion();
     this.film?.dispose();
+    this.mirror.dispose();
 
     this.scene.traverse((object) => {
       const mesh = object as Mesh;
@@ -271,9 +275,10 @@ export class GalleryScene implements GalleryView {
     this.camera.rotateX(-this.look.y * LOOK.pitch);
     this.lights.update(this.progress, this.lionLevel);
     this.atmosphere.update(this.progress, this.lionLevel);
+    const mirroring = this.mirror.render(this.renderer, this.scene, this.camera, seconds);
     this.renderer.render(this.scene, this.camera);
 
-    this.running = gliding || looking || rising || posting || filming;
+    this.running = gliding || looking || rising || posting || filming || mirroring;
     if (this.running) this.invalidate();
   };
 
@@ -295,6 +300,7 @@ export class GalleryScene implements GalleryView {
 
   private applyQuality(tier: QualityTier): void {
     reached = tier;
+    this.mirror.enabled = tier.reflections;
     const [width, height] = this.canvasSize();
     const ratio = this.pixelRatio(width, height);
     if (ratio !== this.renderer.getPixelRatio()) this.renderer.setDrawingBufferSize(width, height, ratio);

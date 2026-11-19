@@ -3,15 +3,18 @@ export interface QualityTier {
   /** The most device pixels drawn per CSS pixel. */
   readonly pixelRatio: number;
   readonly statueShadow: boolean;
+  /** The floor mirrors the room: a second drawing of the scene on every frame. */
+  readonly reflections: boolean;
 }
 
-/** From best to cheapest: the pixel ratio comes down first, then the statue loses its shadow. */
+/** From best to cheapest: the floor stops mirroring, the pixel ratio comes down, then the statue loses its shadow. */
 export const QUALITY_LADDER: readonly QualityTier[] = [
-  { pixelRatio: 2, statueShadow: true },
-  { pixelRatio: 1.5, statueShadow: true },
-  { pixelRatio: 1.25, statueShadow: true },
-  { pixelRatio: 1, statueShadow: true },
-  { pixelRatio: 1, statueShadow: false },
+  { pixelRatio: 2, statueShadow: true, reflections: true },
+  { pixelRatio: 2, statueShadow: true, reflections: false },
+  { pixelRatio: 1.5, statueShadow: true, reflections: false },
+  { pixelRatio: 1.25, statueShadow: true, reflections: false },
+  { pixelRatio: 1, statueShadow: true, reflections: false },
+  { pixelRatio: 1, statueShadow: false, reflections: false },
 ];
 
 /** Slower than this on average and quality steps down: on a 60 Hz screen about one frame in three is late. */
@@ -53,7 +56,7 @@ export class QualityController {
 
   /** True only at the top tier: a costly extra such as a reflective floor is the first thing to go. */
   get allowsCostlyEffects(): boolean {
-    return this.index === 0;
+    return this.tier.reflections;
   }
 
   /** Takes the seconds between two frames of the display in which nothing was drawn: a pace no quality can beat. */
@@ -112,6 +115,8 @@ export class QualityController {
   private stepFrom(affordable: number, drawn: number): number {
     const last = this.ladder.length - 1;
     let next = this.index + 1;
+    // What the mirror costs is not known, so it goes alone and the pace without it is measured before any ratio goes
+    if (this.tier.reflections && !this.ladder[next].reflections) return next;
     while (next < last) {
       const { pixelRatio } = this.ladder[next];
       const lowestRatio = !this.ladder[next + 1].statueShadow;

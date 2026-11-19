@@ -12,6 +12,7 @@ import {
   PlaneGeometry,
   RingGeometry,
 } from "three";
+import { StoneFloor } from "./floor";
 import {
   BENCH,
   DOOR,
@@ -24,13 +25,14 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
+import { buildShading, HALL_FACES } from "./shading";
 import { brushedTexture, walnutTexture, writtenPageTexture } from "./textures";
 
 export interface Palette {
   wall: Material;
   wallInside: Material;
   ceiling: Material;
-  floor: Material;
+  floor: StoneFloor;
   gold: Material;
   bone: Material;
   dark: Material;
@@ -53,7 +55,7 @@ export function createPalette(): Palette {
     wallInside: new MeshLambertMaterial({ color: 0x646362, side: BackSide }),
     // Unlit: a ceiling only ever faces the dark half of the ambient light and would render pure black
     ceiling: new MeshBasicMaterial({ color: 0x1b1b1f }),
-    floor: new MeshStandardMaterial({ color: 0x2b2b30, roughness: 0.42, metalness: 0 }),
+    floor: new StoneFloor(),
     gold: new MeshStandardMaterial({ color: 0xc7a44a, roughness: 0.38, metalness: 0.65 }),
     bone: new MeshLambertMaterial({ color: 0xe8e5de }),
     dark: new MeshLambertMaterial({ color: 0x1c1a19 }),
@@ -108,7 +110,7 @@ function rotunda(palette: Palette): Group {
   const gap = Math.asin(DOOR.width / 2 / radius);
 
   const wall = new Mesh(
-    new CylinderGeometry(radius, radius, height, 72, 1, true, Math.PI / 2 + gap, Math.PI * 2 - gap * 2),
+    new CylinderGeometry(radius, radius, height, HALL_FACES, 1, true, Math.PI / 2 + gap, Math.PI * 2 - gap * 2),
     palette.wallInside,
   );
   wall.position.y = height / 2;
@@ -177,7 +179,7 @@ export function buildArchitecture(palette: Palette): Group {
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(midX, WALL_HEIGHT, 0);
 
-  building.add(floor, ceiling, rotunda(palette));
+  building.add(floor, ceiling, rotunda(palette), buildShading());
 
   for (const side of [-1, 1]) {
     const z = side * HALF_DEPTH;

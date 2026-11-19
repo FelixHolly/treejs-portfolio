@@ -1,26 +1,30 @@
 <section class="c-space my-24" id="about">
     <app-room-label numeral="I" title="The Developer" appReveal />
 
-    <div class="grid lg:grid-cols-[35rem_minmax(0,1fr)] gap-10 lg:gap-12 xl:gap-16 items-center max-w-5xl mx-auto" appReveal [revealDelay]="120">
-        <app-section-plate class="w-full max-w-[40rem] mx-auto" [storeys]="developer.anatomy" />
-        <div class="flex flex-col gap-4 max-w-2xl mx-auto text-center lg:text-left">
-            <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
-            @for (paragraph of developer.bio; track paragraph) {
-                <p class="grid-subtext">{{ paragraph }}</p>
+    <div class="flex flex-col gap-4 max-w-2xl mx-auto" appReveal [revealDelay]="120">
+        <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
+        @for (paragraph of developer.bio; track paragraph) {
+            <p class="grid-subtext">{{ paragraph }}</p>
+        }
+    </div>
+
+    <div class="mt-12 sm:mt-14 max-w-2xl mx-auto" appReveal>
+        <h3 class="sr-only">Skills</h3>
+        <ul class="grid gap-8 sm:grid-cols-3 sm:gap-6">
+            @for (group of developer.skills; track group.area) {
+                <li data-skill-group class="border-t border-gold/40 pt-4">
+                    <h4 class="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-gold">{{ group.area }}</h4>
+                    <ul class="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-1 font-display text-xl text-bone">
+                        @for (tool of group.tools; track tool) {
+                            <li>{{ tool }}</li>
+                        }
+                    </ul>
+                </li>
             }
-        </div>
+        </ul>
     </div>
 
-    <div class="mt-14 sm:mt-20 flex flex-col items-center gap-6" appReveal>
-        <div class="plinth-rule"></div>
-        <p class="max-w-full font-display uppercase tracking-[0.2em] sm:tracking-[0.3em] text-base sm:text-2xl text-bone text-center leading-loose">
-            @for (material of developer.frieze; track material) {<span class="whitespace-nowrap">{{ material }}</span>@if (!$last) {<span class="text-gold px-1 sm:px-2" aria-hidden="true"> · </span>}}
-        </p>
-        <div class="plinth-rule"></div>
-        <p class="exhibit-caption">Materials &amp; instruments of the practice</p>
-    </div>
-
-    <p class="mt-12 max-w-2xl mx-auto text-center grid-subtext" appReveal>
+    <p class="mt-12 sm:mt-14 max-w-2xl mx-auto grid-subtext" appReveal>
         <span class="block font-mono uppercase tracking-[0.2em] text-xs text-gold mb-3">{{ developer.location }}</span>
         {{ developer.viennaLine }}
     </p>

@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from "three";
 import { PageFraming } from "./gallery-view";
-import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, PLATE, ROTUNDA } from "./layout";
+import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, ROTUNDA, SKILL_PLAQUES, SKILL_WALL_SPAN } from "./layout";
 
 export interface Pose {
   position: Vector3;
@@ -22,6 +22,9 @@ const SAMPLES_PER_POINT = 24;
 const OVERVIEW = { x: 16.6, z: 3 } as const;
 /** The statue as the arriving visitor meets it: its width, how far its head and front paws stand out towards them, and how near they may come. */
 const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.5 } as const;
+
+/** Room I's plaques: how far above their middle the view aims, and the width their frames add to the row. */
+const SKILL_VIEW = { rise: 0.02, margin: 0.06 } as const;
 
 /** Half the height of what the camera sees one metre away. */
 function lens(aspect: number): number {
@@ -98,7 +101,7 @@ function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
 export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[] {
   return [
     statuePose(framing),
-    wallPose(PLATE.x, PLATE.y - 0.15, PLATE.width + 0.75, 3.4, framing),
+    wallPose(SKILL_PLAQUES.x, SKILL_PLAQUES.y + SKILL_VIEW.rise, SKILL_WALL_SPAN + SKILL_VIEW.margin, 3.4, framing),
     overviewPose(slots, framing),
     ...slots.map((slot) => wallPose(slot.centre.x, slot.centre.y, slot.span, slot.distance, framing)),
     wallPose(LECTERN.x, 1.3, 3, 4.2, framing),

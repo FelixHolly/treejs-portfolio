@@ -2,6 +2,7 @@ import { provideLocationMocks } from "@angular/common/testing";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
+import { DEVELOPER } from "../../core/content/developer.content";
 import { Work } from "../../core/content/work.model";
 import { WORKS } from "../../core/content/works.content";
 import { WorksService } from "../../core/content/works.service";
@@ -14,7 +15,7 @@ import { FakeViewEnvironment } from "../../testing/fake-view-environment";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { GalleryComponent } from "./gallery.component";
 import { GallerySceneFactory, GalleryView, GalleryViewOptions } from "./scene/gallery-view";
-import { DOOR_XS, pieceSlots, WALL_THICKNESS } from "./scene/layout";
+import { DOOR_XS, pieceSlots, SKILL_PLAQUES, WALL_THICKNESS } from "./scene/layout";
 
 const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
 
@@ -125,12 +126,31 @@ describe("GalleryComponent", () => {
       expect(element.querySelector("canvas")?.getAttribute("aria-hidden")).toBe("true");
     });
 
-    it("writes the tech frieze as text in Room I as well as on the wall", () => {
-      const room = element.querySelector('[data-stop="1"]')!;
+    it("makes Room I's label the about text: greeting, bio, where the developer is based", () => {
+      const label = element.querySelector('[data-stop="1"] [data-label]')!;
 
-      for (const material of ["Angular", "TypeScript", "Spring Boot", "Docker"]) {
-        expect(room.textContent).toContain(material);
+      expect(label.querySelector("h3")?.textContent?.trim()).toBe(DEVELOPER.greeting);
+      for (const paragraph of DEVELOPER.bio) expect(label.textContent).toContain(paragraph);
+      expect(label.textContent).toContain(DEVELOPER.location);
+      expect(label.textContent).toContain(DEVELOPER.viennaLine);
+    });
+
+    it("leaves the skills to the wall: Room I's label has no line listing the stack", () => {
+      const label = element.querySelector('[data-stop="1"] [data-label]')!;
+      const bio = DEVELOPER.bio.join(" ");
+
+      for (const tool of DEVELOPER.skills.flatMap((group) => [...group.tools]).filter((tool) => !bio.includes(tool))) {
+        expect(label.textContent).withContext(tool).not.toContain(tool);
       }
+      expect(Array.from(label.querySelectorAll("p")).some((line) => line.textContent!.includes("TypeScript"))).toBeFalse();
+    });
+
+    it("ends Room I's label with the way on to Room II", () => {
+      const controls = element.querySelectorAll('[data-stop="1"] [data-label] *');
+      const last = controls[controls.length - 1].closest("button");
+
+      expect(last?.classList.contains("onward")).toBeTrue();
+      expect(last?.textContent?.trim()).toBe("Continue to Room II, The Works");
     });
 
     it("summarises the wall and offers a jump to each work", () => {
@@ -244,13 +264,13 @@ describe("GalleryComponent", () => {
       expect(scene.jumpTo.calls.mostRecent().args[0]).toBeCloseTo(0, 2);
     });
 
-    it("is given the storeys of Room I's drawing, from the roof down", async () => {
+    it("is given one skill area for each plaque on Room I's wall, sized for four tools at most", async () => {
       await open();
 
-      expect(options?.anatomy.length).toBe(4);
-      expect(options?.anatomy[0].tools).toContain("Angular");
-      expect(options?.anatomy[2].tools).toEqual(["PostgreSQL"]);
-      expect(options?.anatomy.every((storey) => storey.caption.length > 0 && storey.tools.length > 0)).toBeTrue();
+      expect(options?.skills.length).toBe(SKILL_PLAQUES.count);
+      expect(options?.skills.map((group) => group.area)).toEqual(["Frontend", "Backend", "Data and operations"]);
+      expect(options?.skills[0].tools).toEqual(["Angular", "TypeScript", "NgRx", "Tailwind"]);
+      expect(Math.max(...(options?.skills ?? []).map((group) => group.tools.length))).toBeLessThanOrEqual(4);
     });
 
     it("is told where the entrance text leaves room for the statue: under the name, above the foot", async () => {

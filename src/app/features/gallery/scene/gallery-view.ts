@@ -10,8 +10,8 @@ export interface GalleryViewOptions {
   frieze: readonly string[];
   /** Names lettered on the board behind the visitors' book. */
   visitors: readonly string[];
-  /** The storeys of the section drawing in Room I, from the top down. */
-  anatomy: readonly { caption: string; tools: readonly string[] }[];
+  /** One plaque on Room I's wall per area, lettered with its tools. */
+  skills: readonly { area: string; tools: readonly string[] }[];
   reducedMotion: boolean;
   /** False when nothing may play by itself: reduced motion, or a visitor saving data. */
   films: boolean;

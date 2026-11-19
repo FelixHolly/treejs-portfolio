@@ -20,27 +20,53 @@ describe("DeveloperComponent", () => {
     expect(texts("span, p").includes("FH")).toBeFalse();
   });
 
-  it("hangs the section drawing with the content's storeys, from the roof down", () => {
-    const plate = element.querySelector("app-section-plate")!;
-
-    expect(plate.querySelector("canvas")).not.toBeNull();
-    expect(texts("app-section-plate dt")).toEqual(DEVELOPER.anatomy.map((storey) => storey.caption));
-    expect(texts("app-section-plate li")).toEqual(DEVELOPER.anatomy.flatMap((storey) => [...storey.tools]));
-    expect(plate.querySelector("figcaption")?.textContent?.trim()).toBe("Plate I · Section through a web application");
-  });
-
-  it("keeps the greeting and the bio after the plate, under the old #about anchor", () => {
-    const plate = element.querySelector("app-section-plate")!;
-    const greeting = element.querySelector("h3")!;
-
+  it("opens with the greeting and the bio, under the old #about anchor", () => {
     expect(element.querySelector("section")?.id).toBe("about");
-    expect(greeting.textContent?.trim()).toBe(DEVELOPER.greeting);
-    expect(plate.compareDocumentPosition(greeting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    for (const paragraph of DEVELOPER.bio) expect(element.textContent).toContain(paragraph);
+    expect(element.querySelector("h3")?.textContent?.trim()).toBe(DEVELOPER.greeting);
+    expect(texts("h3 ~ p.grid-subtext")).toEqual([...DEVELOPER.bio]);
   });
 
-  it("still names every material on the frieze and where the developer is based", () => {
-    for (const material of DEVELOPER.frieze) expect(texts(".whitespace-nowrap")).toContain(material);
-    expect(element.textContent).toContain(DEVELOPER.location);
+  it("lists the skills as text, one group per area in the content's order", () => {
+    const groups = Array.from(element.querySelectorAll("[data-skill-group]"));
+
+    expect(groups.map((group) => group.querySelector("h4")?.textContent?.trim())).toEqual(DEVELOPER.skills.map((group) => group.area));
+    expect(groups.map((group) => Array.from(group.querySelectorAll("li")).map((tool) => tool.textContent!.trim()))).toEqual(
+      DEVELOPER.skills.map((group) => [...group.tools]),
+    );
+  });
+
+  it("puts the skills after the about text and gives them a heading of their own for screen readers", () => {
+    const bio = element.querySelector("p.grid-subtext")!;
+    const heading = Array.from(element.querySelectorAll("h3")).find((node) => node.textContent?.trim() === "Skills")!;
+
+    expect(heading.classList.contains("sr-only")).toBeTrue();
+    expect(bio.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(heading.compareDocumentPosition(element.querySelector("[data-skill-group]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("names every tool exactly once: the long line that repeated the stack is gone", () => {
+    const mentions = (text: string, tool: string) => text.split(tool).length - 1;
+    const bio = DEVELOPER.bio.join(" ");
+
+    for (const tool of DEVELOPER.skills.flatMap((group) => [...group.tools])) {
+      expect(mentions(element.textContent!, tool) - mentions(bio, tool))
+        .withContext(tool)
+        .toBe(1);
+    }
+    expect(element.textContent).not.toContain("Materials");
+    expect(element.querySelector(".plinth-rule")).toBeNull();
+    expect(element.querySelector(".exhibit-caption")).toBeNull();
+  });
+
+  it("hangs no drawing: the room is text alone", () => {
+    expect(element.querySelector("canvas, figure, img, svg")).toBeNull();
+  });
+
+  it("still says where the developer is based, after the skills", () => {
+    const location = Array.from(element.querySelectorAll("span")).find((node) => node.textContent?.trim() === DEVELOPER.location)!;
+    const groups = element.querySelectorAll("[data-skill-group]");
+
+    expect(groups[groups.length - 1].compareDocumentPosition(location) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(element.textContent).toContain(DEVELOPER.viennaLine);
   });
 });

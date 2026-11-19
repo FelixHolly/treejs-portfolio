@@ -51,9 +51,6 @@
             @for (paragraph of developer.bio; track paragraph) {
               <p class="grid-subtext mt-3">{{ paragraph }}</p>
             }
-            <p class="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone leading-relaxed">
-              @for (material of developer.frieze; track material) {<span class="whitespace-nowrap">{{ material }}</span>@if (!$last) {<span class="text-gold px-1" aria-hidden="true"> · </span>}}
-            </p>
             <p class="mt-5 font-mono uppercase tracking-[0.2em] text-xs text-gold">{{ developer.location }}</p>
             <p class="grid-subtext mt-2">{{ developer.viennaLine }}</p>
           }

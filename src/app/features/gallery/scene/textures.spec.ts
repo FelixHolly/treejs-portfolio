@@ -1,7 +1,5 @@
 import { Texture } from "three";
-import { PLATE } from "./layout";
-import { sectionPlateTexture } from "./plate";
-import { coverFit, nameBoardTexture } from "./textures";
+import { coverFit, nameBoardTexture, plaqueTexture } from "./textures";
 
 /** The share of a canvas region that is brighter than the dark ground it was painted on. */
 function inked(canvas: HTMLCanvasElement, x: number, y: number, width: number, height: number): number {
@@ -42,43 +40,67 @@ describe("nameBoardTexture", () => {
   });
 });
 
-describe("sectionPlateTexture", () => {
-  const STOREYS = [
-    { caption: "What the visitor sees", tools: ["Angular", "TypeScript"] },
-    { caption: "Where the work is done", tools: ["Java"] },
-    { caption: "Where it is kept", tools: ["PostgreSQL"] },
-    { caption: "What it stands on", tools: ["Docker"] },
-  ];
-  /** The part of the sheet to the right of the house, where the notes are lettered. */
-  const notes = (canvas: HTMLCanvasElement) => inked(canvas, 1000, 300, 900, 760);
+describe("plaqueTexture", () => {
+  const TOOLS = ["Angular", "TypeScript", "NgRx", "Tailwind"];
+  const ASPECT = 0.84;
+  const canvasOf = (heading: string, lines: readonly string[], rows = 4) => plaqueTexture(heading, lines, rows, ASPECT).image as HTMLCanvasElement;
+  /** The ink in each of the `rows` lines the band under the rule is cut into. */
+  const band = (canvas: HTMLCanvasElement, rows: number) => {
+    const pitch = (canvas.height - 270 - 96) / rows;
+    return Array.from({ length: rows }, (_, row) => inked(canvas, 90, Math.round(270 + pitch * row), canvas.width - 180, Math.floor(pitch)));
+  };
 
-  it("is drawn on a sheet in the proportions of its frame", () => {
-    const canvas = sectionPlateTexture(STOREYS).image as HTMLCanvasElement;
+  it("is drawn at the plaque's own proportions, sharp enough for a screen of double density", () => {
+    const canvas = canvasOf("Frontend", TOOLS);
 
-    expect(canvas.width / canvas.height).toBeCloseTo(PLATE.width / PLATE.height, 6);
+    expect(canvas.width / canvas.height).toBeCloseTo(ASPECT, 2);
+    expect(canvas.width).toBeGreaterThanOrEqual(1024);
   });
 
-  it("draws the house and its title whatever storeys it is given", () => {
-    const canvas = sectionPlateTexture([]).image as HTMLCanvasElement;
+  it("letters the heading at the top with a rule under it, above the first line", () => {
+    const canvas = canvasOf("Frontend", TOOLS);
 
-    expect(inked(canvas, 240, 160, 660, 900)).toBeGreaterThan(0.02);
-    expect(inked(canvas, 100, 1110, 900, 110)).toBeGreaterThan(0.005);
-    expect(notes(canvas)).toBe(0);
+    expect(inked(canvas, 90, 120, canvas.width - 180, 60)).toBeGreaterThan(0.01);
+    expect(inked(canvas, canvas.width / 2 - 60, 222, 120, 3)).toBe(1);
+    expect(inked(canvas, 40, 190, canvas.width - 80, 24)).toBe(0);
+    expect(inked(canvas, 40, 232, canvas.width - 80, 30)).toBe(0);
   });
 
-  it("letters one note beside the house for each storey", () => {
-    const one = notes(sectionPlateTexture(STOREYS.slice(0, 1)).image as HTMLCanvasElement);
-    const all = notes(sectionPlateTexture(STOREYS).image as HTMLCanvasElement);
+  it("letters one line for each tool", () => {
+    const lines = band(canvasOf("Frontend", TOOLS), 4);
 
-    expect(one).toBeGreaterThan(0);
-    expect(all).toBeGreaterThan(one * 2);
+    expect(lines.length).toBe(4);
+    for (const line of lines) expect(line).toBeGreaterThan(0.01);
   });
 
-  it("ignores storeys beyond the four the house has", () => {
-    const four = sectionPlateTexture(STOREYS).image as HTMLCanvasElement;
-    const six = sectionPlateTexture([...STOREYS, ...STOREYS.slice(0, 2)]).image as HTMLCanvasElement;
+  it("sets a shorter list in the middle of a plaque sized for a longer one, at the same size of letter", () => {
+    const full = canvasOf("Frontend", ["Java", "Java", "Java", "Java"]);
+    const short = canvasOf("Backend", ["Java", "Java"]);
+    const [first, second, third, fourth] = band(short, 4);
 
-    expect(notes(six)).toBe(notes(four));
+    expect(short.height).toBe(full.height);
+    expect(first).toBe(0);
+    expect(fourth).toBe(0);
+    expect(second).toBeCloseTo(band(full, 4)[1], 6);
+    expect(third).toBeCloseTo(band(full, 4)[2], 6);
+  });
+
+  it("squeezes a long heading and a long line onto the plaque instead of running off it", () => {
+    const canvas = canvasOf("An area with a very long name indeed", ["A tool whose name would never fit on one line of a plaque"], 1);
+
+    expect(inked(canvas, 0, 0, 20, canvas.height)).toBe(0);
+    expect(inked(canvas, canvas.width - 20, 0, 20, canvas.height)).toBe(0);
+    expect(inked(canvas, 30, 60, 50, canvas.height - 120)).toBe(0);
+    expect(inked(canvas, canvas.width - 80, 60, 50, canvas.height - 120)).toBe(0);
+  });
+
+  it("leaves out lines beyond the rows it was sized for, and is still a plaque with none", () => {
+    const over = canvasOf("Frontend", [...TOOLS, "One too many"]);
+    const empty = canvasOf("Frontend", [], 0);
+
+    expect(band(over, 4)).toEqual(band(canvasOf("Frontend", TOOLS), 4));
+    expect(inked(empty, 40, 270, empty.width - 80, empty.height - 320)).toBe(0);
+    expect(inked(empty, 90, 120, empty.width - 180, 60)).toBeGreaterThan(0.01);
   });
 });
 

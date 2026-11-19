@@ -23,8 +23,6 @@ export const LION_YAW = Math.PI - 0.35;
 export const PEDESTAL_RADIUS = 1.4;
 export const DOOR_XS = [5.2, 18.4, 47.6, 56] as const;
 export const END_WALL_X = 64.4;
-/** Room I runs from the first door to the second; its frieze is centred between them. */
-export const ROOM_ONE_X = 11.8;
 /** The FH seal hangs on the far wall of Room I, beside the door to Room II, facing the visitor coming in. */
 export const MEDALLION = { x: DOOR_XS[1] - WALL_THICKNESS / 2, y: 2.05, z: -2.3, radius: 0.68 } as const;
 /** The portrait hangs first in Room I, near the door from the hall; the picture's own size, without mat and frame. */

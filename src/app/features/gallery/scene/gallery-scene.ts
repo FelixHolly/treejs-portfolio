@@ -1,8 +1,6 @@
 import {
   ACESFilmicToneMapping,
-  BackSide,
   Color,
-  CylinderGeometry,
   Fog,
   Group,
   Material,
@@ -12,7 +10,6 @@ import {
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
-  RepeatWrapping,
   Scene,
   ShaderMaterial,
   SRGBColorSpace,
@@ -22,19 +19,18 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { ROOMS } from "../../../core/place/places";
 import { RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
-import { FramedPicture, framedPicture, hang, lectern, letterbox, medallion, letteredBoard, writingDesk } from "./exhibits";
+import { FramedPicture, framedPicture, hang, medallion, letteredBoard, pictureLight } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
 import { FilmScreen } from "./film-screen";
+import { lectern, letterbox, writingDesk } from "./furniture";
 import { GalleryView, GalleryViewOptions, OPEN_BAND, PageFraming } from "./gallery-view";
 import {
-  DOOR,
-  DOOR_XS,
   fieldOfView,
   FrameSlot,
-  HALF_DEPTH,
   HANG_Z,
   LECTERN,
   LETTERBOX,
@@ -42,8 +38,6 @@ import {
   pieceSlots,
   PieceSlot,
   portraitSlot,
-  ROOM_ONE_X,
-  ROTUNDA,
   SKILL_PLAQUE_HEIGHT,
   SKILL_PLAQUES,
   skillPlaqueSlots,
@@ -55,6 +49,7 @@ import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
 import { ShaderWarmup } from "./shader-warmup";
 import { Post } from "./post";
 import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
+import { roomNames } from "./wayfinding";
 
 const BACKGROUND = 0x141417;
 const MAX_PIXEL_RATIO = 2;
@@ -67,7 +62,6 @@ const GLIDE = 4.5;
 const LOOK = { yaw: 0.06, pitch: 0.035, ease: 6 } as const;
 const INTRO_MS = 2200;
 const EMPTY_PLINTH_LEVEL = 0.3;
-const ROOM_INSCRIPTIONS = ["Room I", "Room II", "Room III", "Room IV"] as const;
 /** The board of names above the visitors' book: its width, and the height each name adds. */
 const NAME_BOARD = { width: 2.3, line: 0.31, margin: 0.17, bottom: 1.6 } as const;
 
@@ -369,6 +363,7 @@ export class GalleryScene implements GalleryView {
 
     const desk = writingDesk(this.palette, correspondence);
     this.mail = new Post(this.palette, desk);
+    this.portrait.group.add(pictureLight(this.portrait.slot, this.palette));
     this.scene.add(
       this.portrait.group,
       medallion(this.palette),
@@ -381,6 +376,9 @@ export class GalleryScene implements GalleryView {
     this.slots.forEach((slot, work) => {
       slot.frames.forEach((frame, index) => {
         const picture = framedPicture(frame, this.palette, this.plainFrame);
+        // One lamp lights a column of frames: only the top one carries it
+        const topmost = !slot.frames.some((other) => other.x === frame.x && other.y > frame.y);
+        if (frame.gilded && topmost) picture.group.add(pictureLight(frame, this.palette));
         this.pictures.push(picture);
         this.scene.add(picture.group);
         if (index === 0 && work === this.filmPlace?.work) {
@@ -452,17 +450,6 @@ export class GalleryScene implements GalleryView {
     monogram.rotation.y = -Math.PI / 2;
     this.scene.add(monogram);
 
-    const friezeText = this.options.frieze.join("  ·  ").toUpperCase();
-    const friezeLettering = lettering(
-      inscriptionTexture({ text: friezeText, font: '500 84px "Boska", Georgia, serif', color: "#c7a44a", width: 4096, height: 134, spacing: "0.3em" }),
-    );
-    for (const side of [-1, 1]) {
-      const frieze = new Mesh(new PlaneGeometry(9.2, 0.3), friezeLettering);
-      frieze.position.set(ROOM_ONE_X, 4.12, side * (HALF_DEPTH - 0.02));
-      if (side === 1) frieze.rotation.y = Math.PI;
-      this.scene.add(frieze);
-    }
-
     const engraved = new Mesh(
       new PlaneGeometry(0.46, 0.1),
       lettering(
@@ -486,38 +473,7 @@ export class GalleryScene implements GalleryView {
       this.scene.add(letteredBoard(LECTERN.x, NAME_BOARD.bottom + height / 2, NAME_BOARD.width, height, lettered, this.palette));
     }
 
-    ROOM_INSCRIPTIONS.forEach((text, index) => {
-      const texture = inscriptionTexture({
-        text: text.toUpperCase(),
-        font: '400 40px "JetBrains Mono", monospace',
-        color: "#c7a44a",
-        width: 1024,
-        height: 96,
-        spacing: "0.4em",
-      });
-      const y = DOOR.height + 0.46;
-
-      if (index === 0) {
-        // The rotunda wall is curved, so its lettering follows the curve; seen from inside it must be mirrored back.
-        texture.wrapS = RepeatWrapping;
-        texture.repeat.x = -1;
-        const arc = 1.15 / ROTUNDA.radius;
-        const material = lettering(texture);
-        material.side = BackSide;
-        const band = new Mesh(
-          new CylinderGeometry(ROTUNDA.radius - 0.03, ROTUNDA.radius - 0.03, 0.216, 24, 1, true, Math.PI / 2 - arc, arc * 2),
-          material,
-        );
-        band.position.set(ROTUNDA.x, y, 0);
-        this.scene.add(band);
-        return;
-      }
-
-      const plate = new Mesh(new PlaneGeometry(2.3, 0.216), lettering(texture));
-      plate.position.set(DOOR_XS[index] - 0.215, y, 0);
-      plate.rotation.y = -Math.PI / 2;
-      this.scene.add(plate);
-    });
+    this.scene.add(...roomNames(ROOMS.filter((room) => room.numeral)));
 
     this.invalidate();
   }

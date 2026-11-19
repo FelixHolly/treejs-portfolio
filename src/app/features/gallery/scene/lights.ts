@@ -1,5 +1,5 @@
 import { HemisphereLight, MathUtils, Object3D, SpotLight } from "three";
-import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot, PLATE, ROTUNDA } from "./layout";
+import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot, ROTUNDA, SKILL_PLAQUES } from "./layout";
 
 interface PieceLight {
   light: SpotLight;
@@ -50,7 +50,7 @@ export class GalleryLights {
     this.addLight(this.lionRim);
 
     this.addPiece(spot([MEDALLION.x - 2.8, 4.8, MEDALLION.z], [MEDALLION.x, MEDALLION.y, MEDALLION.z], 0.5), [1], 1, 80, 0.5, 0.38);
-    this.addPiece(spot([PLATE.x, 4.9, HANG_Z + 3.2], [PLATE.x, PLATE.y, HANG_Z], 0.62), [1], 1, 110, 0.66, 0.56);
+    this.addPiece(spot([SKILL_PLAQUES.x, 4.9, HANG_Z + 3.2], [SKILL_PLAQUES.x, SKILL_PLAQUES.y, HANG_Z], 0.62), [1], 1, 110, 0.66, 0.56);
 
     slots.forEach((slot, index) => {
       const commission = slot.frames.length > 1 || slot.frames[0].gilded;

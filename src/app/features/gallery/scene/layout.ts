@@ -27,8 +27,21 @@ export const END_WALL_X = 61.6;
 export const ROOM_ONE_X = 10.4;
 /** The FH seal hangs on the far wall of Room I, beside the door to Room II, facing the visitor coming in. */
 export const MEDALLION = { x: DOOR_XS[1] - WALL_THICKNESS / 2, y: 2.05, z: -2.3, radius: 0.68 } as const;
-/** The framed section drawing in Room I, sized like the commission's main frame. */
-export const PLATE = { x: 11.35, y: 1.95, width: 2.4, height: 1.5 } as const;
+/** The skill plaques in Room I, hung side by side around `x`. A plaque is `head`, a `line` per tool of the longest list, and `foot` tall. */
+export const SKILL_PLAQUES = { x: ROOM_ONE_X, y: 1.85, count: 3, width: 0.96, gap: 0.12, head: 0.25, line: 0.2, foot: 0.09 } as const;
+/** The width of the whole row of plaques. */
+export const SKILL_WALL_SPAN = SKILL_PLAQUES.count * SKILL_PLAQUES.width + (SKILL_PLAQUES.count - 1) * SKILL_PLAQUES.gap;
+
+/** Where each plaque's middle hangs along the wall, from the visitor's left. */
+export function skillPlaqueXs(): number[] {
+  const step = SKILL_PLAQUES.width + SKILL_PLAQUES.gap;
+  return Array.from({ length: SKILL_PLAQUES.count }, (_, index) => SKILL_PLAQUES.x + (index - (SKILL_PLAQUES.count - 1) / 2) * step);
+}
+
+/** The height every plaque shares, set by the longest list of tools. */
+export function skillPlaqueHeight(rows: number): number {
+  return SKILL_PLAQUES.head + SKILL_PLAQUES.line * Math.max(rows, 1) + SKILL_PLAQUES.foot;
+}
 export const LECTERN = { x: 49.2, z: -3.25 } as const;
 export const DESK = { x: 57.4, z: -3.2 } as const;
 /** The brass letterbox on the wall above the writing desk; `slotRise` is the slot's height above its middle. */

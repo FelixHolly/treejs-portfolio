@@ -5,6 +5,7 @@ import {
   DOOR_XS,
   END_WALL_X,
   ENFILADE,
+  EYE,
   fieldOfView,
   HALF_DEPTH,
   LECTERN,
@@ -12,9 +13,12 @@ import {
   MEDALLION,
   PEDESTAL_RADIUS,
   pieceSlots,
-  PLATE,
   ROOM_ONE_X,
   ROTUNDA,
+  SKILL_PLAQUES,
+  SKILL_WALL_SPAN,
+  skillPlaqueHeight,
+  skillPlaqueXs,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
@@ -148,11 +152,35 @@ describe("the building", () => {
     expect(ROTUNDA.height).toBeGreaterThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 2);
   });
 
-  it("hangs Room I's drawing between its two doors, under the ceiling", () => {
-    expect(PLATE.x - PLATE.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
-    expect(PLATE.x + PLATE.width / 2).toBeLessThan(DOOR_XS[1] - 1);
-    expect(PLATE.y + PLATE.height / 2).toBeLessThan(WALL_HEIGHT - 1);
+  it("hangs Room I's plaques between its two doors, centred in the room under its frieze", () => {
+    const xs = skillPlaqueXs();
+
     expect(ROOM_ONE_X).toBeCloseTo((DOOR_XS[0] + DOOR_XS[1]) / 2, 6);
+    expect(xs.length).toBe(SKILL_PLAQUES.count);
+    expect((xs[0] + xs[xs.length - 1]) / 2).toBeCloseTo(ROOM_ONE_X, 6);
+    expect(xs[0] - SKILL_PLAQUES.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
+    expect(xs[xs.length - 1] + SKILL_PLAQUES.width / 2).toBeLessThan(DOOR_XS[1] - 1);
+    expect(xs[xs.length - 1] + SKILL_PLAQUES.width / 2 - (xs[0] - SKILL_PLAQUES.width / 2)).toBeCloseTo(SKILL_WALL_SPAN, 6);
+  });
+
+  it("hangs the plaques side by side with even gaps, never overlapping", () => {
+    const xs = skillPlaqueXs();
+
+    for (let index = 1; index < xs.length; index++) {
+      const gap = xs[index] - SKILL_PLAQUES.width / 2 - (xs[index - 1] + SKILL_PLAQUES.width / 2);
+      expect(gap).toBeCloseTo(SKILL_PLAQUES.gap, 6);
+      expect(gap).toBeGreaterThan(0.08);
+    }
+  });
+
+  it("makes every plaque as tall as the longest list needs, at eye height and well under the frieze", () => {
+    const height = skillPlaqueHeight(4);
+
+    expect(height).toBeGreaterThan(skillPlaqueHeight(2));
+    expect(skillPlaqueHeight(0)).toBe(skillPlaqueHeight(1));
+    expect(SKILL_PLAQUES.y - height / 2).toBeGreaterThan(1);
+    expect(SKILL_PLAQUES.y + height / 2).toBeLessThan(WALL_HEIGHT - 2);
+    expect(Math.abs(SKILL_PLAQUES.y - EYE)).toBeLessThan(0.35);
   });
 
   it("hangs the seal on the wall beside the door to Room II, clear of the door and the corner", () => {

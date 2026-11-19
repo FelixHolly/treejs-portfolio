@@ -1,7 +1,22 @@
 import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 import { buildPoses, buildWaypoints, CameraPath, Framing, Pose } from "./camera-path";
 import { PageFraming, SceneWork } from "./gallery-view";
-import { DOOR, DOOR_XS, END_WALL_X, EYE, fieldOfView, HALF_DEPTH, HANG_Z, pieceSlots, ROTUNDA, WALL_THICKNESS } from "./layout";
+import {
+  DOOR,
+  DOOR_XS,
+  END_WALL_X,
+  EYE,
+  fieldOfView,
+  HALF_DEPTH,
+  HANG_Z,
+  MEDALLION,
+  pieceSlots,
+  ROTUNDA,
+  SKILL_PLAQUES,
+  skillPlaqueHeight,
+  skillPlaqueXs,
+  WALL_THICKNESS,
+} from "./layout";
 
 const WORKS: SceneWork[] = [
   { slug: "a", kind: "commission", images: [1, 2, 3].map((n) => ({ src: `a${n}`, portrait: false })) },
@@ -114,6 +129,87 @@ describe("buildPoses", () => {
     const nearEdge = new Vector3(wide.centre.x - wide.span / 2, wide.centre.y, HANG_Z).project(camera);
 
     expect(nearEdge.x).toBeGreaterThan(1);
+  });
+});
+
+describe("the Room I pose", () => {
+  // Window sizes with the share of the width the label and its gutter take, as the page measures it
+  const WINDOWS: [string, Framing][] = [
+    ["1288x654", frame(1288 / 654, 0.44)],
+    ["1440x790", frame(1440 / 790, 0.42)],
+    ["1920x969", frame(1920 / 969, 0.3)],
+    ["1024x768", frame(1024 / 768, 0.45)],
+    ...FRAMINGS.filter(([, framing]) => framing.labelShare > 0 && framing.aspect > 1),
+  ];
+  const HEIGHT = skillPlaqueHeight(4);
+  /** The header's share of the height of the shortest window the gallery is checked at. */
+  const HEADER = 84 / 654;
+
+  function cameraAt(framing: Framing, yaw = 0): PerspectiveCamera {
+    const pose = buildPoses(pieceSlots(WORKS), framing)[1];
+    const camera = new PerspectiveCamera(fieldOfView(framing.aspect), framing.aspect, 0.1, 80);
+    camera.position.copy(pose.position);
+    camera.lookAt(pose.target);
+    camera.rotateY(yaw);
+    camera.updateMatrixWorld();
+    return camera;
+  }
+
+  /** The corners of the whole row of plaques, as shares of the screen from its left and top. */
+  function rowOnScreen(camera: PerspectiveCamera): { left: number; right: number; top: number; bottom: number } {
+    const xs = skillPlaqueXs();
+    const corner = (x: number, y: number) => new Vector3(x, y, HANG_Z).project(camera);
+    const topLeft = corner(xs[0] - SKILL_PLAQUES.width / 2, SKILL_PLAQUES.y + HEIGHT / 2);
+    const bottomRight = corner(xs[xs.length - 1] + SKILL_PLAQUES.width / 2, SKILL_PLAQUES.y - HEIGHT / 2);
+    return { left: (topLeft.x + 1) / 2, right: (bottomRight.x + 1) / 2, top: (1 - topLeft.y) / 2, bottom: (1 - bottomRight.y) / 2 };
+  }
+
+  for (const [name, framing] of WINDOWS) {
+    it(`shows all three plaques left of the label and under the header at ${name}`, () => {
+      const row = rowOnScreen(cameraAt(framing));
+
+      expect(row.left).toBeGreaterThan(0.02);
+      expect(row.right).toBeLessThan(1 - framing.labelShare);
+      expect(row.top).toBeGreaterThan(HEADER + 0.03);
+      expect(row.bottom).toBeLessThan(0.9);
+    });
+
+    it(`sets the row in the middle of the space the label leaves at ${name}`, () => {
+      const row = rowOnScreen(cameraAt(framing));
+
+      expect((row.left + row.right) / 2).toBeCloseTo((1 - framing.labelShare) / 2, 1);
+    });
+
+  }
+
+  // An ultrawide sees the whole room, the far wall with it
+  for (const [name, framing] of WINDOWS.filter(([, window]) => window.aspect < 3)) {
+    it(`keeps the seal on the far wall out of sight at ${name}, however the mouse turns the view`, () => {
+      for (const yaw of [0, -0.06]) {
+        const camera = cameraAt(framing, yaw);
+        const nearEdge = new Vector3(MEDALLION.x, MEDALLION.y, MEDALLION.z - MEDALLION.radius - 0.05).project(camera);
+
+        expect(nearEdge.x).withContext(`yaw ${yaw}`).toBeGreaterThan(1);
+      }
+    });
+  }
+
+  it("letters the tools at least 15 px tall in the owner's 1288x654 window", () => {
+    const row = rowOnScreen(cameraAt(WINDOWS[0][1]));
+    const pixelsPerMetre = ((row.bottom - row.top) * 654) / HEIGHT;
+
+    // A tool's capital letters stand about 0.43 of its line high
+    expect(pixelsPerMetre * SKILL_PLAQUES.line * 0.43).toBeGreaterThan(15);
+  });
+
+  it("stands square to the wall in front of the row, in Room I", () => {
+    const pose = buildPoses(pieceSlots(WORKS), frame(1.6, 0))[1];
+
+    expect(pose.position.x).toBeCloseTo(SKILL_PLAQUES.x, 6);
+    expect(pose.target.x).toBeCloseTo(pose.position.x, 6);
+    expect(pose.target.z).toBe(HANG_Z);
+    expect(pose.position.x).toBeGreaterThan(DOOR_XS[0]);
+    expect(pose.position.x).toBeLessThan(DOOR_XS[1]);
   });
 });
 

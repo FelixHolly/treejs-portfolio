@@ -24,7 +24,7 @@ import {
 import { RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
-import { FramedPicture, framedPicture, hang, lectern, letterbox, medallion, nameBoard, writingDesk } from "./exhibits";
+import { FramedPicture, framedPicture, hang, lectern, letterbox, medallion, letteredBoard, writingDesk } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
 import { FilmScreen } from "./film-screen";
 import { GalleryView, GalleryViewOptions, OPEN_BAND, PageFraming } from "./gallery-view";
@@ -39,15 +39,16 @@ import {
   MEDALLION,
   pieceSlots,
   PieceSlot,
-  PLATE,
   ROOM_ONE_X,
   ROTUNDA,
+  SKILL_PLAQUES,
+  skillPlaqueHeight,
+  skillPlaqueXs,
 } from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
-import { sectionPlateTexture } from "./plate";
 import { Post } from "./post";
-import { coverFit, inscriptionTexture, nameBoardTexture } from "./textures";
+import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
 
 const BACKGROUND = 0x141417;
 const MAX_PIXEL_RATIO = 2;
@@ -69,7 +70,6 @@ export class GalleryScene implements GalleryView {
   private readonly plainFrame = new MeshLambertMaterial({ color: 0x2c2c33 });
   private readonly slots: PieceSlot[];
   private readonly pictures: FramedPicture[] = [];
-  private readonly plate: FramedPicture;
   private readonly lights: GalleryLights;
   private readonly atmosphere = new RotundaAtmosphere();
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
@@ -115,7 +115,6 @@ export class GalleryScene implements GalleryView {
     this.slots = pieceSlots(options.works);
     this.filmPlace = filmPlacement(options.works, options.films);
     this.lights = new GalleryLights(this.slots);
-    this.plate = framedPicture({ ...PLATE, gilded: true, src: "" }, this.palette, this.plainFrame);
     this.lionLevel = EMPTY_PLINTH_LEVEL;
 
     this.scene.add(buildArchitecture(this.palette), ...this.lights.objects, ...this.atmosphere.objects);
@@ -302,7 +301,6 @@ export class GalleryScene implements GalleryView {
     this.mail = new Post(this.palette, desk);
     this.scene.add(
       medallion(this.palette),
-      this.plate.group,
       lectern(this.palette, visitorsBook),
       desk,
       letterbox(this.palette),
@@ -355,7 +353,6 @@ export class GalleryScene implements GalleryView {
     try {
       await Promise.all([
         document.fonts.load('500 160px "Boska"'),
-        document.fonts.load('italic 400 60px "Boska"'),
         document.fonts.load('400 40px "JetBrains Mono"'),
       ]);
     } catch {
@@ -396,15 +393,20 @@ export class GalleryScene implements GalleryView {
     engraved.position.set(LETTERBOX.x, LETTERBOX.y + 0.02, HANG_Z + LETTERBOX.depth + 0.004);
     this.scene.add(engraved);
 
-    this.plate.picture.material.map = sectionPlateTexture(this.options.anatomy);
-    this.plate.picture.material.color.set(0xffffff);
-    this.plate.picture.material.needsUpdate = true;
+    const skills = this.options.skills.slice(0, SKILL_PLAQUES.count);
+    const rows = Math.max(...skills.map((group) => group.tools.length));
+    const plaqueHeight = skillPlaqueHeight(rows);
+    const plaqueXs = skillPlaqueXs();
+    skills.forEach((group, index) => {
+      const lettered = plaqueTexture(group.area, group.tools, rows, SKILL_PLAQUES.width / plaqueHeight);
+      this.scene.add(letteredBoard(plaqueXs[index], SKILL_PLAQUES.y, SKILL_PLAQUES.width, plaqueHeight, lettered, this.palette));
+    });
 
     const names = this.options.visitors;
     if (names.length) {
       const height = NAME_BOARD.margin * 2 + NAME_BOARD.line * names.length;
       const lettered = nameBoardTexture(names, NAME_BOARD.width / height);
-      this.scene.add(nameBoard(LECTERN.x, NAME_BOARD.bottom + height / 2, NAME_BOARD.width, height, lettered, this.palette));
+      this.scene.add(letteredBoard(LECTERN.x, NAME_BOARD.bottom + height / 2, NAME_BOARD.width, height, lettered, this.palette));
     }
 
     ROOM_INSCRIPTIONS.forEach((text, index) => {

@@ -270,7 +270,7 @@ export class GalleryComponent {
       })),
       frieze: this.developer.frieze,
       visitors: this.entries.map((entry) => entry.company),
-      anatomy: this.developer.anatomy,
+      skills: this.developer.skills,
       reducedMotion: this.reducedMotion,
       films: this.filmsAllowed,
       onFilmLost: () => this.filmLost.set(true),

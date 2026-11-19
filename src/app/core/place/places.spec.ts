@@ -1,6 +1,8 @@
-import { catalogueAnchor, placeFromHash, roomOf, ROOMS, workPlace } from "./places";
+import { catalogueAnchor, placeFromHash, roomOf, ROOMS, titleFor, workPlace } from "./places";
 
 const SLUGS = ["kuechenschelle", "reloo"];
+const TITLES = { kuechenschelle: "Küchenschelle", reloo: "ReLoo" };
+const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
 
 describe("places", () => {
   it("lists the five rooms in walking order", () => {
@@ -57,5 +59,40 @@ describe("places", () => {
 
     expect(placeFromHash("#" + place, SLUGS)).toBe(place);
     expect(placeFromHash("#" + catalogueAnchor(place), SLUGS)).toBe(place);
+  });
+
+  describe("titleFor", () => {
+    it("keeps the site's own title at the entrance, as index.html has it", () => {
+      expect(titleFor("entrance", TITLES)).toBe(SITE_TITLE);
+    });
+
+    const rooms: [string, string][] = [
+      ["developer", "The Developer - Felix Hollndonner"],
+      ["works", "The Works - Felix Hollndonner"],
+      ["visitors-book", "Visitors' Book - Felix Hollndonner"],
+      ["correspondence", "Correspondence - Felix Hollndonner"],
+    ];
+
+    for (const [place, title] of rooms) {
+      it(`names the tab "${title}" in the room "${place}"`, () => {
+        expect(titleFor(place, TITLES)).toBe(title);
+      });
+    }
+
+    it("names the tab after the work at a work's place, in either hash style", () => {
+      expect(titleFor(workPlace("kuechenschelle"), TITLES)).toBe("Küchenschelle - Felix Hollndonner");
+      expect(titleFor("works-reloo", TITLES)).toBe("ReLoo - Felix Hollndonner");
+    });
+
+    for (const place of ["nowhere", "", "home", "DEVELOPER", "works/greenwave", "works/", "works/constructor"]) {
+      it(`falls back to the site's own title at the unknown place "${place}"`, () => {
+        expect(titleFor(place, TITLES)).toBe(SITE_TITLE);
+      });
+    }
+
+    it("needs no work titles to name a room", () => {
+      expect(titleFor("works", {})).toBe("The Works - Felix Hollndonner");
+      expect(titleFor(workPlace("reloo"), {})).toBe(SITE_TITLE);
+    });
   });
 });

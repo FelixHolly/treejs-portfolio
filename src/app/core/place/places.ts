@@ -15,6 +15,9 @@ export const ROOMS = [
   { id: "correspondence", numeral: "IV", name: "Correspondence", catalogueId: "contact" },
 ] as const satisfies readonly Room[];
 
+/** The tab title wherever no room or work names it; index.html carries the same text for the first paint. */
+export const BASE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+
 const WORK_PLACE = /^works[/-](.+)$/;
 
 export function workPlace(slug: string): string {
@@ -40,6 +43,15 @@ export function placeFromHash(hash: string, workSlugs: readonly string[]): strin
 export function roomOf(place: string): Room {
   if (WORK_PLACE.test(place)) return ROOMS[2];
   return ROOMS.find((room) => room.id === place) ?? ROOMS[0];
+}
+
+/** `workTitles` is keyed by slug. A place or work it cannot name gets the site's own title rather than a guess. */
+export function titleFor(place: string, workTitles: Readonly<Record<string, string>>): string {
+  const slug = WORK_PLACE.exec(place)?.[1];
+  // Only a numbered room names the tab: the entrance stands for the whole site
+  const room = ROOMS.find((candidate) => candidate.numeral && candidate.id === place);
+  const name = slug && Object.hasOwn(workTitles, slug) ? workTitles[slug] : room?.name;
+  return name ? `${name} - Felix Hollndonner` : BASE_TITLE;
 }
 
 /** The anchor on the flat page that shows the same place. */

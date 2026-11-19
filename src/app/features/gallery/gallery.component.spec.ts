@@ -14,6 +14,8 @@ import { GalleryComponent } from "./gallery.component";
 import { GallerySceneFactory, GalleryView, GalleryViewOptions } from "./scene/gallery-view";
 import { DOOR_XS, pieceSlots, WALL_THICKNESS } from "./scene/layout";
 
+const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+
 /** Lets the first paint, the deferred scene start and its promise all run. */
 function sceneStarted(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => setTimeout(() => setTimeout(resolve, 0), 0)));
@@ -27,6 +29,8 @@ describe("GalleryComponent", () => {
   let factory: jasmine.Spy<GallerySceneFactory>;
   let options: GalleryViewOptions | undefined;
   let scrollTo: jasmine.Spy;
+  let scrollY: jasmine.Spy | undefined;
+  let placeLeftBehind: string | undefined;
 
   async function open(sceneFails = false): Promise<void> {
     scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "post", "dispose"]);
@@ -42,6 +46,7 @@ describe("GalleryComponent", () => {
         { provide: EmailService, useValue: jasmine.createSpyObj<EmailService>("EmailService", ["sendContactEmail"]) },
       ],
     });
+    if (placeLeftBehind) TestBed.inject(PlaceService).current.set(placeLeftBehind);
     fixture = TestBed.createComponent(GalleryComponent);
     element = fixture.nativeElement;
     document.body.appendChild(element);
@@ -57,9 +62,20 @@ describe("GalleryComponent", () => {
     return event;
   }
 
+  /** `window.scrollTo` is stubbed, so a walk never moves the page: this reports the position it would have reached. */
+  function arriveAt(index: number): void {
+    const label = element.querySelector(`[data-stop="${index}"] [data-label]`)!.getBoundingClientRect();
+    scrollY ??= spyOnProperty(window, "scrollY");
+    scrollY.and.returnValue(label.top + label.height / 2 - window.innerHeight / 2);
+    window.dispatchEvent(new Event("scroll"));
+    fixture.detectChanges();
+  }
+
   beforeEach(() => {
     environment = new FakeViewEnvironment();
     options = undefined;
+    scrollY = undefined;
+    placeLeftBehind = undefined;
     history.replaceState(null, "", location.pathname);
     window.scrollTo({ top: 0, behavior: "instant" });
     scrollTo = spyOn(window, "scrollTo");
@@ -108,7 +124,7 @@ describe("GalleryComponent", () => {
       const room = element.querySelector('[data-stop="2"]')!;
 
       expect(room.textContent).toContain("One commission, two studies and one self-portrait hang on this wall.");
-      expect(Array.from(room.querySelectorAll("button")).map((button) => button.textContent!.replace(/\s+/g, " ").replace(" ,", ",").trim())).toEqual([
+      expect(Array.from(room.querySelectorAll(".work-list button")).map((button) => button.textContent!.replace(/\s+/g, " ").replace(" ,", ",").trim())).toEqual([
         "Küchenschelle, Commission",
         "WheelWallet, Study",
         "ReLoo, Study",
@@ -123,6 +139,35 @@ describe("GalleryComponent", () => {
       expect(Array.from(element.querySelectorAll("app-wall-label a")).map((link) => link.getAttribute("href"))).toEqual([
         "https://kuechenschelle.at",
         "https://github.com/FelixHolly/treejs-portfolio",
+      ]);
+    });
+
+    it("offers the way on at the foot of every label but the entrance and the letter, naming where it leads", () => {
+      const waysOn = Array.from(element.querySelectorAll("main [data-stop]")).map(
+        (section) => section.querySelector(".onward")?.textContent?.trim() ?? null,
+      );
+
+      expect(waysOn).toEqual([
+        null,
+        "Continue to Room II, The Works",
+        "Next: Küchenschelle",
+        "Next: WheelWallet",
+        "Next: ReLoo",
+        "Next: This Gallery",
+        "Continue to Room III, Visitors' Book",
+        "Continue to Room IV, Correspondence",
+        null,
+      ]);
+    });
+
+    it("draws the way on's arrow as an icon and keeps it beside a work's closer look", () => {
+      const waysOn = Array.from(element.querySelectorAll(".onward"));
+      const foot = element.querySelector('[data-stop="4"] .label-foot')!;
+
+      expect(waysOn.every((wayOn) => wayOn.querySelector("app-icon-arrow-down svg[aria-hidden='true']"))).toBeTrue();
+      expect(Array.from(foot.querySelectorAll("button")).map((button) => button.textContent!.trim())).toEqual([
+        "Closer look",
+        "Next: ReLoo",
       ]);
     });
 
@@ -334,7 +379,7 @@ describe("GalleryComponent", () => {
       });
     }
 
-    for (const selector of ["#letter-message", "#letter-name", "app-floor-plan button", ".wordmark", "app-wall-label a"]) {
+    for (const selector of ["#letter-message", "#letter-name", "app-floor-plan button", ".wordmark", "app-wall-label a", ".onward", ".to-letter"]) {
       it(`never steals keys from ${selector}`, () => {
         const target = element.querySelector(selector)!;
 
@@ -377,6 +422,41 @@ describe("GalleryComponent", () => {
       element.querySelectorAll<HTMLButtonElement>('[data-stop="2"] button')[2].click();
 
       expect(document.activeElement?.textContent?.trim()).toBe("ReLoo");
+    });
+
+    it("walks on from a label's foot to the next stop, focuses its heading and leaves a history entry", () => {
+      element.querySelector<HTMLButtonElement>('[data-stop="1"] .onward')!.click();
+
+      expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
+      expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+      expect(document.activeElement?.textContent?.trim()).toBe("The Works");
+      expect(location.hash).toBe("#works");
+    });
+
+    it("walks on from the last work into Room III", () => {
+      element.querySelector<HTMLButtonElement>('[data-stop="6"] .onward')!.click();
+
+      expect(document.activeElement?.textContent?.trim()).toBe("Visitors' Book");
+      expect(location.hash).toBe("#visitors-book");
+    });
+
+    it("walks to the letter from the header and focuses its heading", () => {
+      element.querySelector<HTMLButtonElement>(".hud .to-letter")!.click();
+
+      expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
+      expect(document.activeElement?.textContent?.trim()).toBe("Write to me");
+      expect(location.hash).toBe("#correspondence");
+    });
+
+    it("offers the letter from the header everywhere but in Room IV itself", () => {
+      expect(element.querySelector(".hud .to-letter")?.textContent?.trim()).toBe("Write to me");
+
+      arriveAt(7);
+      expect(element.querySelector(".hud .to-letter")).not.toBeNull();
+
+      arriveAt(8);
+      expect(element.querySelector(".hud .to-letter")).toBeNull();
+      expect(element.querySelector(".hud app-view-switch")).not.toBeNull();
     });
 
     it("enters from the plaque and returns from the exit and the wordmark", () => {
@@ -585,6 +665,52 @@ describe("GalleryComponent", () => {
         expect(element.querySelectorAll('[data-stop="2"] li').length).toBe(works.length);
       });
     }
+  });
+
+  describe("the tab title", () => {
+    it("is the site's own at the entrance, even when the visitor left another room behind on an earlier page", async () => {
+      placeLeftBehind = "correspondence";
+
+      await open();
+
+      expect(TestBed.inject(PlaceService).current()).toBe("entrance");
+      expect(document.title).toBe(SITE_TITLE);
+    });
+  });
+
+  describe("the tab title", () => {
+    beforeEach(() => open());
+
+    it("is the site's own at the entrance", () => {
+      expect(document.title).toBe(SITE_TITLE);
+    });
+
+    it("names the room or the work the visitor has walked to", () => {
+      arriveAt(2);
+      expect(document.title).toBe("The Works - Felix Hollndonner");
+
+      arriveAt(3);
+      expect(document.title).toBe("Küchenschelle - Felix Hollndonner");
+
+      arriveAt(8);
+      expect(document.title).toBe("Correspondence - Felix Hollndonner");
+    });
+
+    it("follows the shared place, whoever moves it", () => {
+      TestBed.inject(PlaceService).current.set("visitors-book");
+      fixture.detectChanges();
+
+      expect(document.title).toBe("Visitors' Book - Felix Hollndonner");
+    });
+
+    it("is the site's own again once the visitor leaves the gallery", () => {
+      arriveAt(1);
+      expect(document.title).toBe("The Developer - Felix Hollndonner");
+
+      fixture.destroy();
+
+      expect(document.title).toBe(SITE_TITLE);
+    });
   });
 
   describe("arriving with a hash", () => {

@@ -1,9 +1,10 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject, DOCUMENT } from "@angular/core";
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, effect, inject, DOCUMENT } from "@angular/core";
 
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Title } from "@angular/platform-browser";
 import { NavigationEnd, Router } from "@angular/router";
 import { WorksService } from "../../../core/content/works.service";
-import { catalogueAnchor, placeFromHash, ROOMS } from "../../../core/place/places";
+import { BASE_TITLE, catalogueAnchor, placeFromHash, ROOMS, titleFor } from "../../../core/place/places";
 import { PlaceService } from "../../../core/place/place.service";
 import { ViewModeService } from "../../../core/view-mode/view-mode.service";
 import { CorrespondenceComponent } from "../correspondence/correspondence.component";
@@ -34,10 +35,15 @@ export class CatalogueComponent {
     const document = inject(DOCUMENT);
     const destroyRef = inject(DestroyRef);
     const router = inject(Router);
-    const slugs = inject(WorksService)
-      .works()
-      .map((work) => work.slug);
+    const title = inject(Title);
+    const works = inject(WorksService).works();
+    const slugs = works.map((work) => work.slug);
+    const workTitles = Object.fromEntries(works.map((work) => [work.slug, work.title]));
     inject(ViewModeService).active.set("catalogue");
+
+    effect(() => title.setTitle(titleFor(place.current(), workTitles)));
+    // The privacy page sets no title of its own
+    destroyRef.onDestroy(() => title.setTitle(BASE_TITLE));
 
     // A link shared from the gallery (#works/kuechenschelle) is led to the same place on this page.
     const adoptHash = () => {

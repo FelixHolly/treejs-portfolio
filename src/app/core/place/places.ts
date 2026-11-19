@@ -3,16 +3,18 @@ export interface Room {
   id: string;
   numeral: "" | "I" | "II" | "III" | "IV";
   name: string;
+  /** The everyday word for the room, for navigation a visitor should not have to decode */
+  plain: string;
   /** Section id of the room on the flat catalogue page */
   catalogueId: string;
 }
 
 export const ROOMS = [
-  { id: "entrance", numeral: "", name: "Entrance", catalogueId: "home" },
-  { id: "developer", numeral: "I", name: "The Developer", catalogueId: "about" },
-  { id: "works", numeral: "II", name: "The Works", catalogueId: "projects" },
-  { id: "visitors-book", numeral: "III", name: "Visitors' Book", catalogueId: "visitors-book" },
-  { id: "correspondence", numeral: "IV", name: "Correspondence", catalogueId: "contact" },
+  { id: "entrance", numeral: "", name: "Entrance", plain: "Home", catalogueId: "home" },
+  { id: "developer", numeral: "I", name: "The Developer", plain: "About", catalogueId: "about" },
+  { id: "works", numeral: "II", name: "The Works", plain: "Work", catalogueId: "projects" },
+  { id: "visitors-book", numeral: "III", name: "Visitors' Book", plain: "References", catalogueId: "visitors-book" },
+  { id: "correspondence", numeral: "IV", name: "Correspondence", plain: "Contact", catalogueId: "contact" },
 ] as const satisfies readonly Room[];
 
 /** The tab title wherever no room or work names it; index.html carries the same text for the first paint. */

@@ -120,25 +120,55 @@ select:focus-visible,
   }
 
   .nav-ul {
-    @apply flex flex-col items-center gap-4 lg:flex-row lg:gap-6 relative z-20;
-  }
-
-  .nav-li {
-    @apply text-stone hover:text-gold font-mono max-lg:hover:bg-graphite-800 max-lg:w-full max-lg:rounded-md max-lg:text-center py-2 max-lg:px-5;
+    @apply flex items-center gap-5 xl:gap-7;
   }
 
   .nav-li_a {
-    @apply relative inline-flex items-center min-h-6 text-sm uppercase tracking-[0.15em] hover:text-gold transition-colors;
+    @apply relative inline-flex items-center min-h-8 font-mono text-sm uppercase tracking-[0.15em] text-stone transition-colors hover:text-gold;
   }
 
-  /* Wayfinding: the visitor's current room reads gold, with its numeral
-     hung beneath the link on desktop and inline in the mobile menu */
+  /* Wayfinding: the current section reads gold, and is marked for eyes that cannot
+     tell it by colour: a rule under the header's link, a note beside the menu's row */
   .nav-li_a.nav-active {
     @apply text-gold;
   }
 
-  .nav-room {
-    @apply lg:absolute lg:left-1/2 lg:top-full lg:-translate-x-1/2 lg:mt-1 text-[0.6rem] tracking-[0.3em] text-gold ml-2 lg:ml-0;
+  .nav-li_a.nav-active::after {
+    content: '';
+    @apply absolute left-0 right-[0.15em] bottom-0 h-px bg-gold;
+  }
+
+  .nav-ul--sheet {
+    @apply flex-col items-stretch gap-0;
+  }
+
+  .nav-ul--sheet .nav-li {
+    @apply border-b border-graphite-700;
+  }
+
+  .nav-ul--sheet .nav-li_a {
+    @apply flex justify-between min-h-14 font-display text-2xl normal-case tracking-normal text-bone hover:text-gold;
+  }
+
+  .nav-ul--sheet .nav-li_a.nav-active {
+    @apply text-gold;
+  }
+
+  .nav-ul--sheet .nav-li_a.nav-active::after {
+    content: none;
+  }
+
+  .nav-here {
+    @apply font-mono text-[0.65rem] uppercase tracking-[0.2em] text-gold;
+  }
+
+  html:has(.nav-sheet[open]) {
+    overflow: hidden;
+  }
+
+  /* A link to a section hands focus to its heading so reading carries on there; a heading is not a control, so it shows no ring */
+  main :is(h1, h2)[tabindex="-1"]:focus-visible {
+    outline: none !important;
   }
 
   .grid-subtext {

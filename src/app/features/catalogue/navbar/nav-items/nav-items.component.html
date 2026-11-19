@@ -1,18 +1,20 @@
-<ul class="nav-ul">
-  @for (item of rooms; track item.id) {
+<ul class="nav-ul" [class.nav-ul--sheet]="sheet()">
+  @for (item of rooms(); track item.id) {
+    @let current = activeId() === item.id;
     <li class="nav-li">
       <a
         routerLink="/"
         [fragment]="item.catalogueId"
         queryParamsHandling="preserve"
+        appSectionLink
         class="nav-li_a"
-        [class.nav-active]="activeId() === item.id"
-        [attr.aria-current]="activeId() === item.id ? 'location' : null"
+        [class.nav-active]="current"
+        [attr.aria-current]="current ? 'location' : null"
         (click)="linkClick.emit()"
       >
-        {{ item.name }}
-        @if (item.numeral && activeId() === item.id) {
-          <span class="nav-room" aria-hidden="true">{{ item.numeral }}</span>
+        {{ item.plain }}
+        @if (sheet() && current) {
+          <span class="nav-here" aria-hidden="true">You are here</span>
         }
       </a>
     </li>

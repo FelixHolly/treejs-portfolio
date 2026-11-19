@@ -10,6 +10,11 @@ describe("places", () => {
     expect(ROOMS.map((room) => room.numeral)).toEqual(["", "I", "II", "III", "IV"]);
   });
 
+  it("gives every room an everyday word for the catalogue's navigation, beside its museum name", () => {
+    expect(ROOMS.map((room) => room.plain)).toEqual(["Home", "About", "Work", "References", "Contact"]);
+    expect(ROOMS.map((room) => room.name)).toEqual(["Entrance", "The Developer", "The Works", "Visitors' Book", "Correspondence"]);
+  });
+
   describe("placeFromHash", () => {
     const cases: [string, string | null][] = [
       ["#developer", "developer"],

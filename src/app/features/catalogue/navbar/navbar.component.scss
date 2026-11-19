@@ -1,0 +1,153 @@
+.page-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1.5rem;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The bar and the head of the menu share a height, so the menu's close button opens where the menu button was */
+.bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  height: 5.25rem;
+  transition: height 0.2s ease;
+}
+
+@media (max-width: 1023.98px) {
+  .slim .bar-row {
+    height: 3.4375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bar-row {
+    height: 5rem;
+  }
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: clamp(1.125rem, 5vw, 1.5rem);
+}
+
+.wordmark-short {
+  display: none;
+}
+
+/* Too narrow for the name beside the two buttons: the initials stand in, and the name stays for screen readers */
+@media (max-width: 22.49rem) {
+  .wordmark {
+    font-size: 1.5rem;
+  }
+
+  .wordmark-short {
+    display: inline;
+  }
+
+  .wordmark-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* A 44px target around a plaque kept as low as the outlined switch beside it */
+.bar-write {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s;
+
+  &:hover .plaque {
+    background: #e8e5de;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    .plaque {
+      outline: 2px solid #c7a44a;
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* Hidden in place, so nothing in the bar shifts as the letter scrolls into view */
+.bar-write--away {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.bar-plaque {
+  min-height: 2rem;
+  padding-inline: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+
+  @media (min-width: 640px) {
+    padding-inline: 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+  }
+}
+
+.nav-sheet {
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #141417;
+  color: #e8e5de;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  /* Only while open: a closed dialog must keep the browser's own display: none */
+  &[open] {
+    display: flex;
+    flex-direction: column;
+    animation: sheet-in 0.2s ease;
+  }
+
+  &::backdrop {
+    background: #141417;
+  }
+}
+
+.sheet-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-block: 2rem max(1.25rem, env(safe-area-inset-bottom));
+
+  .plaque {
+    justify-content: center;
+    width: 100%;
+    min-height: 3rem;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}

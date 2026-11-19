@@ -1,0 +1,34 @@
+<figure>
+    <div class="frame">
+        <div class="mat">
+            <div class="sheet" [style.--rise]="rise">
+                <div class="house" aria-hidden="true">
+                    <canvas #house [style.aspect-ratio]="proportions"></canvas>
+                    <svg class="leaders" [attr.viewBox]="viewBox">
+                        @for (note of notes(); track $index) {
+                            <polyline [attr.points]="note.points" />
+                            <circle [attr.cx]="note.dot[0]" [attr.cy]="note.dot[1]" r="7" />
+                        }
+                    </svg>
+                </div>
+                @if (notes().length) {
+                    <dl class="notes">
+                        @for (note of notes(); track $index) {
+                            <div class="note" [style.--nth]="$index" [style.--drop]="note.drop">
+                                <dt class="font-mono uppercase text-stone">{{ note.storey.caption }}</dt>
+                                <dd class="font-display font-medium text-bone">
+                                    <ul>
+                                        @for (tool of note.storey.tools; track $index) {
+                                            <li>{{ tool }}</li>
+                                        }
+                                    </ul>
+                                </dd>
+                            </div>
+                        }
+                    </dl>
+                }
+            </div>
+        </div>
+    </div>
+    <figcaption class="exhibit-caption">{{ title.number }} · {{ title.name }}</figcaption>
+</figure>

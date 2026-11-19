@@ -8,7 +8,10 @@ import { RoomLabelComponent } from "../../../shared/room-label/room-label.compon
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RevealDirective, RoomLabelComponent],
   templateUrl: "./visitors-book.component.html",
+  styleUrl: "./visitors-book.component.scss",
 })
 export class VisitorsBookComponent {
   readonly entries = VISITOR_ENTRIES;
+  /** A company with several entries in the book is lettered on the board once. */
+  readonly companies = [...new Set(VISITOR_ENTRIES.map((entry) => entry.company))];
 }

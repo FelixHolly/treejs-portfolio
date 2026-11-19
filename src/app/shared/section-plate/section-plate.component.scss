@@ -1,0 +1,155 @@
+$gold: #c7a44a;
+$frame: 0.55rem;
+$sheet-inset: 1rem;
+$notes-min: 13rem;
+$gutter: 0.4rem;
+
+:host {
+  display: block;
+  container-type: inline-size;
+  --mat: clamp(0.5rem, 2.4cqi, 1.25rem);
+}
+
+.frame {
+  padding: $frame;
+  background: linear-gradient(135deg, #8f7534 0%, $gold 28%, #6b5726 55%, $gold 80%, #8f7534 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.mat {
+  padding: var(--mat);
+  background: #e8e5de;
+  box-shadow: inset 0 0 0 1px rgba(20, 20, 23, 0.35);
+}
+
+.sheet {
+  padding: 1.5rem $sheet-inset;
+  background: #17171b;
+  outline: 1px solid rgba(199, 164, 74, 0.45);
+  outline-offset: -0.45rem;
+}
+
+.house {
+  position: relative;
+  inline-size: min(100%, 20rem);
+  margin-inline: auto;
+}
+
+canvas {
+  display: block;
+  inline-size: 100%;
+}
+
+/* Leaders only make sense once the notes sit beside the house */
+.leaders {
+  display: none;
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  fill: none;
+  stroke: $gold;
+  stroke-width: 2.5;
+
+  circle {
+    fill: $gold;
+    stroke: none;
+  }
+}
+
+.notes {
+  display: grid;
+  gap: 1.1rem;
+  margin-block-start: 1.25rem;
+  text-align: center;
+}
+
+dt {
+  font-size: 0.65rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+}
+
+ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+li {
+  display: flex;
+  align-items: center;
+
+  &:not(:last-child)::after {
+    content: '';
+    inline-size: 0.25rem;
+    block-size: 0.25rem;
+    margin-inline: 0.55rem;
+    border-radius: 50%;
+    background: $gold;
+  }
+}
+
+@container (min-width: 34rem) {
+  .sheet:has(.notes) {
+    /* The house's width as a length, so the notes' rows can be cut to its height */
+    --house: min(20rem, 100cqi - 2 * (#{$frame + $sheet-inset} + var(--mat)) - #{$notes-min + $gutter});
+    display: grid;
+    grid-template-columns: var(--house) minmax(0, 1fr);
+    column-gap: $gutter;
+    align-items: start;
+
+    .house {
+      inline-size: auto;
+      margin: 0;
+    }
+
+    .leaders {
+      display: block;
+    }
+  }
+
+  .notes {
+    gap: 0;
+    margin: 0;
+    text-align: start;
+  }
+
+  .note {
+    display: contents;
+  }
+
+  /* Caption above the line its leader ends on, tools below; a note that outgrows its gap pushes the next one down */
+  .note::before,
+  dt,
+  dd {
+    grid-column: 1;
+  }
+
+  .note::before {
+    content: '';
+    grid-row: calc(2 * var(--nth)) / span 2;
+    block-size: calc(var(--house) * var(--rise) * var(--drop));
+  }
+
+  .note:first-child::before {
+    grid-row: 1;
+  }
+
+  dt {
+    grid-row: calc(2 * var(--nth) + 1);
+    align-self: end;
+  }
+
+  dd {
+    grid-row: calc(2 * var(--nth) + 2);
+  }
+
+  ul {
+    justify-content: flex-start;
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+}

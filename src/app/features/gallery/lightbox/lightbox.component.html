@@ -1,4 +1,4 @@
-<dialog #dialog class="lightbox" aria-labelledby="lightbox-title" (close)="work.set(null)">
+<dialog #dialog class="lightbox" aria-labelledby="lightbox-title" (close)="forget()">
   @if (work(); as current) {
     <div class="panel">
       <header>
@@ -9,7 +9,13 @@
           </svg>
         </button>
       </header>
+      @if (current.caseStudy; as sections) {
+        <app-case-study class="md:grid-cols-2 mb-10" [sections]="sections" />
+      }
       <div class="sheet">
+        @if (current.film; as film) {
+          <app-work-film [film]="film" [poster]="current.images[0].src" />
+        }
         @for (image of images(); track image.src) {
           <app-framed-image
             [image]="image"

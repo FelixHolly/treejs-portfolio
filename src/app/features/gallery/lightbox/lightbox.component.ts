@@ -6,16 +6,19 @@ import {
   ElementRef,
   inject,
   Injector,
+  output,
   signal,
   viewChild,
 } from "@angular/core";
 import { Work } from "../../../core/content/work.model";
+import { CaseStudyComponent } from "../../../shared/case-study/case-study.component";
 import { FramedImageComponent } from "../../../shared/framed-image/framed-image.component";
+import { WorkFilmComponent } from "../../../shared/work-film/work-film.component";
 
 @Component({
   selector: "app-lightbox",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FramedImageComponent],
+  imports: [CaseStudyComponent, FramedImageComponent, WorkFilmComponent],
   templateUrl: "./lightbox.component.html",
   styleUrl: "./lightbox.component.scss",
 })
@@ -24,6 +27,7 @@ export class LightboxComponent {
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>("dialog");
 
   readonly work = signal<Work | null>(null);
+  readonly closed = output<void>();
   readonly images = computed(() => {
     const work = this.work();
     return work ? [...work.images, ...(work.detailImages ?? [])] : [];
@@ -49,4 +53,8 @@ export class LightboxComponent {
     this.dialog().nativeElement.close();
   }
 
+  forget(): void {
+    this.work.set(null);
+    this.closed.emit();
+  }
 }

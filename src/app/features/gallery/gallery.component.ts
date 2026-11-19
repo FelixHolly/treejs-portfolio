@@ -82,7 +82,8 @@ export class GalleryComponent {
   private readonly place = inject(PlaceService);
   private readonly viewMode = inject(ViewModeService);
   private readonly createScene = inject(GALLERY_SCENE_FACTORY);
-  private readonly reducedMotion = inject(ViewEnvironment).prefersReducedMotion();
+  private readonly environment = inject(ViewEnvironment);
+  private readonly reducedMotion = this.environment.prefersReducedMotion();
   private readonly works = inject(WorksService).works();
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>("canvas");
   private readonly main = viewChild.required<ElementRef<HTMLElement>>("main");
@@ -96,6 +97,10 @@ export class GalleryComponent {
   readonly year = new Date().getFullYear();
   readonly worksSummary = this.summarise();
   readonly kindLabel = KIND_LABEL;
+  /** Nothing plays by itself for a visitor who asked for less motion or is saving data. */
+  private readonly filmsAllowed = !this.reducedMotion && !this.environment.savesData();
+  /** The scene plays one film, the first work's that has one; only that work's label carries the control. */
+  private readonly filmSlug = this.filmsAllowed ? this.works.find((work) => work.film)?.slug : undefined;
 
   readonly activeIndex = signal(0);
   /** True while the scene cuts between stops for visitors who asked for reduced motion. */
@@ -103,6 +108,9 @@ export class GalleryComponent {
   readonly slow = signal(false);
   /** True once the visitor has walked on from the entrance, so its plaques stop floating over the walk. */
   readonly setOff = signal(false);
+  readonly filmPaused = signal(false);
+  private readonly filmLost = signal(false);
+  readonly filmControlFor = computed(() => (this.filmLost() ? undefined : this.filmSlug));
   readonly currentRoom = computed(() => this.stops[this.activeIndex()].room);
   readonly announcement = computed(() => {
     const room = this.currentRoom();
@@ -150,6 +158,17 @@ export class GalleryComponent {
 
   closerLook(work: Work): void {
     this.lightbox().open(work);
+    this.holdFilm();
+  }
+
+  toggleFilm(): void {
+    this.filmPaused.update((paused) => !paused);
+    this.holdFilm();
+  }
+
+  /** The closer look has the film with its own controls; two should not run at once. */
+  holdFilm(): void {
+    this.scene?.setFilmHeld(this.filmPaused() || this.lightbox().work() !== null);
   }
 
   private start(destroyRef: DestroyRef): void {
@@ -215,6 +234,7 @@ export class GalleryComponent {
             this.scene = scene;
             scene.resize(this.framing);
             scene.jumpTo(this.reducedMotion ? this.activeIndex() : this.progress);
+            this.holdFilm();
           })
           .catch(() => {
             if (!destroyed) void this.viewMode.reportBroken();
@@ -246,11 +266,14 @@ export class GalleryComponent {
         slug: work.slug,
         kind: work.kind,
         images: work.images.map((image) => ({ src: image.src, portrait: image.orientation === "portrait" })),
+        film: work.film?.src,
       })),
       frieze: this.developer.frieze,
       visitors: this.entries.map((entry) => entry.company),
       anatomy: this.developer.anatomy,
       reducedMotion: this.reducedMotion,
+      films: this.filmsAllowed,
+      onFilmLost: () => this.filmLost.set(true),
       assets: { dracoPath: environment.assets.dracoPath, lionModel: environment.assets.models.heroModel },
       onSlow: () => this.slow.set(true),
     });

@@ -10,6 +10,22 @@
                 }
             </div>
             <app-wall-label class="max-w-2xl mx-auto mt-10" [work]="work" appReveal [revealDelay]="220" />
+            @if (work.caseStudy || work.film) {
+                <details class="account max-w-2xl mx-auto mt-6" appReveal [revealDelay]="260">
+                    <summary>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m9 5 7 7-7 7" />
+                        </svg>
+                        How it was built
+                    </summary>
+                    @if (work.film; as film) {
+                        <app-work-film class="mt-5" [film]="film" [poster]="work.images[0].src" />
+                    }
+                    @if (work.caseStudy; as sections) {
+                        <app-case-study class="mt-6" [sections]="sections" [headingLevel]="4" />
+                    }
+                </details>
+            }
         </article>
     }
 

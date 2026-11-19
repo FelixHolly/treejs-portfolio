@@ -69,10 +69,7 @@ export function nameBoardTexture(names: readonly string[], aspect: number): Canv
 }
 
 /** Crops a texture to a plane's proportions like CSS `object-fit: cover`, keeping the top of the image. */
-export function coverFit(texture: Texture, planeAspect: number): void {
-  const image = texture.image as { width: number; height: number };
-  const imageAspect = image.width / image.height;
-
+export function coverFit(texture: Texture, planeAspect: number, imageAspect = aspectOf(texture)): void {
   if (imageAspect > planeAspect) {
     texture.repeat.set(planeAspect / imageAspect, 1);
     texture.offset.set((1 - texture.repeat.x) / 2, 0);
@@ -80,4 +77,9 @@ export function coverFit(texture: Texture, planeAspect: number): void {
     texture.repeat.set(1, imageAspect / planeAspect);
     texture.offset.set(0, 1 - texture.repeat.y);
   }
+}
+
+function aspectOf(texture: Texture): number {
+  const image = texture.image as { width: number; height: number };
+  return image.width / image.height;
 }

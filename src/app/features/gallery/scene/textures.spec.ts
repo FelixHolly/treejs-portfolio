@@ -107,6 +107,16 @@ describe("coverFit", () => {
     expect(tall.offset.y).toBeCloseTo(0.5, 6);
   });
 
+  it("takes the proportions it is given for a source that has no width of its own, such as a video", () => {
+    const film = new Texture();
+    film.image = { videoWidth: 2000, videoHeight: 1000 };
+    coverFit(film, 1, 2);
+
+    expect(film.repeat.x).toBeCloseTo(0.5, 6);
+    expect(film.repeat.y).toBe(1);
+    expect(film.offset.x).toBeCloseTo(0.25, 6);
+  });
+
   it("leaves an image of the frame's own proportions whole", () => {
     const exact = texture(1600, 1000);
     coverFit(exact, 1.6);

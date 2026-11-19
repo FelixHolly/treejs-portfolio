@@ -21,7 +21,7 @@ describe("routes", () => {
 
   beforeEach(async () => {
     environment = new FakeViewEnvironment();
-    const scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "dispose"]);
+    const scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "dispose"]);
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),

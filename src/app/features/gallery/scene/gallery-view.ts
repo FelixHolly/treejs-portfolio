@@ -7,7 +7,6 @@ export interface SceneWork {
 
 export interface GalleryViewOptions {
   works: readonly SceneWork[];
-  frieze: readonly string[];
   /** Names lettered on the board behind the visitors' book. */
   visitors: readonly string[];
   /** The picture in the first frame of Room I. */

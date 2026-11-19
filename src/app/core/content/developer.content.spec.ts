@@ -33,17 +33,6 @@ describe("DEVELOPER", () => {
     for (const tool of DEVELOPER.skills.flatMap((group) => [...group.tools])) expect(tool).not.toMatch(/[\u2013\u2014&/]/);
   });
 
-  it("still letters the frieze, every word of it named on one of the plaques", () => {
-    const tools: string[] = DEVELOPER.skills.flatMap((group) => [...group.tools]);
-
-    expect(DEVELOPER.frieze.length).toBeGreaterThan(0);
-    for (const material of DEVELOPER.frieze) {
-      expect(tools.some((tool) => tool.split(" ").includes(material) || tool === material))
-        .withContext(material)
-        .toBeTrue();
-    }
-  });
-
   it("hangs a portrait: a picture from the site's own assets, described for those who cannot see it", () => {
     expect(DEVELOPER.portrait.src).toBe("assets/portrait.webp");
     expect(DEVELOPER.portrait.alt).toBe("Portrait of Felix Hollndonner");

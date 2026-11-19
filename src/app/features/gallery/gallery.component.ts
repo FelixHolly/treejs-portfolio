@@ -273,7 +273,6 @@ export class GalleryComponent {
         images: work.images.map((image) => ({ src: image.src, portrait: image.orientation === "portrait" })),
         film: work.film?.src,
       })),
-      frieze: this.developer.frieze,
       portrait: this.developer.portrait.src,
       visitors: this.entries.map((entry) => entry.company),
       skills: this.developer.skills,

@@ -277,7 +277,7 @@ describe("GalleryComponent", () => {
   });
 
   describe("the scene", () => {
-    it("is started after the first paint with the collection, frieze and assets", async () => {
+    it("is started after the first paint with the collection and assets", async () => {
       await open();
 
       expect(factory).toHaveBeenCalledTimes(1);
@@ -289,7 +289,6 @@ describe("GalleryComponent", () => {
         "self-portrait:this-gallery:1",
       ]);
       expect(options?.works[1].images[0].portrait).toBeTrue();
-      expect(options?.frieze).toContain("Angular");
       expect(options?.portrait).toBe(DEVELOPER.portrait.src);
       expect(options?.visitors).toEqual(["Polypoint AG", "Eurotours"]);
       expect(options?.assets.lionModel).toMatch(/\.glb$/);

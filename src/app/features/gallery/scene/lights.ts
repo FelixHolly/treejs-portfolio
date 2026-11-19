@@ -107,4 +107,9 @@ export class GalleryLights {
     this.addLight(light);
     this.pieces.push({ light, stops, focus, full, wide, tight });
   }
+
+  /** The lowest tier of quality lights the statue without a shadow. */
+  setStatueShadow(cast: boolean): void {
+    this.lionKey.castShadow = cast;
+  }
 }

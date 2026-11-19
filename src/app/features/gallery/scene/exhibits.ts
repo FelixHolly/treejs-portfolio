@@ -2,6 +2,7 @@ import {
   CircleGeometry,
   CylinderGeometry,
   Group,
+  Material,
   Mesh,
   MeshBasicMaterial,
   MeshLambertMaterial,
@@ -13,14 +14,26 @@ import { Palette, slab } from "./building";
 import { glow } from "./atmosphere";
 import { DESK, FrameSlot, HANG_Z, LECTERN, LETTERBOX, MEDALLION } from "./layout";
 
-export interface FramedPicture {
+export interface FramedPicture<Surface extends Material = MeshBasicMaterial> {
   group: Group;
   /** The picture itself; its texture arrives later. */
-  picture: Mesh<PlaneGeometry, MeshBasicMaterial>;
+  picture: Mesh<PlaneGeometry, Surface>;
   slot: FrameSlot;
 }
 
-export function framedPicture(slot: FrameSlot, palette: Palette, plainFrame: MeshLambertMaterial): FramedPicture {
+export function framedPicture(slot: FrameSlot, palette: Palette, plainFrame: MeshLambertMaterial): FramedPicture;
+export function framedPicture<Surface extends Material>(
+  slot: FrameSlot,
+  palette: Palette,
+  plainFrame: MeshLambertMaterial,
+  surface: Surface,
+): FramedPicture<Surface>;
+export function framedPicture(
+  slot: FrameSlot,
+  palette: Palette,
+  plainFrame: MeshLambertMaterial,
+  surface: Material = new MeshBasicMaterial({ color: 0x1b1b1f, toneMapped: false }),
+): FramedPicture<Material> {
   const large = slot.width > 2;
   const mat = slot.gilded ? (large ? 0.12 : 0.09) : 0.07;
   const bar = slot.gilded ? (large ? 0.09 : 0.06) : 0.035;
@@ -41,10 +54,7 @@ export function framedPicture(slot: FrameSlot, palette: Palette, plainFrame: Mes
   const board = new Mesh(new PlaneGeometry(innerWidth, innerHeight), palette.bone);
   board.position.z = -depth / 2 + 0.01;
 
-  const picture = new Mesh(
-    new PlaneGeometry(slot.width, slot.height),
-    new MeshBasicMaterial({ color: 0x1b1b1f, toneMapped: false }),
-  );
+  const picture = new Mesh(new PlaneGeometry(slot.width, slot.height), surface);
   picture.position.z = -depth / 2 + 0.018;
 
   group.add(board, picture);

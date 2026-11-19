@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { DEVELOPER } from "../../../core/content/developer.content";
 import { RevealDirective } from "../../../directives/reveal.directive";
+import { FramedImageComponent } from "../../../shared/framed-image/framed-image.component";
 import { RoomLabelComponent } from "../../../shared/room-label/room-label.component";
 
 @Component({
   selector: "app-developer",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RevealDirective, RoomLabelComponent],
+  imports: [FramedImageComponent, RevealDirective, RoomLabelComponent],
   templateUrl: "./developer.component.html",
 })
 export class DeveloperComponent {

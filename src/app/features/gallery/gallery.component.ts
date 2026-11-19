@@ -54,7 +54,11 @@ const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
 function onwardText(stops: readonly GalleryStop[], index: number): string {
   const next = stops[index + 1];
   if (index === 0 || !next) return "";
-  return next.work ? `Next: ${next.work.title}` : `Continue to Room ${next.room.numeral}, ${next.room.name}`;
+  if (next.work) return `Next: ${next.work.title}`;
+  // A stop further along the same room goes by its own name; the room's was said on the way in
+  return next.title && next.room === stops[index].room
+    ? `Continue to ${next.title}`
+    : `Continue to Room ${next.room.numeral}, ${next.room.name}`;
 }
 
 function sameFraming(a: PageFraming, b: PageFraming): boolean {
@@ -113,8 +117,9 @@ export class GalleryComponent {
   readonly filmControlFor = computed(() => (this.filmLost() ? undefined : this.filmSlug));
   readonly currentRoom = computed(() => this.stops[this.activeIndex()].room);
   readonly announcement = computed(() => {
-    const room = this.currentRoom();
-    return room.numeral ? `Room ${room.numeral}, ${room.name}` : room.name;
+    const { room, title } = this.stops[this.activeIndex()];
+    const where = room.numeral ? `Room ${room.numeral}, ${room.name}` : room.name;
+    return title ? `${where}, ${title}` : where;
   });
 
   private spans: LabelSpan[] = [];
@@ -269,6 +274,7 @@ export class GalleryComponent {
         film: work.film?.src,
       })),
       frieze: this.developer.frieze,
+      portrait: this.developer.portrait.src,
       visitors: this.entries.map((entry) => entry.company),
       skills: this.developer.skills,
       reducedMotion: this.reducedMotion,

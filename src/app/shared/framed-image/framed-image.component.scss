@@ -33,3 +33,18 @@
 .picture--portrait {
   aspect-ratio: 9 / 19;
 }
+
+// Mirrors PORTRAIT_TONE in the gallery's scene/portrait.ts; change the two together.
+.picture--toned {
+  img {
+    filter: saturate(0.6) sepia(0.28) brightness(0.9);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(20, 20, 23, 0) 42%, rgba(20, 20, 23, 0.5) 100%);
+    pointer-events: none;
+  }
+}

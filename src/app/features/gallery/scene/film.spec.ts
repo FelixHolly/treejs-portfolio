@@ -1,4 +1,4 @@
-import { FILM_REACH, filmPlacement, filmShouldPlay } from "./film";
+import { FILM_REACH, filmPlacement, filmShouldPlay, FIRST_WORK_STOP } from "./film";
 import { SceneWork } from "./gallery-view";
 
 const work = (slug: string, film?: string): SceneWork => ({
@@ -9,9 +9,10 @@ const work = (slug: string, film?: string): SceneWork => ({
 });
 
 describe("filmPlacement", () => {
-  it("places the film at its work's stop, after the entrance, Room I and the overview", () => {
-    expect(filmPlacement([work("a", "a.webm"), work("b")], true)).toEqual({ work: 0, stop: 3, src: "a.webm" });
-    expect(filmPlacement([work("a"), work("b"), work("c", "c.webm")], true)).toEqual({ work: 2, stop: 5, src: "c.webm" });
+  it("places the film at its work's stop, after the entrance, Room I's two stops and the overview", () => {
+    expect(FIRST_WORK_STOP).toBe(4);
+    expect(filmPlacement([work("a", "a.webm"), work("b")], true)).toEqual({ work: 0, stop: 4, src: "a.webm" });
+    expect(filmPlacement([work("a"), work("b"), work("c", "c.webm")], true)).toEqual({ work: 2, stop: 6, src: "c.webm" });
   });
 
   it("shows only the first film when more than one work has one", () => {

@@ -44,6 +44,11 @@ describe("DEVELOPER", () => {
     }
   });
 
+  it("hangs a portrait: a picture from the site's own assets, described for those who cannot see it", () => {
+    expect(DEVELOPER.portrait.src).toBe("assets/portrait.webp");
+    expect(DEVELOPER.portrait.alt).toBe("Portrait of Felix Hollndonner");
+  });
+
   it("keeps the about text: a greeting, two paragraphs, and where the developer is based", () => {
     expect(DEVELOPER.greeting).toBe("Hi, I'm Felix");
     expect(DEVELOPER.bio.length).toBe(2);

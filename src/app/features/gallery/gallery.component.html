@@ -54,6 +54,25 @@
             <p class="mt-5 font-mono uppercase tracking-[0.2em] text-xs text-gold">{{ developer.location }}</p>
             <p class="grid-subtext mt-2">{{ developer.viennaLine }}</p>
           }
+          @case ("skills") {
+            <h3 class="font-display text-2xl text-bone">{{ stop.title }}</h3>
+            <p class="grid-subtext mt-3">The tools behind the works in the next room, grouped by where they sit in an application.</p>
+            <!-- The wall carries the list, and the wall is a picture: this is the same list for those who cannot see it -->
+            <div class="sr-only">
+              <ul>
+                @for (group of developer.skills; track group.area) {
+                  <li>
+                    {{ group.area }}
+                    <ul>
+                      @for (tool of group.tools; track tool) {
+                        <li>{{ tool }}</li>
+                      }
+                    </ul>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
           @case ("works") {
             <app-room-label numeral="II" title="The Works" />
             <p class="grid-subtext">{{ worksSummary }}</p>

@@ -11,6 +11,7 @@ import {
   HANG_Z,
   MEDALLION,
   pieceSlots,
+  PORTRAIT,
   ROTUNDA,
   SKILL_PLAQUES,
   SKILL_WALL,
@@ -56,10 +57,10 @@ function throughADoor(point: Vector3): boolean {
 }
 
 describe("buildPoses", () => {
-  it("gives one pose per stop: five rooms plus one per work", () => {
-    expect(pathFor(WORKS, FRAMINGS[0][1]).poses.length).toBe(9);
-    expect(pathFor([], FRAMINGS[0][1]).poses.length).toBe(5);
-    expect(pathFor([WORKS[0]], FRAMINGS[0][1]).poses.length).toBe(6);
+  it("gives one pose per stop: the entrance, two in Room I, one for each later room, plus one per work", () => {
+    expect(pathFor(WORKS, FRAMINGS[0][1]).poses.length).toBe(10);
+    expect(pathFor([], FRAMINGS[0][1]).poses.length).toBe(6);
+    expect(pathFor([WORKS[0]], FRAMINGS[0][1]).poses.length).toBe(7);
   });
 
   for (const [name, framing] of FRAMINGS) {
@@ -78,15 +79,19 @@ describe("buildPoses", () => {
       const { poses } = pathFor(WORKS, framing);
       const wall = WALL_THICKNESS / 2;
       const rooms = [
+        [DOOR_XS[0], DOOR_XS[1]],
+        [DOOR_XS[0], DOOR_XS[1]],
+        [DOOR_XS[1], DOOR_XS[2]],
         ...WORKS.map(() => [DOOR_XS[1], DOOR_XS[2]]),
         [DOOR_XS[2], DOOR_XS[3]],
         [DOOR_XS[3], END_WALL_X],
       ];
 
+      expect(rooms.length).toBe(poses.length - 1);
       rooms.forEach(([west, east], index) => {
-        const { x } = poses[3 + index].position;
-        expect(x).withContext(`stop ${3 + index}`).toBeGreaterThan(west + wall);
-        expect(x).withContext(`stop ${3 + index}`).toBeLessThan(east - wall);
+        const { x } = poses[1 + index].position;
+        expect(x).withContext(`stop ${1 + index}`).toBeGreaterThan(west + wall);
+        expect(x).withContext(`stop ${1 + index}`).toBeLessThan(east - wall);
       });
     });
   }
@@ -96,7 +101,7 @@ describe("buildPoses", () => {
     const poses = buildPoses(slots, frame(1.6, 0));
 
     slots.forEach((slot, index) => {
-      const pose = poses[3 + index];
+      const pose = poses[4 + index];
       expect(pose.target.z).toBe(HANG_Z);
       expect(pose.position.x).toBeCloseTo(slot.centre.x, 6);
       expect(pose.target.x).toBeCloseTo(pose.position.x, 6);
@@ -105,8 +110,8 @@ describe("buildPoses", () => {
 
   it("stands further back and off to the right when a label takes part of the screen", () => {
     const slots = pieceSlots(WORKS);
-    const open = buildPoses(slots, frame(1.6, 0))[3];
-    const beside = buildPoses(slots, frame(1.6, 0.4))[3];
+    const open = buildPoses(slots, frame(1.6, 0))[4];
+    const beside = buildPoses(slots, frame(1.6, 0.4))[4];
 
     expect(beside.position.z).toBeGreaterThan(open.position.z);
     expect(beside.position.x).toBeGreaterThan(slots[0].centre.x);
@@ -116,7 +121,7 @@ describe("buildPoses", () => {
     // 1288x654, where the label and its gutter take 44% of the width
     const framing = frame(1288 / 654, 0.44);
     const slots = pieceSlots(WORKS);
-    const study = buildPoses(slots, framing)[5];
+    const study = buildPoses(slots, framing)[6];
     const wide = slots[3];
     const camera = new PerspectiveCamera(fieldOfView(framing.aspect), framing.aspect, 0.1, 80);
     camera.position.copy(study.position);
@@ -131,27 +136,115 @@ describe("buildPoses", () => {
   });
 });
 
-describe("the Room I pose", () => {
-  // Window sizes with the share of the width the label and its gutter take, as the page measures it
-  const WINDOWS: [string, Framing][] = [
-    ["1288x654", frame(1288 / 654, 0.44)],
-    ["1440x790", frame(1440 / 790, 0.42)],
-    ["1920x969", frame(1920 / 969, 0.3)],
-    ["1024x768", frame(1024 / 768, 0.45)],
-    ...FRAMINGS.filter(([, framing]) => framing.labelShare > 0 && framing.aspect > 1),
-  ];
-  /** The header's share of the height of the shortest window the gallery is checked at. */
-  const HEADER = 84 / 654;
+// Window sizes with the share of the width the label and its gutter take, as the page measures it
+const WINDOWS: [string, Framing][] = [
+  ["1288x654", frame(1288 / 654, 0.44)],
+  ["1440x790", frame(1440 / 790, 0.42)],
+  ["1920x969", frame(1920 / 969, 0.3)],
+  ["1024x768", frame(1024 / 768, 0.45)],
+  ...FRAMINGS.filter(([, framing]) => framing.labelShare > 0 && framing.aspect > 1),
+];
+/** The header's share of the height of the shortest window the gallery is checked at. */
+const HEADER = 84 / 654;
+/** As far as the scene turns either way when the mouse rests at an edge of the screen. */
+const TURNS = [0, 0.06, -0.06];
+const PORTRAIT_STOP = 1;
+const SKILLS_STOP = 2;
+/** What the mat and the bars add to the picture all round. */
+const PORTRAIT_SURROUND = 0.15;
 
-  function cameraAt(framing: Framing, yaw = 0): PerspectiveCamera {
-    const pose = buildPoses(pieceSlots(WORKS), framing)[1];
-    const camera = new PerspectiveCamera(fieldOfView(framing.aspect), framing.aspect, 0.1, 80);
-    camera.position.copy(pose.position);
-    camera.lookAt(pose.target);
-    camera.rotateY(yaw);
-    camera.updateMatrixWorld();
-    return camera;
+function cameraAtStop(stop: number, framing: Framing, yaw = 0): PerspectiveCamera {
+  const pose = buildPoses(pieceSlots(WORKS), framing)[stop];
+  const camera = new PerspectiveCamera(fieldOfView(framing.aspect), framing.aspect, 0.1, 80);
+  camera.position.copy(pose.position);
+  camera.lookAt(pose.target);
+  camera.rotateY(yaw);
+  camera.updateMatrixWorld();
+  return camera;
+}
+
+describe("the portrait pose", () => {
+  const halfWidth = PORTRAIT.width / 2 + PORTRAIT_SURROUND;
+  const halfHeight = PORTRAIT.height / 2 + PORTRAIT_SURROUND;
+
+  /** The corners of the frame, bars included, as shares of the screen from its left and top. */
+  function frameOnScreen(camera: PerspectiveCamera): { left: number; right: number; top: number; bottom: number } {
+    const topLeft = new Vector3(PORTRAIT.x - halfWidth, PORTRAIT.y + halfHeight, HANG_Z).project(camera);
+    const bottomRight = new Vector3(PORTRAIT.x + halfWidth, PORTRAIT.y - halfHeight, HANG_Z).project(camera);
+    return { left: (topLeft.x + 1) / 2, right: (bottomRight.x + 1) / 2, top: (1 - topLeft.y) / 2, bottom: (1 - bottomRight.y) / 2 };
   }
+
+  for (const [name, framing] of WINDOWS) {
+    it(`shows the whole frame left of the label and under the header at ${name}, however the mouse turns the view`, () => {
+      for (const yaw of TURNS) {
+        const onScreen = frameOnScreen(cameraAtStop(PORTRAIT_STOP, framing, yaw));
+
+        expect(onScreen.left).withContext(`yaw ${yaw}`).toBeGreaterThan(0.02);
+        expect(onScreen.right).withContext(`yaw ${yaw}`).toBeLessThan(1 - framing.labelShare - 0.02);
+        expect(onScreen.top).withContext(`yaw ${yaw}`).toBeGreaterThan(HEADER + 0.03);
+        expect(onScreen.bottom).withContext(`yaw ${yaw}`).toBeLessThan(0.92);
+      }
+    });
+
+    it(`sets the frame in the middle of the space the label leaves at ${name}`, () => {
+      const onScreen = frameOnScreen(cameraAtStop(PORTRAIT_STOP, framing));
+
+      expect((onScreen.left + onScreen.right) / 2).toBeCloseTo((1 - framing.labelShare) / 2, 1);
+    });
+  }
+
+  // An ultrawide sees the whole room, the plaques with it
+  for (const [name, framing] of WINDOWS.filter(([, window]) => window.aspect < 3)) {
+    it(`shows no plaque at ${name}: the nearest one stays beyond the right edge, however the mouse turns the view`, () => {
+      for (const yaw of TURNS) {
+        const camera = cameraAtStop(PORTRAIT_STOP, framing, yaw);
+        const nearEdge = new Vector3(SKILL_PLAQUES.x - SKILL_WALL.width / 2 - 0.05, SKILL_PLAQUES.y, HANG_Z).project(camera);
+
+        expect(nearEdge.x).withContext(`yaw ${yaw}`).toBeGreaterThan(1);
+      }
+    });
+
+    it(`keeps the portrait out of sight from in front of the plaques at ${name}, however the mouse turns the view`, () => {
+      for (const yaw of TURNS) {
+        const camera = cameraAtStop(SKILLS_STOP, framing, yaw);
+        const nearEdge = new Vector3(PORTRAIT.x + halfWidth + 0.05, PORTRAIT.y, HANG_Z).project(camera);
+
+        expect(nearEdge.x).withContext(`yaw ${yaw}`).toBeLessThan(-1);
+      }
+    });
+  }
+
+  it("makes the portrait the room's centrepiece in the owner's 1288x654 window: its frame takes over half the height", () => {
+    const onScreen = frameOnScreen(cameraAtStop(PORTRAIT_STOP, WINDOWS[0][1]));
+
+    expect(onScreen.bottom - onScreen.top).toBeGreaterThan(0.55);
+    expect(onScreen.bottom - onScreen.top).toBeLessThan(0.7);
+  });
+
+  it("stands square to the wall in front of the portrait, in Room I and nearer its first door than the plaques' stop", () => {
+    const poses = buildPoses(pieceSlots(WORKS), frame(1.6, 0));
+    const pose = poses[PORTRAIT_STOP];
+
+    expect(pose.position.x).toBeCloseTo(PORTRAIT.x, 6);
+    expect(pose.target.x).toBeCloseTo(pose.position.x, 6);
+    expect(pose.target.z).toBe(HANG_Z);
+    expect(pose.position.x).toBeGreaterThan(DOOR_XS[0]);
+    expect(pose.position.x).toBeLessThan(poses[SKILLS_STOP].position.x);
+  });
+
+  it("stands closer to the portrait than to the plaques, and never nearer than a visitor would", () => {
+    for (const [name, framing] of WINDOWS) {
+      const poses = buildPoses(pieceSlots(WORKS), framing);
+      const back = poses[PORTRAIT_STOP].position.z - HANG_Z;
+
+      expect(back).withContext(name).toBeGreaterThanOrEqual(2.8);
+      expect(back).withContext(name).toBeLessThan(poses[SKILLS_STOP].position.z - HANG_Z);
+    }
+  });
+});
+
+describe("the skills pose", () => {
+  const cameraAt = (framing: Framing, yaw = 0) => cameraAtStop(SKILLS_STOP, framing, yaw);
 
   /** The corners of the whole block of plaques, as shares of the screen from its left and top. */
   function blockOnScreen(camera: PerspectiveCamera): { left: number; right: number; top: number; bottom: number } {
@@ -213,7 +306,7 @@ describe("the Room I pose", () => {
   });
 
   it("steps back for the block's height where the screen is wide, and for its width where the label leaves little", () => {
-    const back = (framing: Framing) => buildPoses(pieceSlots(WORKS), framing)[1].position.z - HANG_Z;
+    const back = (framing: Framing) => buildPoses(pieceSlots(WORKS), framing)[SKILLS_STOP].position.z - HANG_Z;
     const tan = Math.tan(MathUtils.degToRad(25));
 
     expect(back(frame(1288 / 654, 0.44))).toBeCloseTo(back(frame(3.5, 0.2)), 6);
@@ -222,7 +315,7 @@ describe("the Room I pose", () => {
   });
 
   it("stands square to the wall in front of the block, in Room I", () => {
-    const pose = buildPoses(pieceSlots(WORKS), frame(1.6, 0))[1];
+    const pose = buildPoses(pieceSlots(WORKS), frame(1.6, 0))[SKILLS_STOP];
 
     expect(pose.position.x).toBeCloseTo(SKILL_PLAQUES.x, 6);
     expect(pose.target.x).toBeCloseTo(pose.position.x, 6);
@@ -369,17 +462,19 @@ describe("CameraPath", () => {
     }
   });
 
-  it("walks through the first door on its middle line, looking down the rooms beyond", () => {
+  it("walks through the first door on its middle line, looking on into the room and already turning to the portrait", () => {
     const { path } = pathFor(WORKS, FRAMINGS[0][1]);
     let atDoor = sample(path, 0);
-    for (let progress = 0; progress <= 1; progress += 0.002) {
+    for (let progress = 0; progress <= PORTRAIT_STOP; progress += 0.002) {
       const here = sample(path, progress);
       if (Math.abs(here.position.x - DOOR_XS[0]) < Math.abs(atDoor.position.x - DOOR_XS[0])) atDoor = here;
     }
     const heading = Math.atan2(atDoor.target.z - atDoor.position.z, atDoor.target.x - atDoor.position.x);
 
     expect(Math.abs(atDoor.position.z)).toBeLessThan(0.15);
-    expect(Math.abs(heading)).toBeLessThan(0.35);
+    // The portrait hangs a few steps inside, on the left: the head turns to it, but never past half way to the wall
+    expect(heading).toBeLessThan(0);
+    expect(heading).toBeGreaterThan(-Math.PI / 4);
     expect(atDoor.target.x).toBeGreaterThan(atDoor.position.x + 1);
   });
 
@@ -412,7 +507,7 @@ describe("CameraPath", () => {
   it("looks ahead along the route mid-stride, not back at the stop it left", () => {
     const { path, poses } = pathFor(WORKS, FRAMINGS[0][1]);
     const { position, target } = sample(path, 0.5);
-    const towardsNext = poses[1].position.clone().sub(position).setY(0).normalize();
+    const towardsNext = poses[PORTRAIT_STOP].position.clone().sub(position).setY(0).normalize();
     const looking = target.clone().sub(position).setY(0).normalize();
 
     expect(looking.dot(towardsNext)).toBeGreaterThan(0.5);

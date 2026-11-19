@@ -77,8 +77,52 @@ describe("DeveloperComponent", () => {
     expect(element.querySelector(".exhibit-caption")).toBeNull();
   });
 
-  it("hangs no drawing: the room is text alone", () => {
-    expect(element.querySelector("canvas, figure, img, svg")).toBeNull();
+  it("hangs the portrait, and nothing else: one picture, described by the content's own words", () => {
+    const pictures = element.querySelectorAll("img");
+
+    expect(pictures.length).toBe(1);
+    expect(pictures[0].alt).toBe("Portrait of Felix Hollndonner");
+    expect(pictures[0].alt).toBe(DEVELOPER.portrait.alt);
+    expect(pictures[0].getAttribute("src")).toContain(DEVELOPER.portrait.src);
+    expect(element.querySelector("canvas, svg")).toBeNull();
+  });
+
+  it("leaves the portrait to load when it nears the screen, since Room I starts below the fold", () => {
+    const picture = element.querySelector("img")!;
+
+    expect(picture.getAttribute("loading")).toBe("lazy");
+    expect(picture.getAttribute("fetchpriority")).not.toBe("high");
+  });
+
+  it("frames the portrait in gilt, upright at four to five, toned like the one on the gallery's wall", () => {
+    const frame = element.querySelector("app-framed-image")!;
+    const picture = frame.querySelector<HTMLElement>(".picture")!;
+
+    expect(frame.querySelector(".frame--gilded")).not.toBeNull();
+    expect(frame.querySelector(".mat")).not.toBeNull();
+    expect(picture.classList.contains("picture--toned")).toBeTrue();
+    expect(picture.style.aspectRatio).toBe("4 / 5");
+    expect(frame.querySelector("figcaption")).toBeNull();
+  });
+
+  it("stands the portrait beside the greeting and bio from a tablet up and above them on a phone, never full width", () => {
+    const frame = element.querySelector("app-framed-image")!;
+    const row = frame.parentElement!;
+    const text = row.querySelector(".measure")!;
+
+    expect(row.classList.contains("flex-col")).toBeTrue();
+    expect(row.classList.contains("md:flex-row")).toBeTrue();
+    expect(frame.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(frame.classList.contains("w-64")).toBeTrue();
+    expect(frame.classList.contains("md:w-72")).toBeTrue();
+    expect(frame.classList.contains("shrink-0")).toBeTrue();
+  });
+
+  it("still caps the bio's line length beside the portrait", () => {
+    const text = element.querySelector("app-framed-image")!.parentElement!.querySelector(".measure")!;
+
+    expect(text.querySelector("h3")?.textContent?.trim()).toBe(DEVELOPER.greeting);
+    expect(Array.from(text.querySelectorAll("p.grid-subtext")).map((line) => line.textContent!.trim())).toEqual([...DEVELOPER.bio]);
   });
 
   it("still says where the developer is based, after the skills", () => {

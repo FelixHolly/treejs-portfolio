@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, MathUtils, Vector3 } from "three";
 import { PageFraming } from "./gallery-view";
-import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, ROTUNDA, SKILL_PLAQUES, SKILL_WALL } from "./layout";
+import { DESK, DOOR_XS, EYE, fieldOfView, HANG_Z, LECTERN, PieceSlot, PORTRAIT, ROTUNDA, SKILL_PLAQUES, SKILL_WALL } from "./layout";
 
 export interface Pose {
   position: Vector3;
@@ -19,12 +19,14 @@ const FILL = 0.84;
 const FARTHEST = 6.9;
 /** Length samples taken between neighbouring points of the route. */
 const SAMPLES_PER_POINT = 24;
-const OVERVIEW = { x: 16.6, z: 3 } as const;
+const OVERVIEW = { x: 19.4, z: 3 } as const;
 /** The statue as the arriving visitor meets it: its width, how far its head and front paws stand out towards them, and how near they may come. */
 const STATUE = { width: 2.3, head: 0.7, paws: 0.9, nearest: 4, wallGap: 0.5 } as const;
 
 /** Room I's plaques: how far above their middle the view aims, so the block clears the header; what their frames add to it; and the room a turn of the head needs to either side. */
 const SKILL_VIEW = { rise: 0.1, margin: 0.06, aside: 0.2 } as const;
+/** The portrait: what mat and frame add all round, how far above its middle the view aims, the room either side, and the nearest the visitor stands. */
+const PORTRAIT_VIEW = { surround: 0.15, rise: 0.17, aside: 0.2, nearest: 2.8 } as const;
 /** A hanging as tall as Room I's fills at most this much of the screen's height. */
 const TALL_FILL = 0.72;
 
@@ -86,8 +88,8 @@ function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
 
   const first = slots[0];
   const last = slots[slots.length - 1];
-  const leftEdge = first ? first.centre.x - first.span / 2 : 20;
-  const rightEdge = last ? last.centre.x + last.span / 2 : 30;
+  const leftEdge = first ? first.centre.x - first.span / 2 : 22.8;
+  const rightEdge = last ? last.centre.x + last.span / 2 : 32.8;
 
   // Keep the last work clear of the label, but never push the first one off the left edge.
   const heading = Math.min(
@@ -100,10 +102,18 @@ function overviewPose(slots: readonly PieceSlot[], framing: Framing): Pose {
   };
 }
 
-/** One camera pose per stop: entrance, developer, works overview, each work, visitors' book, correspondence. */
+/** One camera pose per stop: entrance, portrait, skills, works overview, each work, visitors' book, correspondence. */
 export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[] {
   return [
     statuePose(framing),
+    wallPose(
+      PORTRAIT.x,
+      PORTRAIT.y + PORTRAIT_VIEW.rise,
+      PORTRAIT.width + PORTRAIT_VIEW.surround * 2 + PORTRAIT_VIEW.aside,
+      PORTRAIT_VIEW.nearest,
+      framing,
+      PORTRAIT.height + PORTRAIT_VIEW.surround * 2,
+    ),
     wallPose(
       SKILL_PLAQUES.x,
       SKILL_PLAQUES.y + SKILL_VIEW.rise,
@@ -122,7 +132,7 @@ export function buildPoses(slots: readonly PieceSlot[], framing: Framing): Pose[
 /** Points the route passes between stops, so the camera rounds the lion and walks through each door. */
 export function buildWaypoints(workCount: number): Vector3[][] {
   const door = (index: number) => new Vector3(DOOR_XS[index], EYE, 0);
-  const waypoints: Vector3[][] = Array.from({ length: workCount + 5 }, () => []);
+  const waypoints: Vector3[][] = Array.from({ length: workCount + 6 }, () => []);
 
   // Round the statue on the side it faces, then squared up to the doorway before stepping through
   waypoints[0] = [
@@ -133,9 +143,9 @@ export function buildWaypoints(workCount: number): Vector3[][] {
     new Vector3(DOOR_XS[0] - 1.2, EYE, 0),
     door(0),
   ];
-  waypoints[1] = [door(1)];
-  waypoints[workCount + 2] = [door(2)];
-  waypoints[workCount + 3] = [door(3)];
+  waypoints[2] = [door(1)];
+  waypoints[workCount + 3] = [door(2)];
+  waypoints[workCount + 4] = [door(3)];
   return waypoints;
 }
 

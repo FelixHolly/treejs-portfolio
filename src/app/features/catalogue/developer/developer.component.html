@@ -1,11 +1,14 @@
 <section class="c-space my-24" id="about">
     <app-room-label numeral="I" title="The Developer" appReveal />
 
-    <div class="flex flex-col gap-4 measure mx-auto" appReveal [revealDelay]="120">
-        <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
-        @for (paragraph of developer.bio; track paragraph) {
-            <p class="grid-subtext">{{ paragraph }}</p>
-        }
+    <div class="flex flex-col items-center gap-8 md:flex-row md:items-start md:justify-center md:gap-12" appReveal [revealDelay]="120">
+        <app-framed-image class="w-64 max-w-full shrink-0 md:w-72" [image]="developer.portrait" aspect="4 / 5" toned sizes="18rem" />
+        <div class="flex flex-col gap-4 measure">
+            <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
+            @for (paragraph of developer.bio; track paragraph) {
+                <p class="grid-subtext">{{ paragraph }}</p>
+            }
+        </div>
     </div>
 
     <div class="mt-12 sm:mt-14 max-w-2xl lg:max-w-5xl mx-auto" appReveal>

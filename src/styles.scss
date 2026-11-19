@@ -138,7 +138,7 @@ select:focus-visible,
   }
 
   .nav-room {
-    @apply lg:absolute lg:left-1/2 lg:top-full lg:-translate-x-1/2 lg:mt-1 text-[0.6rem] tracking-[0.3em] text-gold/70 ml-2 lg:ml-0;
+    @apply lg:absolute lg:left-1/2 lg:top-full lg:-translate-x-1/2 lg:mt-1 text-[0.6rem] tracking-[0.3em] text-gold ml-2 lg:ml-0;
   }
 
   .grid-subtext {

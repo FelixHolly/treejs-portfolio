@@ -243,3 +243,8 @@ html.gallery-active {
     padding-top: 4.25rem;
   }
 }
+
+/* Walking with the keys moves focus to the stop's heading for screen readers; a heading is not a control, so it shows no ring */
+html.gallery-active main :is(h1, h2, h3)[tabindex="-1"]:focus-visible {
+  outline: none !important;
+}

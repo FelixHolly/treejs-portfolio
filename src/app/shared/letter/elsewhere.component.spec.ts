@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { CorrespondenceLink } from "../../core/content/correspondence.content";
-import { PostscriptComponent } from "./postscript.component";
+import { ElsewhereComponent } from "./elsewhere.component";
 
-describe("PostscriptComponent", () => {
-  let fixture: ComponentFixture<PostscriptComponent>;
+describe("ElsewhereComponent", () => {
+  let fixture: ComponentFixture<ElsewhereComponent>;
 
   const LINKS: CorrespondenceLink[] = [
     { label: "LinkedIn", href: "https://example.com/in" },
@@ -12,7 +12,7 @@ describe("PostscriptComponent", () => {
   ];
 
   function sentence(links: CorrespondenceLink[], cvHref: string | null = null): string {
-    fixture = TestBed.createComponent(PostscriptComponent);
+    fixture = TestBed.createComponent(ElsewhereComponent);
     fixture.componentRef.setInput("links", links);
     fixture.componentRef.setInput("cvHref", cvHref);
     fixture.detectChanges();
@@ -22,13 +22,13 @@ describe("PostscriptComponent", () => {
   }
 
   it("reads as one sentence however many links there are", () => {
-    expect(sentence(LINKS.slice(0, 1))).toBe("P.S. You can also find me on LinkedIn.");
-    expect(sentence(LINKS.slice(0, 2))).toBe("P.S. You can also find me on LinkedIn or GitHub.");
-    expect(sentence(LINKS)).toBe("P.S. You can also find me on LinkedIn, GitHub or Mastodon.");
+    expect(sentence(LINKS.slice(0, 1))).toBe("Or find me on LinkedIn.");
+    expect(sentence(LINKS.slice(0, 2))).toBe("Or find me on LinkedIn or GitHub.");
+    expect(sentence(LINKS)).toBe("Or find me on LinkedIn, GitHub or Mastodon.");
   });
 
   it("offers the CV as a download once there is one", () => {
-    expect(sentence(LINKS.slice(0, 2), "assets/cv.pdf")).toBe("P.S. You can also download my CV, or find me on LinkedIn or GitHub.");
+    expect(sentence(LINKS.slice(0, 2), "assets/cv.pdf")).toBe("Or download my CV, or find me on LinkedIn or GitHub.");
 
     const cv = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>("a[download]")!;
     expect(cv.getAttribute("href")).toBe("assets/cv.pdf");

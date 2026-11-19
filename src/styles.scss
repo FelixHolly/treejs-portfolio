@@ -66,9 +66,15 @@ body::before {
 }
 
 /* On the letter's paper, sheet and envelope alike, keep the ink readable under the highlight */
-app-letter ::selection {
+app-letter .sheet ::selection,
+app-letter-envelope ::selection {
   background: rgba(199, 164, 74, 0.45);
   color: #141417;
+}
+
+/* In the gallery the letter is type around a sheet, not a panel: its label's own shadow would outline a box that is not there */
+html.gallery-active .label--letter {
+  box-shadow: none;
 }
 
 /* Global focus styles for accessibility */

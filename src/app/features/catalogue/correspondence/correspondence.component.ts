@@ -8,7 +8,7 @@ import { LetterComponent } from "../../../shared/letter/letter.component";
   imports: [LetterComponent, RevealDirective],
   template: `
     <section class="c-space my-20" id="contact">
-      <app-letter class="max-w-[38rem] mx-auto scroll-mt-24" appReveal />
+      <app-letter class="max-w-[34rem] mx-auto scroll-mt-24" appReveal />
     </section>
   `,
 })

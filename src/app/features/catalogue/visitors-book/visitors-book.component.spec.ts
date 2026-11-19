@@ -57,4 +57,55 @@ describe("VisitorsBookComponent", () => {
     expect(element.querySelectorAll("blockquote").length).toBe(VISITOR_ENTRIES.length);
     for (const entry of VISITOR_ENTRIES) expect(element.textContent).toContain(entry.role);
   });
+
+  describe("each entry", () => {
+    const figures = () => Array.from(element.querySelectorAll<HTMLElement>("figure"));
+
+    it("holds its mark, its quote and who wrote it together in one figure, in that order", () => {
+      figures().forEach((figure, index) => {
+        const parts = Array.from(figure.children).map((child) => child.tagName);
+
+        expect(parts).withContext(VISITOR_ENTRIES[index].company).toEqual(["SPAN", "BLOCKQUOTE", "FIGCAPTION"]);
+        expect(figure.querySelector("blockquote")?.textContent?.trim()).toBe(VISITOR_ENTRIES[index].quote);
+      });
+    });
+
+    it("names the role and then the company under the quote, readable as one phrase", () => {
+      figures().forEach((figure, index) => {
+        const entry = VISITOR_ENTRIES[index];
+        const caption = figure.querySelector("figcaption")!;
+
+        expect(caption.textContent?.replace(/\s+/g, " ").trim()).toBe(`${entry.role}, ${entry.company}`);
+        expect(caption.querySelector(".company")?.textContent).toBe(entry.company);
+      });
+    });
+
+    it("sets the quote upright and left-aligned in a column narrower than the page", () => {
+      for (const figure of figures()) {
+        const quote = getComputedStyle(figure.querySelector("blockquote")!);
+
+        expect(quote.fontStyle).toBe("normal");
+        expect(["start", "left"]).toContain(quote.textAlign);
+        expect(quote.maxWidth).not.toBe("none");
+        expect(parseFloat(quote.fontSize)).toBeGreaterThanOrEqual(18);
+      }
+    });
+
+    it("hangs the quotation mark in the margin as decoration, left of the quote and unseen by assistive technology", () => {
+      for (const figure of figures()) {
+        const mark = figure.querySelector<HTMLElement>(".mark")!;
+        const quote = figure.querySelector("blockquote")!;
+
+        expect(mark.getAttribute("aria-hidden")).toBe("true");
+        expect(mark.getBoundingClientRect().right).toBeLessThanOrEqual(quote.getBoundingClientRect().left);
+        expect(figure.querySelector("figcaption")!.getBoundingClientRect().left).toBeCloseTo(quote.getBoundingClientRect().left, 0);
+      }
+    });
+
+    it("sets who wrote it no smaller than 12px", () => {
+      for (const figure of figures()) {
+        expect(parseFloat(getComputedStyle(figure.querySelector("figcaption")!).fontSize)).toBeGreaterThanOrEqual(12);
+      }
+    });
+  });
 });

@@ -2,16 +2,23 @@
     <span id="works" class="anchor"></span>
     <app-room-label numeral="II" title="The Works" appReveal />
 
-    @for (work of commissions(); track work.slug) {
+    @for (hung of commissions(); track hung.work.slug) {
+        @let work = hung.work;
         <article class="commission" [id]="'works-' + work.slug">
-            <div class="triptych" appReveal [revealDelay]="120">
-                @for (image of work.images; track image.src) {
-                    <app-framed-image [image]="image" [class.triptych-centre]="$first" [sizes]="$first ? '(min-width: 1024px) 60vw, 100vw' : '(min-width: 640px) 45vw, 100vw'" />
-                }
-            </div>
-            <app-wall-label class="max-w-2xl mx-auto mt-10" [work]="work" appReveal [revealDelay]="220" />
+            <app-wall-label placement="page" lead [work]="work">
+                <div class="pictures" appReveal [class.pictures--phone-led]="hung.phoneLed">
+                    <app-framed-image class="lead-picture" [class.lead-picture--upright]="hung.lead.orientation === 'portrait'" [image]="hung.lead" [sizes]="hung.phoneLed ? '(min-width: 768px) 14rem, 55vw' : '(min-width: 1024px) 60vw, 100vw'" />
+                    @if (hung.others.length) {
+                        <div class="picture-row" tabindex="0" role="group" [attr.aria-label]="'More pictures of ' + work.title">
+                            @for (image of hung.others; track image.src) {
+                                <app-framed-image [image]="image" sizes="(min-width: 1024px) 50vw, 80vw" />
+                            }
+                        </div>
+                    }
+                </div>
+            </app-wall-label>
             @if (work.caseStudy || work.film) {
-                <details class="account max-w-2xl mx-auto mt-6" appReveal [revealDelay]="260">
+                <details class="account" appReveal>
                     <summary>
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="m9 5 7 7-7 7" />
@@ -29,14 +36,16 @@
         </article>
     }
 
-    <div class="plinth-rule my-16 sm:my-24" appReveal></div>
+    <div class="plinth-rule my-12 sm:my-24" appReveal></div>
 
     <div class="plain-frames">
         @for (work of plainFramed(); track work.slug) {
             @let wide = work.images[0].orientation === 'landscape';
+            @let study = work.kind === 'study';
             <article class="plain-work" [id]="'works-' + work.slug" appReveal [revealDelay]="$index * 120">
-                <app-framed-image class="plain-frame" [class.plain-frame--wide]="wide" [image]="work.images[0]" variant="plain" [sizes]="wide ? '(min-width: 768px) 22rem, 90vw' : '(min-width: 768px) 14rem, 60vw'" />
-                <app-wall-label [work]="work" />
+                <app-wall-label placement="page" [class.label--beside]="study" [compact]="study" [work]="work">
+                    <app-framed-image class="plain-frame" [class.plain-frame--wide]="wide" [image]="work.images[0]" variant="plain" [sizes]="wide ? '(min-width: 768px) 22rem, 90vw' : '(min-width: 768px) 14rem, 8rem'" />
+                </app-wall-label>
             </article>
         }
     </div>

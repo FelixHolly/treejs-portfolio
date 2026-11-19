@@ -11,15 +11,14 @@
         </div>
     }
 
-    <div class="max-w-3xl mx-auto">
+    <div class="entries">
         @for (entry of entries; track entry.company) {
-            <figure class="py-10 sm:py-12 text-center border-b border-graphite-700 last:border-b-0" appReveal>
-                <span class="font-display text-gold text-6xl leading-none block" aria-hidden="true">&ldquo;</span>
-                <blockquote class="font-display italic text-xl sm:text-2xl text-bone leading-relaxed mt-2">
-                    {{ entry.quote }}
-                </blockquote>
-                <figcaption class="mt-8 font-mono text-xs uppercase tracking-[0.25em] text-stone">
-                    {{ entry.role }} · {{ entry.company }}
+            <figure class="entry" appReveal>
+                <span class="mark font-display" aria-hidden="true">&ldquo;</span>
+                <blockquote class="font-display">{{ entry.quote }}</blockquote>
+                <figcaption class="by font-mono">
+                    <span>{{ entry.role }}<span class="sr-only">, </span></span>
+                    <span class="company">{{ entry.company }}</span>
                 </figcaption>
             </figure>
         }

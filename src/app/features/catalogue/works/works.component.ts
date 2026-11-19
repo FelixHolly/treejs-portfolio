@@ -17,6 +17,14 @@ import { WorkFilmComponent } from "../../../shared/work-film/work-film.component
 export class WorksComponent {
   private readonly works = inject(WorksService).works();
 
-  readonly commissions = computed(() => this.works.filter((work) => work.kind === "commission"));
+  /** A phone screenshot stays readable at a phone's width, so where a commission has one it leads. */
+  readonly commissions = computed(() =>
+    this.works
+      .filter((work) => work.kind === "commission")
+      .map((work) => {
+        const phone = work.detailImages?.find((image) => image.orientation === "portrait");
+        return { work, phoneLed: !!phone, lead: phone ?? work.images[0], others: phone ? work.images : work.images.slice(1) };
+      }),
+  );
   readonly plainFramed = computed(() => this.works.filter((work) => work.kind !== "commission"));
 }

@@ -1,7 +1,7 @@
 import { SceneWork } from "./gallery-view";
 
-/** Stops before the first work: entrance, developer and the overview of the works. */
-const FIRST_WORK_STOP = 3;
+/** Stops before the first work: entrance, portrait, skills and the overview of the works. */
+export const FIRST_WORK_STOP = 4;
 /** How far from its stop, in stops, a film keeps playing. */
 export const FILM_REACH = 0.25;
 

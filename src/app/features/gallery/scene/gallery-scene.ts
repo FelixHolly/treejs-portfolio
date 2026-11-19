@@ -14,6 +14,7 @@ import {
   PlaneGeometry,
   RepeatWrapping,
   Scene,
+  ShaderMaterial,
   SRGBColorSpace,
   Texture,
   TextureLoader,
@@ -32,6 +33,7 @@ import {
   DOOR,
   DOOR_XS,
   fieldOfView,
+  FrameSlot,
   HALF_DEPTH,
   HANG_Z,
   LECTERN,
@@ -39,6 +41,7 @@ import {
   MEDALLION,
   pieceSlots,
   PieceSlot,
+  portraitSlot,
   ROOM_ONE_X,
   ROTUNDA,
   SKILL_PLAQUE_HEIGHT,
@@ -47,6 +50,7 @@ import {
 } from "./layout";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
+import { hangPortrait, portraitMaterial } from "./portrait";
 import { Post } from "./post";
 import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
 
@@ -70,6 +74,7 @@ export class GalleryScene implements GalleryView {
   private readonly plainFrame = new MeshLambertMaterial({ color: 0x2c2c33 });
   private readonly slots: PieceSlot[];
   private readonly pictures: FramedPicture[] = [];
+  private readonly portrait: FramedPicture<ShaderMaterial>;
   private readonly lights: GalleryLights;
   private readonly atmosphere = new RotundaAtmosphere();
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
@@ -116,6 +121,7 @@ export class GalleryScene implements GalleryView {
     this.filmPlace = filmPlacement(options.works, options.films);
     this.lights = new GalleryLights(this.slots);
     this.lionLevel = EMPTY_PLINTH_LEVEL;
+    this.portrait = framedPicture(portraitSlot(options.portrait), this.palette, this.plainFrame, portraitMaterial());
 
     this.scene.add(buildArchitecture(this.palette), ...this.lights.objects, ...this.atmosphere.objects);
     this.furnish();
@@ -205,6 +211,7 @@ export class GalleryScene implements GalleryView {
         material.dispose();
       }
     });
+    (this.portrait.picture.material.uniforms["map"].value as Texture | null)?.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }
@@ -300,6 +307,7 @@ export class GalleryScene implements GalleryView {
     const desk = writingDesk(this.palette, correspondence);
     this.mail = new Post(this.palette, desk);
     this.scene.add(
+      this.portrait.group,
       medallion(this.palette),
       lectern(this.palette, visitorsBook),
       desk,
@@ -332,7 +340,7 @@ export class GalleryScene implements GalleryView {
 
     const loader = new TextureLoader();
     const anisotropy = Math.min(this.renderer.capabilities.getMaxAnisotropy(), 8);
-    for (const { picture, slot } of this.pictures) {
+    const fetch = (slot: FrameSlot, hangIt: (texture: Texture) => void) => {
       loader.load(slot.src, (texture) => {
         if (this.disposed) {
           texture.dispose();
@@ -340,12 +348,20 @@ export class GalleryScene implements GalleryView {
         }
         texture.colorSpace = SRGBColorSpace;
         texture.anisotropy = anisotropy;
+        hangIt(texture);
+        this.invalidate();
+      });
+    };
+
+    for (const { picture, slot } of this.pictures) {
+      fetch(slot, (texture) => {
         coverFit(texture, slot.width / slot.height);
         if (picture === this.film?.picture) this.film.hangStill(texture);
         else hang(picture, texture);
-        this.invalidate();
       });
     }
+    const { picture, slot } = this.portrait;
+    fetch(slot, (texture) => hangPortrait(picture.material, texture, slot.width / slot.height));
   }
 
   /** Wall lettering uses the page's fonts, so it waits for them. */

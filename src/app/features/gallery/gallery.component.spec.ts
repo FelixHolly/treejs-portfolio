@@ -112,6 +112,7 @@ describe("GalleryComponent", () => {
       expect(headings).toEqual([
         "Felix Hollndonner",
         "The Developer",
+        "Skills",
         "The Works",
         "Küchenschelle",
         "WheelWallet",
@@ -126,7 +127,7 @@ describe("GalleryComponent", () => {
       expect(element.querySelector("canvas")?.getAttribute("aria-hidden")).toBe("true");
     });
 
-    it("makes Room I's label the about text: greeting, bio, where the developer is based", () => {
+    it("makes Room I's first label the about text: greeting, bio, where the developer is based", () => {
       const label = element.querySelector('[data-stop="1"] [data-label]')!;
 
       expect(label.querySelector("h3")?.textContent?.trim()).toBe(DEVELOPER.greeting);
@@ -135,7 +136,7 @@ describe("GalleryComponent", () => {
       expect(label.textContent).toContain(DEVELOPER.viennaLine);
     });
 
-    it("leaves the skills to the wall: Room I's label has no line listing the stack", () => {
+    it("leaves the skills to their own stop: the about label has no line listing the stack", () => {
       const label = element.querySelector('[data-stop="1"] [data-label]')!;
       const bio = DEVELOPER.bio.join(" ");
 
@@ -145,16 +146,51 @@ describe("GalleryComponent", () => {
       expect(Array.from(label.querySelectorAll("p")).some((line) => line.textContent!.includes("TypeScript"))).toBeFalse();
     });
 
-    it("ends Room I's label with the way on to Room II", () => {
+    it("ends the about label with the way on to the skills, named by their own title and not the room's", () => {
       const controls = element.querySelectorAll('[data-stop="1"] [data-label] *');
       const last = controls[controls.length - 1].closest("button");
 
       expect(last?.classList.contains("onward")).toBeTrue();
-      expect(last?.textContent?.trim()).toBe("Continue to Room II, The Works");
+      expect(last?.textContent?.trim()).toBe("Continue to Skills");
+    });
+
+    it("keeps the skills label short: a heading, one sentence and the way on to Room II", () => {
+      const label = element.querySelector('[data-stop="2"] [data-label]')!;
+      const seen = Array.from(label.children).filter((child) => !child.classList.contains("sr-only"));
+
+      expect(label.querySelector("app-room-label")).toBeNull();
+      expect(seen.map((child) => child.tagName)).toEqual(["H3", "P", "DIV"]);
+      expect(label.querySelector("h3")?.textContent?.trim()).toBe("Skills");
+      expect(label.querySelector("p")?.textContent?.trim()).toBe(
+        "The tools behind the works in the next room, grouped by where they sit in an application.",
+      );
+      expect(label.querySelector(".onward")?.textContent?.trim()).toBe("Continue to Room II, The Works");
+    });
+
+    it("lists the four groups and their tools in the skills label for those who cannot see the wall", () => {
+      const hidden = element.querySelector('[data-stop="2"] [data-label] .sr-only')!;
+      const groups = Array.from(hidden.querySelectorAll(":scope > ul > li"));
+
+      expect(groups.length).toBe(4);
+      expect(groups.map((group) => group.firstChild?.textContent?.trim())).toEqual(DEVELOPER.skills.map((group) => group.area));
+      expect(groups.map((group) => Array.from(group.querySelectorAll("ul > li")).map((tool) => tool.textContent!.trim()))).toEqual(
+        DEVELOPER.skills.map((group) => [...group.tools]),
+      );
+      expect(hidden.closest("[aria-hidden]")).toBeNull();
+    });
+
+    it("says nothing else about the tools where the wall can be seen", () => {
+      const label = element.querySelector('[data-stop="2"] [data-label]')!;
+      const seen = Array.from(label.children)
+        .filter((child) => !child.classList.contains("sr-only"))
+        .map((child) => child.textContent)
+        .join(" ");
+
+      for (const tool of DEVELOPER.skills.flatMap((group) => [...group.tools])) expect(seen).withContext(tool).not.toContain(tool);
     });
 
     it("summarises the wall and offers a jump to each work", () => {
-      const room = element.querySelector('[data-stop="2"]')!;
+      const room = element.querySelector('[data-stop="3"]')!;
 
       expect(room.textContent).toContain("One commission, two studies and one self-portrait hang on this wall.");
       expect(Array.from(room.querySelectorAll(".work-list button")).map((button) => button.textContent!.replace(/\s+/g, " ").replace(" ,", ",").trim())).toEqual([
@@ -182,6 +218,7 @@ describe("GalleryComponent", () => {
 
       expect(waysOn).toEqual([
         null,
+        "Continue to Skills",
         "Continue to Room II, The Works",
         "Next: Küchenschelle",
         "Next: WheelWallet",
@@ -195,7 +232,7 @@ describe("GalleryComponent", () => {
 
     it("draws the way on's arrow as an icon and keeps it beside a work's closer look", () => {
       const waysOn = Array.from(element.querySelectorAll(".onward"));
-      const foot = element.querySelector('[data-stop="4"] .label-foot')!;
+      const foot = element.querySelector('[data-stop="5"] .label-foot')!;
 
       expect(waysOn.every((wayOn) => wayOn.querySelector("app-icon-arrow-down svg[aria-hidden='true']"))).toBeTrue();
       expect(Array.from(foot.querySelectorAll("button")).map((button) => button.textContent!.trim())).toEqual([
@@ -253,6 +290,7 @@ describe("GalleryComponent", () => {
       ]);
       expect(options?.works[1].images[0].portrait).toBeTrue();
       expect(options?.frieze).toContain("Angular");
+      expect(options?.portrait).toBe(DEVELOPER.portrait.src);
       expect(options?.visitors).toEqual(["Polypoint AG", "Eurotours"]);
       expect(options?.assets.lionModel).toMatch(/\.glb$/);
       expect(options?.reducedMotion).toBeFalse();
@@ -427,7 +465,7 @@ describe("GalleryComponent", () => {
     }
 
     it("stands still while the closer look is open, even with focus on the page body", async () => {
-      element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+      element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
       fixture.detectChanges();
       await fixture.whenStable();
       scrollTo.calls.reset();
@@ -456,7 +494,7 @@ describe("GalleryComponent", () => {
     });
 
     it("walks to a work from the Room II list", () => {
-      element.querySelectorAll<HTMLButtonElement>('[data-stop="2"] button')[2].click();
+      element.querySelectorAll<HTMLButtonElement>('[data-stop="3"] button')[2].click();
 
       expect(document.activeElement?.textContent?.trim()).toBe("ReLoo");
     });
@@ -466,12 +504,41 @@ describe("GalleryComponent", () => {
 
       expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
       expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+      expect(document.activeElement?.textContent?.trim()).toBe("Skills");
+      expect(location.hash).toBe("#developer/skills");
+    });
+
+    it("walks on from the skills into Room II", () => {
+      element.querySelector<HTMLButtonElement>('[data-stop="2"] .onward')!.click();
+
       expect(document.activeElement?.textContent?.trim()).toBe("The Works");
       expect(location.hash).toBe("#works");
     });
 
+    it("walks to the skills when their address is typed, and to the portrait from the floor plan's Room I", () => {
+      history.replaceState(null, "", "#developer/skills");
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      const skills = scrollTo.calls.mostRecent().args[0].top;
+
+      element.querySelectorAll<HTMLButtonElement>("app-floor-plan button")[1].click();
+
+      expect(skills).toBeGreaterThan(0);
+      expect(scrollTo.calls.mostRecent().args[0].top).toBeLessThan(skills);
+      expect(document.activeElement?.textContent?.trim()).toBe("The Developer");
+    });
+
+    it("stays in Room I at the skills: the plan and the caption keep the room, the live region adds the stop", () => {
+      arriveAt(2);
+
+      expect(element.querySelector("app-floor-plan [aria-current]")?.textContent).toContain("Room I, The Developer");
+      expect(element.querySelector("app-floor-plan .caption")?.textContent?.trim()).toBe("Room I · The Developer");
+      expect(element.querySelector("[aria-live]")?.textContent?.trim()).toBe("Room I, The Developer, Skills");
+      expect(TestBed.inject(PlaceService).current()).toBe("developer/skills");
+      expect(location.hash).toBe("#developer/skills");
+    });
+
     it("walks on from the last work into Room III", () => {
-      element.querySelector<HTMLButtonElement>('[data-stop="6"] .onward')!.click();
+      element.querySelector<HTMLButtonElement>('[data-stop="7"] .onward')!.click();
 
       expect(document.activeElement?.textContent?.trim()).toBe("Visitors' Book");
       expect(location.hash).toBe("#visitors-book");
@@ -488,10 +555,10 @@ describe("GalleryComponent", () => {
     it("offers the letter from the header everywhere but in Room IV itself", () => {
       expect(element.querySelector(".hud .to-letter")?.textContent?.trim()).toBe("Write to me");
 
-      arriveAt(7);
+      arriveAt(8);
       expect(element.querySelector(".hud .to-letter")).not.toBeNull();
 
-      arriveAt(8);
+      arriveAt(9);
       expect(element.querySelector(".hud .to-letter")).toBeNull();
       expect(element.querySelector(".hud app-view-switch")).not.toBeNull();
     });
@@ -526,7 +593,7 @@ describe("GalleryComponent", () => {
 
     it("leaves the browser's own focus scrolling alone in a label taller than the screen", () => {
       spyOnProperty(window, "innerHeight").and.returnValue(150);
-      element.querySelector<HTMLElement>('[data-stop="7"]')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      element.querySelector<HTMLElement>('[data-stop="8"]')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
 
       expect(scrollTo).not.toHaveBeenCalled();
     });
@@ -589,12 +656,12 @@ describe("GalleryComponent", () => {
     beforeEach(() => open());
 
     it("stands at its own stop in Room II, the last work before the visitors' book", () => {
-      const stop = element.querySelector('[data-stop="6"]')!;
+      const stop = element.querySelector('[data-stop="7"]')!;
 
       expect(stop.querySelector("h3")?.textContent?.trim()).toBe("This Gallery");
       expect(stop.querySelector(".room-number")?.textContent?.trim()).toBe("Self-portrait");
       expect(stop.classList.contains("stop--hop")).toBeTrue();
-      expect(element.querySelector('[data-stop="7"] h2')?.textContent?.trim()).toBe("Visitors' Book");
+      expect(element.querySelector('[data-stop="8"] h2')?.textContent?.trim()).toBe("Visitors' Book");
     });
 
     it("fits on the wall of Room II with the works before it, a metre short of the wall to Room III", () => {
@@ -606,7 +673,7 @@ describe("GalleryComponent", () => {
     });
 
     it("links to its code and not to a live site, since the visitor is standing in it", () => {
-      const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('[data-stop="6"] a'));
+      const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('[data-stop="7"] a'));
 
       expect(links.length).toBe(1);
       expect(links[0].textContent).toContain("View the code");
@@ -616,7 +683,7 @@ describe("GalleryComponent", () => {
     });
 
     it("is walked to from the Room II list, which leaves its own address behind for Back", () => {
-      element.querySelectorAll<HTMLButtonElement>('[data-stop="2"] button')[3].click();
+      element.querySelectorAll<HTMLButtonElement>('[data-stop="3"] button')[3].click();
 
       expect(scrollTo).toHaveBeenCalledTimes(1);
       expect(document.activeElement?.textContent?.trim()).toBe("This Gallery");
@@ -635,7 +702,7 @@ describe("GalleryComponent", () => {
     });
 
     it("keeps the floor plan and the live region in Room II while the visitor stands at it", () => {
-      fixture.componentInstance.activeIndex.set(6);
+      fixture.componentInstance.activeIndex.set(7);
       fixture.detectChanges();
 
       expect(element.querySelector("app-floor-plan [aria-current]")?.textContent).toContain("Room II, The Works");
@@ -644,7 +711,7 @@ describe("GalleryComponent", () => {
     });
 
     it("opens a closer look at its three pictures, each described", async () => {
-      element.querySelector<HTMLButtonElement>('[data-stop="6"] .view-switch')!.click();
+      element.querySelector<HTMLButtonElement>('[data-stop="7"] .view-switch')!.click();
       fixture.detectChanges();
       await fixture.whenStable();
       const dialog = element.querySelector("dialog")!;
@@ -680,7 +747,7 @@ describe("GalleryComponent", () => {
     async function summaryOf(works: Work[]): Promise<string | undefined> {
       collection = works;
       await open();
-      return element.querySelector('[data-stop="2"] .grid-subtext')?.textContent?.trim();
+      return element.querySelector('[data-stop="3"] .grid-subtext')?.textContent?.trim();
     }
 
     const collections: [string, Work[], string][] = [
@@ -699,7 +766,7 @@ describe("GalleryComponent", () => {
     for (const [name, works, sentence] of collections) {
       it(`reads naturally for ${name}`, async () => {
         expect(await summaryOf(works)).toBe(sentence);
-        expect(element.querySelectorAll('[data-stop="2"] li').length).toBe(works.length);
+        expect(element.querySelectorAll('[data-stop="3"] li').length).toBe(works.length);
       });
     }
   });
@@ -724,12 +791,15 @@ describe("GalleryComponent", () => {
 
     it("names the room or the work the visitor has walked to", () => {
       arriveAt(2);
-      expect(document.title).toBe("The Works - Felix Hollndonner");
+      expect(document.title).toBe("Skills - Felix Hollndonner");
 
       arriveAt(3);
+      expect(document.title).toBe("The Works - Felix Hollndonner");
+
+      arriveAt(4);
       expect(document.title).toBe("Küchenschelle - Felix Hollndonner");
 
-      arriveAt(8);
+      arriveAt(9);
       expect(document.title).toBe("Correspondence - Felix Hollndonner");
     });
 
@@ -760,6 +830,16 @@ describe("GalleryComponent", () => {
       expect(scrollTo.calls.first().args[0].top).toBeGreaterThan(0);
     });
 
+    it("opens at the skills when their address is the one shared", async () => {
+      history.replaceState(null, "", "#developer/skills");
+
+      await open();
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo.calls.first().args[0].behavior).toBe("instant");
+      expect(scrollTo.calls.first().args[0].top).toBeGreaterThan(0);
+    });
+
     it("understands the catalogue's older anchors", async () => {
       history.replaceState(null, "", "#contact");
 
@@ -776,7 +856,7 @@ describe("GalleryComponent", () => {
       beforeEach(() => open());
 
       it("offers a way to pause it in the commission's label, between the closer look and the way on", () => {
-        const foot = element.querySelector('[data-stop="3"] .label-foot')!;
+        const foot = element.querySelector('[data-stop="4"] .label-foot')!;
 
         expect(Array.from(foot.querySelectorAll("button")).map((button) => button.textContent!.trim())).toEqual([
           "Closer look",
@@ -787,7 +867,7 @@ describe("GalleryComponent", () => {
 
       it("offers it only for the work that has a film", () => {
         expect(element.querySelectorAll(".film-toggle").length).toBe(1);
-        for (const stop of [4, 5, 6]) {
+        for (const stop of [5, 6, 7]) {
           expect(element.querySelector(`[data-stop="${stop}"] .film-toggle`)).withContext(`stop ${stop}`).toBeNull();
         }
       });
@@ -833,7 +913,7 @@ describe("GalleryComponent", () => {
       });
 
       it("holds the film while the closer look is open and lets it go when that closes", async () => {
-        element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+        element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -849,7 +929,7 @@ describe("GalleryComponent", () => {
 
       it("keeps a film the visitor paused paused after the closer look closes", async () => {
         control()!.click();
-        element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+        element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -899,7 +979,7 @@ describe("GalleryComponent", () => {
       fixture.detectChanges();
       await fixture.whenStable();
       await sceneStarted();
-      element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+      element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -918,7 +998,7 @@ describe("GalleryComponent", () => {
       fixture.detectChanges();
 
       expect(control()).toBeNull();
-      expect(element.querySelector('[data-stop="3"] .label-foot .view-switch')).not.toBeNull();
+      expect(element.querySelector('[data-stop="4"] .label-foot .view-switch')).not.toBeNull();
     });
 
     it("offers the control for the one film the scene plays, not for a second work's", async () => {
@@ -928,7 +1008,7 @@ describe("GalleryComponent", () => {
       await open();
 
       expect(element.querySelectorAll(".film-toggle").length).toBe(1);
-      expect(element.querySelector('[data-stop="3"] .film-toggle')).not.toBeNull();
+      expect(element.querySelector('[data-stop="4"] .film-toggle')).not.toBeNull();
     });
 
     it("plays nothing and offers no control to a visitor who asked for less motion", async () => {
@@ -937,7 +1017,7 @@ describe("GalleryComponent", () => {
 
       expect(options?.films).toBeFalse();
       expect(control()).toBeNull();
-      expect(element.querySelector('[data-stop="3"] .label-foot .view-switch')).not.toBeNull();
+      expect(element.querySelector('[data-stop="4"] .label-foot .view-switch')).not.toBeNull();
     });
 
     it("plays nothing and offers no control to a visitor saving data", async () => {

@@ -14,21 +14,23 @@ export const HALF_DEPTH = 4;
 export const WALL_HEIGHT = 5.2;
 export const WALL_THICKNESS = 0.4;
 export const DOOR = { width: 2.4, height: 3.3 } as const;
-export const ENFILADE = { from: 5, to: 61.8 } as const;
+export const ENFILADE = { from: 5, to: 64.6 } as const;
 /** The round entrance hall, centred at `x` so its east wall meets the enfilade. The statue stands at its centre. */
 export const ROTUNDA = { x: -2.5, radius: 7.5, height: 14, plinthHeight: 1, lionHeight: 2.7 } as const;
 /** The statue faces the arriving visitor, turned a little towards the side they walk past it on. */
 export const LION_YAW = Math.PI - 0.35;
 /** The drum the statue stands on, wide enough for the statue's base at any turn. */
 export const PEDESTAL_RADIUS = 1.4;
-export const DOOR_XS = [5.2, 15.6, 44.8, 53.2] as const;
-export const END_WALL_X = 61.6;
+export const DOOR_XS = [5.2, 18.4, 47.6, 56] as const;
+export const END_WALL_X = 64.4;
 /** Room I runs from the first door to the second; its frieze is centred between them. */
-export const ROOM_ONE_X = 10.4;
+export const ROOM_ONE_X = 11.8;
 /** The FH seal hangs on the far wall of Room I, beside the door to Room II, facing the visitor coming in. */
 export const MEDALLION = { x: DOOR_XS[1] - WALL_THICKNESS / 2, y: 2.05, z: -2.3, radius: 0.68 } as const;
-/** The skill plaques in Room I, hung `columns` to a row in a block around `x` and `y`. A plaque is `head`, a `line` for each of `lines` tools, and `foot` tall. */
-export const SKILL_PLAQUES = { x: ROOM_ONE_X, y: 1.85, count: 4, columns: 2, lines: 6, width: 1.36, gap: 0.14, head: 0.236, line: 0.133, foot: 0.077 } as const;
+/** The portrait hangs first in Room I, near the door from the hall; the picture's own size, without mat and frame. */
+export const PORTRAIT = { x: 7.7, y: 1.72, width: 1, height: 1.25 } as const;
+/** The skill plaques further along Room I, hung `columns` to a row in a block around `x` and `y`. A plaque is `head`, a `line` for each of `lines` tools, and `foot` tall. */
+export const SKILL_PLAQUES = { x: 13.4, y: 1.85, count: 4, columns: 2, lines: 6, width: 1.36, gap: 0.14, head: 0.236, line: 0.133, foot: 0.077 } as const;
 export const SKILL_PLAQUE_HEIGHT = SKILL_PLAQUES.head + SKILL_PLAQUES.line * SKILL_PLAQUES.lines + SKILL_PLAQUES.foot;
 const SKILL_ROWS = Math.ceil(SKILL_PLAQUES.count / SKILL_PLAQUES.columns);
 /** The width and height of the whole block of plaques. */
@@ -45,11 +47,11 @@ export function skillPlaqueSlots(): { x: number; y: number }[] {
     y: y + ((SKILL_ROWS - 1) / 2 - Math.floor(index / columns)) * (SKILL_PLAQUE_HEIGHT + gap),
   }));
 }
-export const LECTERN = { x: 49.2, z: -3.25 } as const;
-export const DESK = { x: 57.4, z: -3.2 } as const;
+export const LECTERN = { x: 52, z: -3.25 } as const;
+export const DESK = { x: 60.2, z: -3.2 } as const;
 /** The brass letterbox on the wall above the writing desk; `slotRise` is the slot's height above its middle. */
 export const LETTERBOX = { x: DESK.x, y: 1.98, width: 0.62, height: 0.78, depth: 0.2, slotRise: 0.2 } as const;
-export const BENCH = { x: 29, z: 3.45 } as const;
+export const BENCH = { x: 31.8, z: 3.45 } as const;
 
 export interface FrameSlot {
   x: number;
@@ -58,6 +60,11 @@ export interface FrameSlot {
   height: number;
   gilded: boolean;
   src: string;
+}
+
+/** The portrait's frame, gilded like the commission's. */
+export function portraitSlot(src: string): FrameSlot {
+  return { ...PORTRAIT, gilded: true, src };
 }
 
 export interface PieceSlot {
@@ -70,11 +77,11 @@ export interface PieceSlot {
   distance: number;
 }
 
-const COMMISSION = { x: 21.6, y: 1.95, width: 2.4, height: 1.5, outerHalf: 1.41 } as const;
+const COMMISSION = { x: 24.4, y: 1.95, width: 2.4, height: 1.5, outerHalf: 1.41 } as const;
 const COMPANION = { offset: 2.5, rise: 0.56, width: 1.12, height: 0.7, outerHalf: 0.71 } as const;
 // Far enough along that a plain frame never shows beside the commission's label. A wide frame takes
 // the longer step, or its near edge would show beside the label of the piece before it.
-const PLAIN = { x: 32.6, y: 1.9, step: 4.2, wideStep: 5.8 } as const;
+const PLAIN = { x: 35.4, y: 1.9, step: 4.2, wideStep: 5.8 } as const;
 
 /** Hangs the works along Room II: a commission with its companions stacked beside it, then every other work in a plain frame. */
 export function pieceSlots(works: readonly SceneWork[]): PieceSlot[] {

@@ -17,6 +17,10 @@ export const ROOMS = [
   { id: "correspondence", numeral: "IV", name: "Correspondence", plain: "Contact", catalogueId: "contact" },
 ] as const satisfies readonly Room[];
 
+/** A stop inside a room that has an address and a tab title of its own. */
+export const SKILLS = { id: "developer/skills", room: "developer", name: "Skills" } as const;
+const ALCOVES = [SKILLS] as const;
+
 /** The tab title wherever no room or work names it; index.html carries the same text for the first paint. */
 export const BASE_TITLE = "Felix Hollndonner, Full-Stack Developer";
 
@@ -37,6 +41,7 @@ export function placeFromHash(hash: string, workSlugs: readonly string[]): strin
 
   const room = ROOMS.find((candidate) => candidate.id === id || candidate.catalogueId === id);
   if (room) return room.id;
+  if (ALCOVES.some((alcove) => alcove.id === id)) return id;
 
   const slug = WORK_PLACE.exec(id)?.[1];
   return slug && workSlugs.includes(slug) ? workPlace(slug) : null;
@@ -44,7 +49,8 @@ export function placeFromHash(hash: string, workSlugs: readonly string[]): strin
 
 export function roomOf(place: string): Room {
   if (WORK_PLACE.test(place)) return ROOMS[2];
-  return ROOMS.find((room) => room.id === place) ?? ROOMS[0];
+  const id = ALCOVES.find((alcove) => alcove.id === place)?.room ?? place;
+  return ROOMS.find((room) => room.id === id) ?? ROOMS[0];
 }
 
 /** `workTitles` is keyed by slug. A place or work it cannot name gets the site's own title rather than a guess. */
@@ -52,7 +58,8 @@ export function titleFor(place: string, workTitles: Readonly<Record<string, stri
   const slug = WORK_PLACE.exec(place)?.[1];
   // Only a numbered room names the tab: the entrance stands for the whole site
   const room = ROOMS.find((candidate) => candidate.numeral && candidate.id === place);
-  const name = slug && Object.hasOwn(workTitles, slug) ? workTitles[slug] : room?.name;
+  const alcove = ALCOVES.find((candidate) => candidate.id === place);
+  const name = slug && Object.hasOwn(workTitles, slug) ? workTitles[slug] : (alcove?.name ?? room?.name);
   return name ? `${name} - Felix Hollndonner` : BASE_TITLE;
 }
 

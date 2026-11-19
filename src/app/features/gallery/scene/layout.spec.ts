@@ -13,6 +13,8 @@ import {
   MEDALLION,
   PEDESTAL_RADIUS,
   pieceSlots,
+  PORTRAIT,
+  portraitSlot,
   ROOM_ONE_X,
   ROTUNDA,
   SKILL_PLAQUE_HEIGHT,
@@ -97,9 +99,9 @@ describe("pieceSlots", () => {
     const [commission, first, second] = pieceSlots(REAL);
 
     expect(commission).toEqual(pieceSlots([COMMISSION])[0]);
-    expect(commission.frames[0].x).toBe(21.6);
-    expect(first.centre.x).toBe(32.6);
-    expect(second.centre.x).toBeCloseTo(36.8, 6);
+    expect(commission.frames[0].x).toBeCloseTo(DOOR_XS[1] + 6, 6);
+    expect(first.centre.x).toBeCloseTo(DOOR_XS[1] + 17, 6);
+    expect(second.centre.x).toBeCloseTo(DOOR_XS[1] + 21.2, 6);
   });
 
   it("hangs a wide frame further from the piece before it than a narrow one, edge included", () => {
@@ -152,7 +154,39 @@ describe("the building", () => {
     expect(ROTUNDA.height).toBeGreaterThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 2);
   });
 
-  it("hangs Room I's four plaques two by two between its doors, centred in the room under its frieze", () => {
+  it("hangs the portrait first in Room I: upright, four to five, at eye height, well inside the door from the hall", () => {
+    const outerHalf = PORTRAIT.width / 2 + 0.15;
+
+    expect(PORTRAIT.width / PORTRAIT.height).toBeCloseTo(4 / 5, 6);
+    expect(PORTRAIT.width).toBeCloseTo(1, 1);
+    expect(Math.abs(PORTRAIT.y - EYE)).toBeLessThan(0.2);
+    expect(PORTRAIT.x - outerHalf).toBeGreaterThan(DOOR_XS[0] + WALL_THICKNESS / 2 + 1);
+    expect(PORTRAIT.x).toBeLessThan(ROOM_ONE_X);
+    expect(PORTRAIT.y + PORTRAIT.height / 2 + 0.15).toBeLessThan(WALL_HEIGHT - 2);
+    expect(PORTRAIT.y - PORTRAIT.height / 2 - 0.15).toBeGreaterThan(0.6);
+  });
+
+  it("keeps the portrait clear of the plaques, with more bare wall between them than either is wide", () => {
+    const portraitEdge = PORTRAIT.x + PORTRAIT.width / 2 + 0.15;
+    const plaquesEdge = SKILL_PLAQUES.x - SKILL_WALL.width / 2;
+
+    expect(plaquesEdge - portraitEdge).toBeGreaterThan(SKILL_WALL.width);
+    expect(SKILL_PLAQUES.x).toBeGreaterThan(ROOM_ONE_X);
+  });
+
+  it("frames the portrait in gilt like the commission, with the picture it is given", () => {
+    expect(portraitSlot("assets/portrait.webp")).toEqual({
+      x: PORTRAIT.x,
+      y: PORTRAIT.y,
+      width: PORTRAIT.width,
+      height: PORTRAIT.height,
+      gilded: true,
+      src: "assets/portrait.webp",
+    });
+    expect(pieceSlots([COMMISSION])[0].frames[0].gilded).toBeTrue();
+  });
+
+  it("hangs Room I's four plaques two by two in the far half of the room, between its doors and under its frieze", () => {
     const slots = skillPlaqueSlots();
     const xs = slots.map((slot) => slot.x);
     const ys = slots.map((slot) => slot.y);
@@ -160,7 +194,7 @@ describe("the building", () => {
     expect(ROOM_ONE_X).toBeCloseTo((DOOR_XS[0] + DOOR_XS[1]) / 2, 6);
     expect(slots.length).toBe(4);
     expect(slots.length).toBe(SKILL_PLAQUES.count);
-    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(ROOM_ONE_X, 6);
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(SKILL_PLAQUES.x, 6);
     expect((Math.min(...ys) + Math.max(...ys)) / 2).toBeCloseTo(SKILL_PLAQUES.y, 6);
     expect(Math.min(...xs) - SKILL_PLAQUES.width / 2).toBeGreaterThan(DOOR_XS[0] + 1);
     expect(Math.max(...xs) + SKILL_PLAQUES.width / 2).toBeLessThan(DOOR_XS[1] - 1);

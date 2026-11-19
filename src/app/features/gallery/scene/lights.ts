@@ -1,5 +1,6 @@
 import { HemisphereLight, MathUtils, Object3D, SpotLight } from "three";
-import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot, ROTUNDA, SKILL_PLAQUES } from "./layout";
+import { FIRST_WORK_STOP } from "./film";
+import { DESK, HANG_Z, LECTERN, MEDALLION, PieceSlot, PORTRAIT, ROTUNDA, SKILL_PLAQUES } from "./layout";
 
 interface PieceLight {
   light: SpotLight;
@@ -38,7 +39,8 @@ export class GalleryLights {
   private readonly lionRim = spot([ROTUNDA.x + 1.6, 4.6, 4.8], [ROTUNDA.x, 2.6, 0], 0.46, COOL);
 
   constructor(slots: readonly PieceSlot[]) {
-    const firstPiece = 3;
+    const firstPiece = FIRST_WORK_STOP;
+    const overview = firstPiece - 1;
     const visitorsBook = firstPiece + slots.length;
 
     this.lionKey.penumbra = 1;
@@ -49,14 +51,15 @@ export class GalleryLights {
     this.addLight(this.lionKey);
     this.addLight(this.lionRim);
 
-    this.addPiece(spot([MEDALLION.x - 2.8, 4.8, MEDALLION.z], [MEDALLION.x, MEDALLION.y, MEDALLION.z], 0.5), [1], 1, 80, 0.5, 0.38);
-    this.addPiece(spot([SKILL_PLAQUES.x, 4.9, HANG_Z + 3.2], [SKILL_PLAQUES.x, SKILL_PLAQUES.y, HANG_Z], 0.62), [1], 1, 110, 0.66, 0.56);
+    this.addPiece(spot([MEDALLION.x - 2.8, 4.8, MEDALLION.z], [MEDALLION.x, MEDALLION.y, MEDALLION.z], 0.5), [1, 2], 2, 80, 0.5, 0.38);
+    this.addPiece(spot([PORTRAIT.x, 4.9, HANG_Z + 3.2], [PORTRAIT.x, PORTRAIT.y, HANG_Z], 0.5), [1], 1, 95, 0.5, 0.4);
+    this.addPiece(spot([SKILL_PLAQUES.x, 4.9, HANG_Z + 3.2], [SKILL_PLAQUES.x, SKILL_PLAQUES.y, HANG_Z], 0.62), [2], 2, 110, 0.66, 0.56);
 
     slots.forEach((slot, index) => {
       const commission = slot.frames.length > 1 || slot.frames[0].gilded;
       this.addPiece(
         spot([slot.centre.x, 4.9, HANG_Z + 3.2], [slot.centre.x, slot.centre.y, HANG_Z], 0.62),
-        [2, firstPiece + index],
+        [overview, firstPiece + index],
         firstPiece + index,
         commission ? 110 : 75,
         commission ? 0.66 : 0.44,

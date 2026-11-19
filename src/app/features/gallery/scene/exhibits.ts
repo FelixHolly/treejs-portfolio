@@ -1,4 +1,6 @@
 import {
+  BackSide,
+  CatmullRomCurve3,
   CircleGeometry,
   CylinderGeometry,
   Group,
@@ -9,10 +11,22 @@ import {
   PlaneGeometry,
   Texture,
   TorusGeometry,
+  TubeGeometry,
+  Vector3,
 } from "three";
 import { Palette, slab } from "./building";
 import { glow } from "./atmosphere";
-import { DESK, FrameSlot, HANG_Z, LECTERN, LETTERBOX, MEDALLION } from "./layout";
+import { FrameSlot, HANG_Z, MEDALLION } from "./layout";
+
+/** What a frame puts round its picture: the mat's width, the moulding's, and how far the moulding stands off the wall. */
+function frameProfile(slot: FrameSlot): { mat: number; bar: number; depth: number } {
+  const large = slot.width > 2;
+  return {
+    mat: slot.gilded ? (large ? 0.12 : 0.09) : 0.07,
+    bar: slot.gilded ? (large ? 0.09 : 0.06) : 0.035,
+    depth: 0.07,
+  };
+}
 
 export interface FramedPicture<Surface extends Material = MeshBasicMaterial> {
   group: Group;
@@ -34,10 +48,7 @@ export function framedPicture(
   plainFrame: MeshLambertMaterial,
   surface: Material = new MeshBasicMaterial({ color: 0x1b1b1f, toneMapped: false }),
 ): FramedPicture<Material> {
-  const large = slot.width > 2;
-  const mat = slot.gilded ? (large ? 0.12 : 0.09) : 0.07;
-  const bar = slot.gilded ? (large ? 0.09 : 0.06) : 0.035;
-  const depth = 0.07;
+  const { mat, bar, depth } = frameProfile(slot);
   const material = slot.gilded ? palette.gold : plainFrame;
   const innerWidth = slot.width + mat * 2;
   const innerHeight = slot.height + mat * 2;
@@ -66,6 +77,66 @@ export function hang(picture: FramedPicture["picture"], map: Texture): void {
   picture.material.map = map;
   picture.material.color.set(0xdedede);
   picture.material.needsUpdate = true;
+}
+
+/** The picture light: how far its hood stands above the frame and out from it, and the hood's own size. */
+const PICTURE_LIGHT = { rise: 0.1, reach: 0.12, hood: 0.03, tilt: 0.1, share: 0.44, longest: 1.25 } as const;
+/** Its light on the mat: how strong it is right under the lamp, and how far across and down the mat it has gone. */
+const WASH = { strength: 0.42, across: 1.7, down: 0.6 } as const;
+
+/**
+ * A brass picture light arching over a frame, to be added to the frame's own group.
+ * Its light on the mat is painted on: it lies behind the picture, so only the mat takes it.
+ */
+export function pictureLight(slot: FrameSlot, palette: Palette): Group {
+  const { mat, bar, depth } = frameProfile(slot);
+  const { rise, reach, hood, tilt } = PICTURE_LIGHT;
+  const innerWidth = slot.width + mat * 2;
+  const innerHeight = slot.height + mat * 2;
+  const top = innerHeight / 2 + bar;
+  const length = Math.min((innerWidth + bar * 2) * PICTURE_LIGHT.share, PICTURE_LIGHT.longest);
+  const light = new Group();
+
+  const trough = new CylinderGeometry(hood, hood, length, 12, 1, false, 0, Math.PI);
+  const lamp = new Group();
+  lamp.position.set(0, top + rise, depth / 2 + reach);
+  lamp.rotation.x = tilt;
+  const shell = new Mesh(trough, palette.gold);
+  const lining = new Mesh(trough, new MeshBasicMaterial({ color: 0xffe3ab, side: BackSide, toneMapped: false }));
+  const tube = new Mesh(
+    new CylinderGeometry(0.008, 0.008, length - 0.05, 8),
+    new MeshBasicMaterial({ color: 0xfff6dd, toneMapped: false }),
+  );
+  // A half cylinder opens sideways as built; turned onto its side its open half faces down
+  for (const part of [shell, lining, tube]) part.rotation.z = Math.PI / 2;
+  tube.position.y = 0.008;
+  lamp.add(shell, lining, tube);
+
+  const arms = length > 0.8 ? [-length * 0.28, length * 0.28] : [0];
+  for (const x of arms) {
+    const sweep = new CatmullRomCurve3([
+      new Vector3(x, top - 0.02, -depth / 2 + 0.012),
+      new Vector3(x, top + rise * 0.7, -depth / 2 + 0.02),
+      new Vector3(x, top + rise + 0.035, depth / 2 + reach * 0.4),
+      new Vector3(x, top + rise + 0.02, depth / 2 + reach - 0.004),
+    ]);
+    light.add(
+      new Mesh(new TubeGeometry(sweep, 10, 0.006, 6), palette.gold),
+      slab(0.05, 0.014, 0.03, x, top + 0.007, -depth / 2 + 0.015, palette.gold),
+    );
+  }
+
+  const wash = new Mesh(new PlaneGeometry(innerWidth, innerHeight), glow("pool", WASH.strength));
+  const uv = wash.geometry.getAttribute("uv");
+  // The glow fades from the middle of its own square; this sets that middle under the lamp, on the mat's top edge
+  for (let index = 0; index < uv.count; index++) {
+    uv.setXY(index, 0.5 + (uv.getX(index) - 0.5) / WASH.across, 0.5 - (1 - uv.getY(index)) / (WASH.down * 2));
+  }
+  wash.position.z = -depth / 2 + 0.014;
+  wash.name = "wash";
+
+  light.add(lamp, wash);
+  return light;
 }
 
 /** A lettered board in a thin gold frame. Unlit, so it reads the same in a pool of light as beside one. */
@@ -98,100 +169,6 @@ export function medallion(palette: Palette): Group {
   field.position.z = -0.015;
 
   group.add(outer, inner, field);
-  return group;
-}
-
-export function lectern(palette: Palette, towards: { x: number; z: number }): Group {
-  const group = new Group();
-  group.position.set(LECTERN.x, 0, LECTERN.z);
-  group.rotation.y = Math.atan2(towards.x - LECTERN.x, towards.z - LECTERN.z);
-
-  const top = new Group();
-  top.position.y = 1.08;
-  top.rotation.x = 0.38;
-  top.add(slab(0.74, 0.04, 0.52, 0, 0, 0, palette.wood), slab(0.64, 0.024, 0.44, 0, 0.032, 0, palette.wood));
-
-  for (const side of [-1, 1]) {
-    const page = new Mesh(new PlaneGeometry(0.3, 0.4), palette.bone);
-    page.rotation.x = -Math.PI / 2;
-    page.rotation.y = side * 0.06;
-    page.position.set(side * 0.155, 0.05, 0);
-    top.add(page);
-  }
-  top.add(slab(0.012, 0.004, 0.46, 0, 0.052, 0.02, palette.gold));
-
-  group.add(slab(0.5, 0.06, 0.5, 0, 0.03, 0, palette.wood), slab(0.26, 1.02, 0.26, 0, 0.55, 0, palette.wood), top);
-  return group;
-}
-
-export function writingDesk(palette: Palette, towards: { x: number; z: number }): Group {
-  const group = new Group();
-  group.position.set(DESK.x, 0, DESK.z);
-  group.rotation.y = Math.atan2(towards.x - DESK.x, towards.z - DESK.z);
-
-  group.add(slab(1.5, 0.05, 0.78, 0, 0.77, 0, palette.wood));
-  for (const x of [-0.69, 0.69]) {
-    for (const z of [-0.33, 0.33]) group.add(slab(0.06, 0.745, 0.06, x, 0.3725, z, palette.wood));
-  }
-
-  const sheets: [number, number, number][] = [
-    [-0.05, 0.08, 0.12],
-    [0.12, -0.02, -0.2],
-  ];
-  sheets.forEach(([x, z, turn], index) => {
-    const sheet = new Mesh(new PlaneGeometry(0.3, 0.42), palette.bone);
-    sheet.rotation.x = -Math.PI / 2;
-    sheet.rotation.z = turn;
-    sheet.position.set(x, 0.797 + index * 0.002, z);
-    group.add(sheet);
-  });
-
-  const inkwell = new Mesh(new CylinderGeometry(0.035, 0.045, 0.06, 20), palette.gold);
-  inkwell.position.set(0.52, 0.825, -0.22);
-  const pen = slab(0.2, 0.008, 0.008, 0.3, 0.802, -0.12, palette.gold);
-  pen.rotation.y = 0.5;
-
-  group.add(inkwell, pen, deskLamp(palette));
-  return group;
-}
-
-/** A lit reading lamp; its light on the desk is painted on rather than computed. */
-function deskLamp(palette: Palette): Group {
-  const lamp = new Group();
-  lamp.position.set(-0.54, 0.795, -0.2);
-
-  const part = (top: number, bottom: number, height: number, y: number, material: MeshBasicMaterial | Palette["gold"]) => {
-    const mesh = new Mesh(new CylinderGeometry(top, bottom, height, 28), material);
-    mesh.position.y = y;
-    return mesh;
-  };
-  const shade = part(0.07, 0.15, 0.14, 0.4, new MeshBasicMaterial({ color: 0xe2b56a, toneMapped: false }));
-
-  const pool = new Mesh(new PlaneGeometry(1.1, 0.8), glow("pool", 0.5));
-  pool.rotation.x = -Math.PI / 2;
-  pool.position.set(0.22, 0.008, 0.14);
-
-  lamp.add(part(0.075, 0.085, 0.02, 0.01, palette.gold), part(0.011, 0.011, 0.33, 0.175, palette.gold), shade, pool);
-  return lamp;
-}
-
-/** A brass letterbox on the wall above the writing desk; its lettering is added once the fonts are ready. */
-export function letterbox(palette: Palette): Group {
-  const { width, height, depth, slotRise } = LETTERBOX;
-  const group = new Group();
-  group.position.set(LETTERBOX.x, LETTERBOX.y, HANG_Z + depth / 2);
-
-  const keyhole = new Mesh(new CylinderGeometry(0.014, 0.014, 0.01, 16), palette.dark);
-  keyhole.rotation.x = Math.PI / 2;
-  keyhole.position.set(0, -height * 0.28, depth / 2 + 0.012);
-
-  group.add(
-    slab(width, height, depth, 0, 0, 0, palette.gold),
-    slab(width + 0.08, 0.05, depth + 0.05, 0, height / 2 + 0.025, 0.025, palette.gold),
-    slab(width * 0.68, 0.034, 0.012, 0, slotRise, depth / 2, palette.dark),
-    slab(width * 0.72, height * 0.34, 0.012, 0, -height * 0.26, depth / 2, palette.gold),
-    keyhole,
-  );
   return group;
 }
 

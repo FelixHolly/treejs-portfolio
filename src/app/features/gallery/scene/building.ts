@@ -24,6 +24,7 @@ import {
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
+import { brushedTexture, walnutTexture, writtenPageTexture } from "./textures";
 
 export interface Palette {
   wall: Material;
@@ -35,9 +36,18 @@ export interface Palette {
   dark: Material;
   wood: Material;
   pedestal: Material;
+  walnut: Material;
+  /** Brushed, for the larger metal surfaces. */
+  brass: Material;
+  paper: Material;
+  /** A sheet somebody has written on. */
+  page: Material;
 }
 
 export function createPalette(): Palette {
+  // One texture as colour and as relief, so the scene's own clean-up, which frees `map`, frees both
+  const grain = walnutTexture();
+
   return {
     wall: new MeshLambertMaterial({ color: 0x646362 }),
     wallInside: new MeshLambertMaterial({ color: 0x646362, side: BackSide }),
@@ -49,6 +59,10 @@ export function createPalette(): Palette {
     dark: new MeshLambertMaterial({ color: 0x1c1a19 }),
     wood: new MeshLambertMaterial({ color: 0x5a4030 }),
     pedestal: new MeshStandardMaterial({ color: 0x33312e, roughness: 0.6, metalness: 0 }),
+    walnut: new MeshStandardMaterial({ map: grain, bumpMap: grain, bumpScale: 0.25, roughness: 0.6, metalness: 0 }),
+    brass: new MeshStandardMaterial({ color: 0xbd9a45, map: brushedTexture(), roughness: 0.5, metalness: 0.7 }),
+    paper: new MeshStandardMaterial({ color: 0xd8d2c3, roughness: 0.92, metalness: 0 }),
+    page: new MeshStandardMaterial({ map: writtenPageTexture(), roughness: 0.92, metalness: 0 }),
   };
 }
 

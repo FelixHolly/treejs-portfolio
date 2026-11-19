@@ -21,6 +21,10 @@ export interface GalleryViewOptions {
   onFilmLost(): void;
   /** Called once if the scene is still too slow to watch after giving up all the quality it can. */
   onSlow(): void;
+  /** Called with the stop of the piece the mouse has come to point at, and with null once it points at none. */
+  onPointed(stop: number | null): void;
+  /** Called with the stop of a piece the visitor clicked; the page decides what that does. */
+  onChosen(stop: number): void;
 }
 
 /** Where the page's own text sits over the scene, so the camera can frame each piece clear of it. */
@@ -41,6 +45,12 @@ export interface GalleryView {
   jumpTo(progress: number): void;
   /** Mouse position in -1..1 on both axes, for the look-around offset. */
   setPointer(x: number, y: number): void;
+  /** The mouse over the bare scene, in -1..1 across and down the canvas: the piece there, if any, is reported and lit. */
+  pointAt(x: number, y: number): void;
+  /** The mouse has left the bare scene, for the page's own text or for good. */
+  pointAway(): void;
+  /** A click on the bare scene at that place; a piece there is reported as chosen. */
+  click(x: number, y: number): void;
   /** Call when the canvas changes size or the page's text moves. */
   resize(framing: PageFraming): void;
   setPaused(paused: boolean): void;

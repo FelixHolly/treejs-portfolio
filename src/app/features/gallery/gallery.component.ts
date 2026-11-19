@@ -48,6 +48,10 @@ const STATUE_HALF_WIDTH = 0.2;
 const SIDE_GUTTER = 24;
 /** Keys must not step the walk while the visitor is typing or operating a control. */
 const INTERACTIVE = "input, textarea, select, button, a, dialog, [contenteditable]";
+/** Where the scene shows through the page: its empty stretches, and the gaps in the entrance's own layout. */
+const BARE = "canvas, main, .stop, .stop--entrance > .label, .entrance-foot, .plaques";
+/** A press that travels further than this before it lifts was a drag, not a click, in pixels. */
+const CLICK_SLOP = 4;
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
 
 /** Empty at the entrance, which has its own plaque for this, and at the last stop, which leads nowhere. */
@@ -80,6 +84,7 @@ function sameFraming(a: PageFraming, b: PageFraming): boolean {
   ],
   templateUrl: "./gallery.component.html",
   styleUrl: "./gallery.component.scss",
+  host: { "[class.cursor-pointer]": "pointed() !== null" },
 })
 export class GalleryComponent {
   private readonly document = inject(DOCUMENT);
@@ -113,6 +118,8 @@ export class GalleryComponent {
   /** True once the visitor has walked on from the entrance, so its plaques stop floating over the walk. */
   readonly setOff = signal(false);
   readonly filmPaused = signal(false);
+  /** The stop of the piece under the mouse, as the scene reports it. */
+  readonly pointed = signal<number | null>(null);
   private readonly filmLost = signal(false);
   readonly filmControlFor = computed(() => (this.filmLost() ? undefined : this.filmSlug));
   readonly currentRoom = computed(() => this.stops[this.activeIndex()].room);
@@ -128,6 +135,7 @@ export class GalleryComponent {
   private fadeTarget = 0;
   private fadeTimer = 0;
   private framing: PageFraming = { labelShare: 0, statueBand: OPEN_BAND };
+  private pressedAt?: readonly [x: number, y: number];
 
   constructor() {
     this.viewMode.active.set("gallery");
@@ -163,6 +171,7 @@ export class GalleryComponent {
 
   closerLook(work: Work): void {
     this.lightbox().open(work);
+    this.scene?.pointAway();
     this.holdFilm();
   }
 
@@ -199,9 +208,26 @@ export class GalleryComponent {
       this.syncFromScroll();
     };
     const onKey = (event: KeyboardEvent) => this.onKey(event);
+    const across = (event: MouseEvent) => (event.clientX / root.clientWidth) * 2 - 1;
+    const down = (event: MouseEvent) => (event.clientY / window.innerHeight) * 2 - 1;
     const onPointer = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
-      this.scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, (event.clientY / window.innerHeight) * 2 - 1);
+      this.scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, down(event));
+      if (this.overScene(event)) this.scene?.pointAt(across(event), down(event));
+      else this.scene?.pointAway();
+    };
+    const onLeave = () => this.scene?.pointAway();
+    const onPress = (event: PointerEvent) => {
+      const counts = event.pointerType === "mouse" && event.button === 0 && this.overScene(event);
+      this.pressedAt = counts ? [event.clientX, event.clientY] : undefined;
+    };
+    // A press that began in a label and lifts over the scene is the end of a text selection, not a click
+    const onClick = (event: MouseEvent) => {
+      const from = this.pressedAt;
+      this.pressedAt = undefined;
+      if (!from || !this.overScene(event)) return;
+      if (Math.hypot(event.clientX - from[0], event.clientY - from[1]) > CLICK_SLOP) return;
+      this.scene?.click(across(event), down(event));
     };
     const onHash = () => this.restoreFromHash("smooth");
     const onBack = () => this.restoreFromHash("smooth");
@@ -212,6 +238,9 @@ export class GalleryComponent {
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerdown", onPress, { passive: true });
+    window.addEventListener("click", onClick);
+    root.addEventListener("pointerleave", onLeave);
     window.addEventListener("hashchange", onHash);
     window.addEventListener("popstate", onBack);
     this.document.addEventListener("visibilitychange", onVisibility);
@@ -254,6 +283,9 @@ export class GalleryComponent {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onPress);
+      window.removeEventListener("click", onClick);
+      root.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("hashchange", onHash);
       window.removeEventListener("popstate", onBack);
       this.document.removeEventListener("visibilitychange", onVisibility);
@@ -281,7 +313,23 @@ export class GalleryComponent {
       onFilmLost: () => this.filmLost.set(true),
       assets: { dracoPath: environment.assets.dracoPath, lionModel: environment.assets.models.heroModel },
       onSlow: () => this.slow.set(true),
+      onPointed: (stop) => this.pointed.set(stop),
+      onChosen: (stop) => this.choose(stop),
     });
+  }
+
+  private overScene(event: Event): boolean {
+    const target = event.target;
+    return target instanceof Element && target.matches(BARE) && this.lightbox().work() === null;
+  }
+
+  /** A clicked piece is walked to; one the visitor already stands at opens its closer look, and the statue leads on into Room I. */
+  private choose(stop: number): void {
+    if (this.lightbox().work() !== null || !this.stops[stop]) return;
+    const work = this.stops[stop].work;
+    if (stop !== this.activeIndex()) this.goTo(stop, true);
+    else if (work) this.closerLook(work);
+    else if (stop === 0) this.goTo(1, true);
   }
 
   private measure(): void {

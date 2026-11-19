@@ -1,0 +1,25 @@
+.postscript {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--print);
+}
+
+a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    color: var(--pen);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--print);
+    outline-offset: 3px;
+  }
+
+  /* A finger gets the full height; the padding of an inline link adds to its target, not to the line */
+  @media (pointer: coarse) {
+    padding-block: 0.85rem;
+  }
+}

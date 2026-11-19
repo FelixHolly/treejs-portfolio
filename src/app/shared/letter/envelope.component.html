@@ -1,0 +1,24 @@
+<svg class="folds" viewBox="0 0 100 62" preserveAspectRatio="none" aria-hidden="true">
+    <path class="seam" d="M0 62 38 27M100 62 62 27" />
+    <path class="flap" d="M0 0 50 34 100 0" />
+</svg>
+<div class="postage" aria-hidden="true">
+    <div class="stamp">
+        <div class="stamp-face">
+            <img ngSrc="assets/lion-stamp.webp" width="216" height="280" alt="">
+            <span>FH</span>
+        </div>
+    </div>
+    <svg class="postmark" viewBox="0 0 120 44" aria-hidden="true">
+        <circle cx="22" cy="22" r="19" />
+        <circle cx="22" cy="22" r="12.5" />
+        <path d="M46 8q6-5 12 0t12 0 12 0 12 0 12 0 12 0M46 17q6-5 12 0t12 0 12 0 12 0 12 0 12 0M46 26q6-5 12 0t12 0 12 0 12 0 12 0 12 0M46 35q6-5 12 0t12 0 12 0 12 0 12 0 12 0" />
+    </svg>
+</div>
+<p class="address">
+    <span class="sr-only">An envelope addressed to </span>
+    <span class="addressee">{{ name() }}</span>
+    <span class="sr-only">, </span>
+    <span>{{ room() }}</span>
+</p>
+<app-wax-seal class="seal" />

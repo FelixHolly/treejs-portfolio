@@ -24,7 +24,9 @@ import {
 import { RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
-import { FramedPicture, framedPicture, lectern, letterbox, medallion, nameBoard, writingDesk } from "./exhibits";
+import { FramedPicture, framedPicture, hang, lectern, letterbox, medallion, nameBoard, writingDesk } from "./exhibits";
+import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
+import { FilmScreen } from "./film-screen";
 import { GalleryView, GalleryViewOptions, OPEN_BAND, PageFraming } from "./gallery-view";
 import {
   DOOR,
@@ -74,9 +76,12 @@ export class GalleryScene implements GalleryView {
   private readonly pointer = new Vector2();
   private readonly look = new Vector2();
   private readonly cancelLion: () => void;
+  private readonly filmPlace?: FilmPlacement;
 
   private path!: CameraPath;
   private mail!: Post;
+  private film?: FilmScreen;
+  private filmHeld = false;
   private progress = 0;
   private target = 0;
   private lionLevel: number;
@@ -108,6 +113,7 @@ export class GalleryScene implements GalleryView {
     this.scene.fog = new Fog(BACKGROUND, 9, 36);
 
     this.slots = pieceSlots(options.works);
+    this.filmPlace = filmPlacement(options.works, options.films);
     this.lights = new GalleryLights(this.slots);
     this.plate = framedPicture({ ...PLATE, gilded: true, src: "" }, this.palette, this.plainFrame);
     this.lionLevel = EMPTY_PLINTH_LEVEL;
@@ -171,6 +177,7 @@ export class GalleryScene implements GalleryView {
   setPaused(paused: boolean): void {
     this.paused = paused;
     if (paused) {
+      this.film?.pause();
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
       this.running = false;
@@ -179,10 +186,16 @@ export class GalleryScene implements GalleryView {
     }
   }
 
+  setFilmHeld(held: boolean): void {
+    this.filmHeld = held;
+    this.invalidate();
+  }
+
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.rafId);
     this.cancelLion();
+    this.film?.dispose();
 
     this.scene.traverse((object) => {
       const mesh = object as Mesh;
@@ -219,6 +232,7 @@ export class GalleryScene implements GalleryView {
 
     const rising = this.advanceIntro(now);
     const posting = this.mail.update(now);
+    const filming = this.runFilm();
 
     this.path.sample(this.progress, this.pose);
     this.camera.position.copy(this.pose.position);
@@ -229,10 +243,17 @@ export class GalleryScene implements GalleryView {
     this.atmosphere.update(this.progress, this.lionLevel);
     this.renderer.render(this.scene, this.camera);
 
-    this.running = gliding || looking || rising || posting;
+    this.running = gliding || looking || rising || posting || filming;
     this.measure(seconds);
     if (this.running) this.invalidate();
   };
+
+  private runFilm(): boolean {
+    if (!this.film || !this.filmPlace) return false;
+    if (filmShouldPlay(this.progress, this.filmPlace.stop, this.filmHeld)) this.film.play();
+    else this.film.pause();
+    return this.film.playing;
+  }
 
   private async unveil(lion: Group): Promise<void> {
     try {
@@ -288,13 +309,22 @@ export class GalleryScene implements GalleryView {
       this.mail.envelope,
     );
 
-    for (const slot of this.slots) {
-      for (const frame of slot.frames) {
+    this.slots.forEach((slot, work) => {
+      slot.frames.forEach((frame, index) => {
         const picture = framedPicture(frame, this.palette, this.plainFrame);
         this.pictures.push(picture);
         this.scene.add(picture.group);
-      }
-    }
+        if (index === 0 && work === this.filmPlace?.work) {
+          this.film = new FilmScreen(
+            picture.picture,
+            this.filmPlace.src,
+            frame.width / frame.height,
+            () => this.invalidate(),
+            () => this.options.onFilmLost(),
+          );
+        }
+      });
+    });
   }
 
   /** The screenshots are fetched once the visitor leaves the entrance, not before. */
@@ -313,9 +343,8 @@ export class GalleryScene implements GalleryView {
         texture.colorSpace = SRGBColorSpace;
         texture.anisotropy = anisotropy;
         coverFit(texture, slot.width / slot.height);
-        picture.material.map = texture;
-        picture.material.color.set(0xdedede);
-        picture.material.needsUpdate = true;
+        if (picture === this.film?.picture) this.film.hangStill(texture);
+        else hang(picture, texture);
         this.invalidate();
       });
     }

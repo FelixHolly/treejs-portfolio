@@ -98,6 +98,18 @@
           <div class="label-foot flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3">
             @if (stop.work; as work) {
               <button type="button" class="view-switch" (click)="closerLook(work)">Closer look</button>
+              @if (work.slug === filmControlFor()) {
+                <button type="button" class="film-toggle inline-flex items-center gap-1.5 min-h-6 -my-1 font-mono text-[0.7rem] text-stone transition-colors hover:text-bone" (click)="toggleFilm()">
+                  <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor" aria-hidden="true">
+                    @if (filmPaused()) {
+                      <path d="M2.5 1v10l8-5z" />
+                    } @else {
+                      <path d="M2 1h3v10H2zM7 1h3v10H7z" />
+                    }
+                  </svg>
+                  {{ filmPaused() ? "Play the film" : "Pause the film" }}
+                </button>
+              }
             }
             @if (onward[index]; as next) {
               <!-- The negative margin lets the 24px target reach into the space around it, so the row is only as tall as its text needs -->
@@ -137,4 +149,4 @@
   </div>
 }
 
-<app-lightbox />
+<app-lightbox (closed)="holdFilm()" />

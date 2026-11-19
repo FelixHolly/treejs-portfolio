@@ -82,3 +82,47 @@
 .plain-frame--wide {
   width: min(100%, 22rem);
 }
+
+.account {
+  border-block: 1px solid #26262c;
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c7a44a;
+    cursor: pointer;
+    list-style: none;
+    transition: color 0.2s ease;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    svg {
+      transition: transform 0.2s ease;
+    }
+
+    &:hover {
+      color: #e8e5de;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #c7a44a;
+      outline-offset: 2px;
+    }
+  }
+
+  &[open] {
+    padding-bottom: 1.75rem;
+
+    summary svg {
+      transform: rotate(90deg);
+    }
+  }
+}

@@ -44,6 +44,29 @@ export const WORKS: readonly Work[] = [
         orientation: "portrait",
       },
     ],
+    caseStudy: [
+      {
+        heading: "How it is built",
+        text: "One Angular 21 app serves both the public site, rendered on the server so recipes load fast and search engines can read them, and the admin area, rendered in the browser. Behind it sit a Spring Boot 4 API on Java 21 with PostgreSQL 17, and a small Python service for imports. Caddy stands in front and handles HTTPS.",
+      },
+      {
+        heading: "From video to recipe",
+        text: "The import reads a video's details and transcript, and a language model drafts a structured recipe from them. A vocabulary check and a normaliser clean the draft, and a person reviews it in the admin before anything is published.",
+      },
+      {
+        heading: "Two decisions",
+        text: "Search runs on an in-memory index of every published recipe instead of a cache per filter combination, so result counts and filter counts always agree; past about two thousand recipes I would revisit it. Releases are blue and green: a new backend must pass its health check before traffic moves to it, a failed release rolls back by itself, and every database change is written so the previous release keeps working.",
+      },
+      {
+        heading: "In numbers",
+        text: "About 2,500 frontend tests, including automated accessibility checks, and about 1,000 backend tests run before every release. The whole platform runs on one small server for about nine euros a month.",
+      },
+    ],
+    film: {
+      src: "assets/works/kuechenschelle-film.webm",
+      description:
+        "A silent twelve-second visit to kuechenschelle.at: the home page, the recipe index, a search for Strudel, and a recipe scrolled to its ingredients.",
+    },
   },
   {
     slug: "wheelwallet",

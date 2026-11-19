@@ -2,6 +2,7 @@ export interface SceneWork {
   slug: string;
   kind: "commission" | "study" | "self-portrait";
   images: { src: string; portrait: boolean }[];
+  film?: string;
 }
 
 export interface GalleryViewOptions {
@@ -12,7 +13,11 @@ export interface GalleryViewOptions {
   /** The storeys of the section drawing in Room I, from the top down. */
   anatomy: readonly { caption: string; tools: readonly string[] }[];
   reducedMotion: boolean;
+  /** False when nothing may play by itself: reduced motion, or a visitor saving data. */
+  films: boolean;
   assets: { dracoPath: string; lionModel: string };
+  /** Called once if the film cannot be played, so the page can withdraw its control. */
+  onFilmLost(): void;
   /** Called once if the first frames average under 30 fps. */
   onSlow(): void;
 }
@@ -38,6 +43,8 @@ export interface GalleryView {
   /** Call when the canvas changes size or the page's text moves. */
   resize(framing: PageFraming): void;
   setPaused(paused: boolean): void;
+  /** Holds or releases the film in a work's frame; the scene alone decides when a released film plays. */
+  setFilmHeld(held: boolean): void;
   /** Sends the envelope on the writing desk into the letterbox, once the visitor's letter has gone. */
   post(): void;
   dispose(): void;

@@ -51,6 +51,13 @@ export function framedPicture(slot: FrameSlot, palette: Palette, plainFrame: Mes
   return { group, picture, slot };
 }
 
+/** A little under full white, so the picture sits in the room's light rather than glowing out of it. */
+export function hang(picture: FramedPicture["picture"], map: Texture): void {
+  picture.material.map = map;
+  picture.material.color.set(0xdedede);
+  picture.material.needsUpdate = true;
+}
+
 /** A lettered board in a thin gold frame. Unlit, so it reads the same in a pool of light as beside one. */
 export function nameBoard(x: number, y: number, width: number, height: number, lettering: Texture, palette: Palette): Group {
   const bar = 0.028;

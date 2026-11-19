@@ -61,6 +61,75 @@ describe("WorksComponent", () => {
     ]);
   });
 
+  describe("how the commission was built", () => {
+    let details: HTMLDetailsElement;
+
+    beforeEach(() => {
+      details = element.querySelector<HTMLDetailsElement>("#works-kuechenschelle details")!;
+    });
+
+    it("sits under the commission's label, closed until asked for, behind a native summary", () => {
+      const label = element.querySelector("#works-kuechenschelle app-wall-label")!;
+
+      expect(details.open).toBeFalse();
+      expect(details.firstElementChild?.tagName).toBe("SUMMARY");
+      expect(details.querySelector("summary")?.textContent?.trim()).toBe("How it was built");
+      expect(label.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(label.contains(details)).toBeFalse();
+    });
+
+    it("draws its disclosure mark as an icon hidden from assistive technology", () => {
+      expect(details.querySelector("summary svg[aria-hidden='true']")).not.toBeNull();
+    });
+
+    it("opens from the summary without any script of its own", () => {
+      details.querySelector("summary")!.click();
+
+      expect(details.open).toBeTrue();
+    });
+
+    it("holds the four parts of the account under headings one level below the work's title", () => {
+      expect(element.querySelector("#works-kuechenschelle app-wall-label h3")?.textContent).toBe("Küchenschelle");
+      expect(Array.from(details.querySelectorAll("h4")).map((heading) => heading.textContent)).toEqual([
+        "How it is built",
+        "From video to recipe",
+        "Two decisions",
+        "In numbers",
+      ]);
+      expect(details.querySelectorAll("h3").length).toBe(0);
+      expect(details.textContent).toContain("about nine euros a month");
+    });
+
+    it("offers the film above the account, with controls and a poster, never playing or loading by itself", () => {
+      const video = details.querySelector("video")!;
+      const account = details.querySelector("app-case-study")!;
+
+      expect(video.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(video.controls).toBeTrue();
+      expect(video.muted).toBeTrue();
+      expect(video.autoplay).toBeFalse();
+      expect(video.paused).toBeTrue();
+      expect(video.preload).toBe("none");
+      expect(video.hasAttribute("playsinline")).toBeTrue();
+      expect(video.getAttribute("src")).toBe("assets/works/kuechenschelle-film.webm");
+      expect(video.getAttribute("poster")).toBe("assets/works/kuechenschelle-home.webp");
+      expect(video.getAttribute("aria-label")).toContain("kuechenschelle.at");
+    });
+
+    it("does not make the wall label any longer", () => {
+      const label = element.querySelector("#works-kuechenschelle app-wall-label")!;
+
+      expect(label.textContent).not.toContain("How it is built");
+      expect(label.querySelector("video")).toBeNull();
+    });
+
+    it("adds nothing to works that have no account or film", () => {
+      expect(element.querySelectorAll("details").length).toBe(1);
+      expect(element.querySelectorAll("video").length).toBe(1);
+      expect(element.querySelector(".plain-frames app-case-study")).toBeNull();
+    });
+  });
+
   it("no longer mentions the retired GreenWave project", () => {
     expect(element.textContent).not.toContain("GreenWave");
   });

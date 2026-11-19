@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
 import { Work } from "../../core/content/work.model";
+import { WORKS } from "../../core/content/works.content";
 import { WorksService } from "../../core/content/works.service";
 import { PlaceService } from "../../core/place/place.service";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
@@ -33,7 +34,7 @@ describe("GalleryComponent", () => {
   let placeLeftBehind: string | undefined;
 
   async function open(sceneFails = false): Promise<void> {
-    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "post", "dispose"]);
+    scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
     factory = jasmine.createSpy("factory").and.callFake((_canvas: HTMLCanvasElement, received: GalleryViewOptions) => {
       options = received;
       return sceneFails ? Promise.reject(new Error("no WebGL")) : Promise.resolve(scene);
@@ -223,6 +224,9 @@ describe("GalleryComponent", () => {
       expect(options?.visitors).toEqual(["Polypoint AG", "Eurotours"]);
       expect(options?.assets.lionModel).toMatch(/\.glb$/);
       expect(options?.reducedMotion).toBeFalse();
+      expect(options?.works.map((work) => work.film)).toEqual(["assets/works/kuechenschelle-film.webm", undefined, undefined, undefined]);
+      expect(options?.films).toBeTrue();
+      expect(scene.setFilmHeld.calls.allArgs()).toEqual([[false]]);
       expect(scene.resize).toHaveBeenCalled();
       expect(scene.jumpTo).toHaveBeenCalledTimes(1);
       expect(scene.jumpTo.calls.mostRecent().args[0]).toBeCloseTo(0, 2);
@@ -729,6 +733,197 @@ describe("GalleryComponent", () => {
       await open();
 
       expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("the film in the commission's frame", () => {
+    const control = () => element.querySelector<HTMLButtonElement>(".film-toggle");
+
+    describe("when films may play", () => {
+      beforeEach(() => open());
+
+      it("offers a way to pause it in the commission's label, between the closer look and the way on", () => {
+        const foot = element.querySelector('[data-stop="3"] .label-foot')!;
+
+        expect(Array.from(foot.querySelectorAll("button")).map((button) => button.textContent!.trim())).toEqual([
+          "Closer look",
+          "Pause the film",
+          "Next: WheelWallet",
+        ]);
+      });
+
+      it("offers it only for the work that has a film", () => {
+        expect(element.querySelectorAll(".film-toggle").length).toBe(1);
+        for (const stop of [4, 5, 6]) {
+          expect(element.querySelector(`[data-stop="${stop}"] .film-toggle`)).withContext(`stop ${stop}`).toBeNull();
+        }
+      });
+
+      it("pauses the film in the scene and turns into the way to play it again", () => {
+        control()!.click();
+        fixture.detectChanges();
+
+        expect(scene.setFilmHeld.calls.mostRecent().args).toEqual([true]);
+        expect(control()!.textContent!.trim()).toBe("Play the film");
+
+        control()!.click();
+        fixture.detectChanges();
+
+        expect(scene.setFilmHeld.calls.mostRecent().args).toEqual([false]);
+        expect(control()!.textContent!.trim()).toBe("Pause the film");
+      });
+
+      it("says its state in its name alone, with a drawn icon that assistive technology skips", () => {
+        expect(control()!.hasAttribute("aria-pressed")).toBeFalse();
+        expect(control()!.hasAttribute("aria-label")).toBeFalse();
+        expect(control()!.type).toBe("button");
+        expect(control()!.querySelector("svg[aria-hidden='true'] path")).not.toBeNull();
+
+        const pauseIcon = control()!.querySelector("path")!.getAttribute("d");
+        control()!.click();
+        fixture.detectChanges();
+
+        expect(control()!.querySelector("path")!.getAttribute("d")).not.toBe(pauseIcon);
+      });
+
+      it("is a target of at least 24 pixels", () => {
+        const box = control()!.getBoundingClientRect();
+
+        expect(box.height).toBeGreaterThanOrEqual(24);
+        expect(box.width).toBeGreaterThanOrEqual(24);
+      });
+
+      it("never steals the walking keys", () => {
+        expect(press(" ", {}, control()!).defaultPrevented).toBeFalse();
+        expect(press("ArrowDown", {}, control()!).defaultPrevented).toBeFalse();
+        expect(scrollTo).not.toHaveBeenCalled();
+      });
+
+      it("holds the film while the closer look is open and lets it go when that closes", async () => {
+        element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(scene.setFilmHeld.calls.mostRecent().args).toEqual([true]);
+
+        const dialog = element.querySelector("dialog")!;
+        const closed = new Promise((resolve) => dialog.addEventListener("close", resolve, { once: true }));
+        dialog.close();
+        await closed;
+
+        expect(scene.setFilmHeld.calls.mostRecent().args).toEqual([false]);
+      });
+
+      it("keeps a film the visitor paused paused after the closer look closes", async () => {
+        control()!.click();
+        element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const dialog = element.querySelector("dialog")!;
+        const closed = new Promise((resolve) => dialog.addEventListener("close", resolve, { once: true }));
+        dialog.close();
+        await closed;
+
+        expect(scene.setFilmHeld.calls.allArgs()).toEqual([[false], [true], [true], [true]]);
+      });
+    });
+
+    it("tells a scene that arrives late that the visitor already paused the film", async () => {
+      let deliver!: (view: GalleryView) => void;
+      await open();
+      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
+      factory.and.returnValue(new Promise<GalleryView>((resolve) => (deliver = resolve)));
+      fixture.destroy();
+      element.remove();
+
+      fixture = TestBed.createComponent(GalleryComponent);
+      element = fixture.nativeElement;
+      document.body.appendChild(element);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await sceneStarted();
+      control()!.click();
+      expect(late.setFilmHeld).not.toHaveBeenCalled();
+
+      deliver(late);
+      await sceneStarted();
+
+      expect(late.setFilmHeld).toHaveBeenCalledOnceWith(true);
+    });
+
+    it("holds the film in a scene that arrives after the closer look was opened", async () => {
+      let deliver!: (view: GalleryView) => void;
+      await open();
+      const late = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
+      factory.and.returnValue(new Promise<GalleryView>((resolve) => (deliver = resolve)));
+      fixture.destroy();
+      element.remove();
+
+      fixture = TestBed.createComponent(GalleryComponent);
+      element = fixture.nativeElement;
+      document.body.appendChild(element);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await sceneStarted();
+      element.querySelector<HTMLButtonElement>('[data-stop="3"] .view-switch')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      deliver(late);
+      await sceneStarted();
+
+      expect(late.setFilmHeld).toHaveBeenCalledOnceWith(true);
+      element.querySelector("dialog")!.close();
+    });
+
+    it("withdraws the control when the scene says the film cannot be played", async () => {
+      await open();
+      expect(control()).not.toBeNull();
+
+      options!.onFilmLost();
+      fixture.detectChanges();
+
+      expect(control()).toBeNull();
+      expect(element.querySelector('[data-stop="3"] .label-foot .view-switch')).not.toBeNull();
+    });
+
+    it("offers the control for the one film the scene plays, not for a second work's", async () => {
+      const film = { src: "assets/works/other.webm", description: "Another film." };
+      const works = WORKS.map((work, index): Work => (index === 1 ? { ...work, film } : work));
+      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      await open();
+
+      expect(element.querySelectorAll(".film-toggle").length).toBe(1);
+      expect(element.querySelector('[data-stop="3"] .film-toggle')).not.toBeNull();
+    });
+
+    it("plays nothing and offers no control to a visitor who asked for less motion", async () => {
+      environment.reducedMotion = true;
+      await open();
+
+      expect(options?.films).toBeFalse();
+      expect(control()).toBeNull();
+      expect(element.querySelector('[data-stop="3"] .label-foot .view-switch')).not.toBeNull();
+    });
+
+    it("plays nothing and offers no control to a visitor saving data", async () => {
+      environment.dataSaver = true;
+      await open();
+
+      expect(options?.films).toBeFalse();
+      expect(options?.reducedMotion).toBeFalse();
+      expect(control()).toBeNull();
+    });
+
+    it("offers no control when no work has a film", async () => {
+      const works = WORKS.map((work): Work => ({ ...work, film: undefined }));
+      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      await open();
+
+      expect(options?.films).toBeTrue();
+      expect(options?.works.every((work) => work.film === undefined)).toBeTrue();
+      expect(control()).toBeNull();
     });
   });
 

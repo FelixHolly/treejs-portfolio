@@ -1,313 +1,235 @@
-$ink: #141417;
-$paper: #e8e5de;
+$faint: rgba(31, 42, 68, 0.26);
+$firm: rgba(42, 33, 26, 0.62);
+$grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .24 0 0 0 0 .16 0 0 0 .22 -.06'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+/* One writing line: the rule sits a little above the foot of each line of text, where the pen rests on it */
+$rules: linear-gradient(to bottom, transparent calc(var(--rule) - 7px), $faint 0, $faint calc(var(--rule) - 6px), transparent 0) 0 0 / 100% var(--rule);
 
-/* The letter: a bone paper sheet under a spotlight, the only light
-   surface on the site. Typed correspondence on museum stationery. */
+/* The gallery's stationery. Print is upright and brown-black; whatever a pen wrote is italic and blue-black. */
+:host {
+  --paper: #e8e5de;
+  --print: #2a211a;
+  --print-soft: #5f5246;
+  --pen: #1f2a44;
+  --rule: 2rem;
+  --grain: #{$grain};
+  position: relative;
+  display: block;
+  isolation: isolate;
+  font-family: 'Boska', Georgia, serif;
+  color: var(--print);
+}
+
 .letter-sheet {
   position: relative;
-  background: $paper;
-  border-radius: 0.375rem;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-  overflow: hidden;
-  width: 100%;
+  padding: 1.75rem 1.25rem 1.25rem;
+  border-radius: 1px;
+  background: var(--grain), var(--paper);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 20px 40px -16px rgba(0, 0, 0, 0.7);
 
-  /* Gold-dim rule along the top edge, like a letterhead */
+  @media (min-width: 640px) {
+    padding: 2.25rem 2.5rem 1.5rem;
+  }
+
+  /* The next sheet of the stack, lying a little askew under this one */
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(to right, transparent 0%, rgba(143, 117, 52, 0.9) 50%, transparent 100%);
+    inset: 0;
+    z-index: -1;
+    background: #d5d1c6;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    transform: rotate(-1deg) translate(2px, 3px);
   }
 }
 
-.letter-body {
-  padding: 2.25rem 2.25rem 1.75rem;
-  color: $ink;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-
-  @media (max-width: 640px) {
-    padding: 1.75rem 1.25rem 1.5rem;
-  }
-
-  /* Ink overrides: shared utilities assume the dark wall */
-  .head-text {
-    color: $ink;
-  }
-
-  .room-number {
-    color: #6b5726;
-  }
-}
-
-.letterhead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-/* A postage stamp: the notches along its edge are dots of the sheet's own colour */
-.stamp {
-  position: relative;
-  flex: none;
-  width: 64px;
-  height: 80px;
-  background:
-    radial-gradient(circle, $paper 2.6px, transparent 3px) -4px -4px / 8px 8px,
-    #f7f4ee;
-  transform: rotate(4deg);
-}
-
-.stamp-face {
-  position: absolute;
-  inset: 5px;
-  overflow: hidden;
-  background: #1b1b1f;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  span {
-    position: absolute;
-    left: 4px;
-    bottom: 1px;
-    font-family: 'Boska', Georgia, serif;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    color: $paper;
-  }
+.invitation {
+  margin-top: 1rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .intro {
-  margin-top: 0.75rem;
-  max-width: 34rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: rgba(20, 20, 23, 0.8);
+  margin-top: 0.3rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--print-soft);
 }
 
 .letter-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-top: 1.75rem;
-}
-
-.starters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.6rem;
-}
-
-.chip {
-  min-height: 2.25rem;
-  padding: 0 0.85rem;
-  border: 1px solid rgba(20, 20, 23, 0.55);
-  border-radius: 0.125rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: $ink;
-
-  &:hover {
-    background: $ink;
-    color: $paper;
-  }
+  margin-top: 1rem;
 }
 
 .salutation,
-.sealed-title {
-  font-family: 'Boska', Georgia, serif;
-  font-size: 1.6rem;
-  line-height: 1.2;
+.closing,
+.ruled,
+.sign input {
+  padding-inline: 0.25rem;
+  font-style: italic;
+  color: var(--pen);
 }
 
 .salutation {
-  font-style: italic;
+  margin-top: 0.4rem;
+  background: $rules;
+  font-size: 1.5rem;
+  line-height: var(--rule);
 }
 
-/* Writing paper: one ruled line under every line of text, moving with the text when it scrolls */
+/* Writing paper: one rule under every line of text, moving with the text when it scrolls */
 .ruled {
-  --rule: 2rem;
   width: 100%;
   min-height: calc(var(--rule) * 3);
-  padding: 0 0.25rem;
-  border: 0;
-  /* The last line is drawn strongly enough to mark where the field ends */
-  border-bottom: 1px solid rgba(20, 20, 23, 0.6);
   border-radius: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--rule) - 1px),
-    rgba(20, 20, 23, 0.32) calc(var(--rule) - 1px),
-    rgba(20, 20, 23, 0.32) var(--rule)
-  );
-  background-attachment: local;
-  font: inherit;
-  font-size: 1rem;
+  /* The last rule stays put and is drawn firmly enough to mark where the field ends */
+  background:
+    linear-gradient($firm, $firm) 0 calc(100% - 6px) / 100% 1px no-repeat,
+    $rules local;
+  font-size: 1.125rem;
   line-height: var(--rule);
-  color: #141417;
-  resize: vertical;
 
   @media (min-height: 861px) {
     min-height: calc(var(--rule) * 4);
   }
 }
 
+.closing {
+  margin-top: 0.9rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
 .signature {
   display: grid;
-  gap: 1.25rem 1.5rem;
+  gap: 0.6rem 2rem;
 
   @media (min-width: 560px) {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.field-error {
-  font-size: 0.875rem;
-  color: #991b1b;
+.sign {
+  display: flex;
+  flex-direction: column;
+
+  input {
+    min-height: 2.5rem;
+    border-bottom: 1px solid $firm;
+    border-radius: 0;
+    background: none;
+    font-size: 1.125rem;
+
+    /* A browser that fills the line in keeps to the paper and the pen */
+    &:autofill {
+      box-shadow: inset 0 0 0 3rem var(--paper);
+      -webkit-text-fill-color: var(--pen);
+    }
+  }
+
+  label {
+    margin-top: 0.25rem;
+    padding-inline: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--print-soft);
+  }
+}
+
+/* A correction in red pen, under the line it belongs to */
+.error,
+.send-error {
+  padding-inline: 0.25rem;
+  font-size: 0.9375rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: #9b1c1c;
+}
+
+.error {
+  margin-top: 0.25rem;
 }
 
 .send-error {
-  padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(153, 27, 27, 0.55);
-  border-radius: 0.125rem;
-  background: rgba(153, 27, 27, 0.06);
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: #7f1d1d;
+  margin-top: 0.75rem;
 }
 
-.sealed {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
-  margin-top: 1.75rem;
-  padding: 1.5rem 0 0.5rem;
-  border-top: 1px solid rgba(20, 20, 23, 0.2);
+app-seal-button {
+  margin-block: 0.75rem 0.5rem;
 }
 
-.seal {
-  animation: press 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-}
-
-@keyframes press {
-  from {
-    opacity: 0;
-    transform: scale(1.5) rotate(-14deg);
-  }
+/* After sending: the envelope lies on a slip of the same paper, which says what happens next */
+.letter-sheet.slip {
+  margin: -1rem 0.75rem 0;
+  padding-top: 2.25rem;
 }
 
 .sealed-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.again {
+  min-height: 1.75rem;
   margin-top: 0.5rem;
-}
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 
-.sealed-text {
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-  color: rgba(20, 20, 23, 0.8);
-}
-
-.desk-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 2rem;
-  margin-top: 1.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(20, 20, 23, 0.2);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-
-  a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 1.75rem;
-    color: $ink;
-    text-decoration: underline;
-    text-decoration-color: #8f7534;
-    text-underline-offset: 0.3em;
-
-    &:hover {
-      color: #6b5726;
-    }
+  &:hover {
+    color: var(--pen);
   }
 }
 
-/* Gold on bone paper is too faint for a focus ring; the letter uses ink */
-.letter-sheet :is(a, button, input, textarea, [tabindex]):focus-visible {
-  outline: 2px solid $ink;
+/* Gold on bone paper is too faint for a focus ring; the letter uses its print ink */
+.letter-sheet :is(button, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--print);
   outline-offset: 3px;
 }
 
-/* On a short screen the whole letter, from its heading to its links, fits under the header at once */
+/* On a short screen the whole letter, from its letterhead to its postscript, fits under the header at once */
 @media (max-height: 860px) and (min-width: 640px) {
-  .letter-body {
-    padding: 1.1rem 2rem 0.75rem;
+  :host {
+    --rule: 1.875rem;
+  }
 
-    .head-text {
-      font-size: 2.25rem;
-      line-height: 1.1;
-    }
+  .letter-sheet {
+    padding: 1.25rem 2rem 0.9rem;
+  }
 
-    .room-number {
-      margin-bottom: 0.4rem;
-    }
+  .invitation {
+    margin-top: 0.6rem;
+    font-size: 1.2rem;
   }
 
   .intro {
-    margin-top: 0.5rem;
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.45;
   }
 
   .letter-form {
-    gap: 0.7rem;
-    margin-top: 0.8rem;
+    margin-top: 0.5rem;
   }
 
-  .chip {
+  .closing {
+    margin-top: 0.4rem;
+  }
+
+  .sign input {
     min-height: 2rem;
   }
 
-  .field-btn {
-    min-height: 2.75rem;
-    padding-block: 0.5rem;
-  }
-
-  .salutation {
-    font-size: 1.4rem;
-  }
-
-  .ruled {
-    --rule: 1.75rem;
-  }
-
-  .signature .field-input {
-    min-height: 2.25rem;
-    padding-block: 0.25rem;
-  }
-
-  .desk-links {
-    margin-top: 0.8rem;
-    padding-top: 0.6rem;
+  app-seal-button {
+    margin-block: 0.25rem;
   }
 }
 
 /* A finger needs a taller target than the compact desk letter gives a mouse */
 @media (pointer: coarse) {
-  .chip,
-  .desk-links a {
+  .sign input,
+  .again {
     min-height: 2.75rem;
   }
 }

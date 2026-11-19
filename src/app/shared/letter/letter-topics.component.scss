@@ -1,0 +1,80 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.2rem;
+  font-size: 1.0625rem;
+  color: var(--print);
+}
+
+.re {
+  margin-right: 0.3rem;
+  font-weight: 500;
+}
+
+.slash,
+.hint {
+  color: var(--print-soft);
+}
+
+.hint {
+  margin-left: 0.45rem;
+  font-size: 0.8125rem;
+}
+
+.topic {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding-inline: 0.45rem;
+  cursor: pointer;
+
+  @media (pointer: coarse) {
+    min-height: 2.75rem;
+  }
+}
+
+.word {
+  position: relative;
+}
+
+.circle {
+  position: absolute;
+  inset: -0.2rem -0.55rem -0.25rem;
+  width: calc(100% + 1.1rem);
+  height: calc(100% + 0.45rem);
+  overflow: visible;
+  fill: none;
+  stroke: var(--pen);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  /* Longer than any of the circles, so one dash can hide or show the whole stroke */
+  stroke-dasharray: 400;
+  opacity: 0;
+  pointer-events: none;
+
+  path {
+    vector-effect: non-scaling-stroke;
+  }
+}
+
+.topic:hover .circle {
+  opacity: 0.28;
+}
+
+input:checked + .word .circle {
+  opacity: 1;
+  animation: draw 0.45s ease-out;
+}
+
+input:focus-visible + .word {
+  outline: 2px solid var(--print);
+  outline-offset: 0.5rem;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 400;
+  }
+}

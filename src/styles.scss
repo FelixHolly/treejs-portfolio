@@ -65,8 +65,8 @@ body::before {
   color: #e8e5de;
 }
 
-/* On the bone letter paper, keep the ink readable under the highlight */
-.letter-sheet ::selection {
+/* On the letter's paper, sheet and envelope alike, keep the ink readable under the highlight */
+app-letter ::selection {
   background: rgba(199, 164, 74, 0.45);
   color: #141417;
 }
@@ -174,20 +174,6 @@ select:focus-visible,
   .grid-subtext {
     @apply text-stone text-base font-generalsans;
   }
-
-  /* Letter fields: typed blanks on paper (underlines, not boxes) */
-  .field-label {
-    @apply text-xs font-mono uppercase tracking-[0.2em] text-graphite/70;
-  }
-
-  .field-input {
-    @apply w-full bg-transparent border-0 border-b border-graphite/60 rounded-none px-1 py-3 min-h-12 font-mono placeholder:text-graphite/40 text-base text-graphite transition-colors focus:border-graphite;
-  }
-
-  .field-btn {
-    @apply bg-graphite px-5 py-3 min-h-12 rounded-md font-mono uppercase tracking-[0.15em] text-sm flex justify-center items-center text-bone gap-3 transition-colors hover:text-gold active:scale-[0.99];
-  }
-
 
   /*  footer */
   .social-icon {

@@ -1,6 +1,16 @@
 <section class="c-space my-24" id="visitors-book">
     <app-room-label numeral="III" title="Visitors' Book" appReveal />
 
+    @if (companies.length) {
+        <div class="board" aria-hidden="true" appReveal>
+            <div class="board-face font-display font-medium uppercase">
+                @for (company of companies; track company) {
+                    <p>{{ company }}</p>
+                }
+            </div>
+        </div>
+    }
+
     <div class="max-w-3xl mx-auto">
         @for (entry of entries; track entry.company) {
             <figure class="py-10 sm:py-12 text-center border-b border-graphite-700 last:border-b-0" appReveal>

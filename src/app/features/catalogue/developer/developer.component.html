@@ -1,14 +1,9 @@
 <section class="c-space my-24" id="about">
     <app-room-label numeral="I" title="The Developer" appReveal />
 
-    <div class="grid md:grid-cols-[auto_1fr] gap-10 lg:gap-16 items-center max-w-4xl mx-auto" appReveal [revealDelay]="120">
-        <div class="flex flex-col items-center">
-            <div class="medallion" aria-hidden="true">
-                <span class="font-display text-5xl text-bone tracking-[0.15em] pl-[0.15em]">FH</span>
-            </div>
-            <p class="exhibit-caption">Fig. I · Monogram</p>
-        </div>
-        <div class="flex flex-col gap-4 text-center md:text-left">
+    <div class="grid lg:grid-cols-[35rem_minmax(0,1fr)] gap-10 lg:gap-12 xl:gap-16 items-center max-w-5xl mx-auto" appReveal [revealDelay]="120">
+        <app-section-plate class="w-full max-w-[40rem] mx-auto" [storeys]="developer.anatomy" />
+        <div class="flex flex-col gap-4 max-w-2xl mx-auto text-center lg:text-left">
             <h3 class="font-display text-2xl sm:text-3xl text-bone">{{ developer.greeting }}</h3>
             @for (paragraph of developer.bio; track paragraph) {
                 <p class="grid-subtext">{{ paragraph }}</p>

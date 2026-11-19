@@ -1,0 +1,37 @@
+$tracking: 0.22em;
+
+/* Matches the board that hangs behind the book in the gallery (nameBoardTexture) */
+.board {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  margin: 0 auto 1rem;
+  padding: 3px;
+  background: linear-gradient(135deg, #8f7534 0%, #c7a44a 28%, #6b5726 55%, #c7a44a 80%, #8f7534 100%);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.board-face {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.4rem 1.75rem;
+  background: #17171b;
+  outline: 1px solid rgba(199, 164, 74, 0.5);
+  outline-offset: -0.4rem;
+  color: #d9b85c;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  letter-spacing: $tracking;
+  text-align: center;
+  overflow-wrap: anywhere;
+
+  @media (min-width: 640px) {
+    gap: 0.7rem;
+    padding: 1.75rem 3rem;
+    font-size: 1.125rem;
+  }
+
+  /* Tracking trails each letter, the last one too: an equal indent keeps the line centred */
+  p {
+    text-indent: $tracking;
+  }
+}

@@ -34,6 +34,7 @@ export function loadLion(
         mesh.receiveShadow = true;
         mesh.material.color.set(STONE_TINT);
         if (mesh.material.map) mesh.material.map.anisotropy = 8;
+        if (mesh.material.normalMap) mesh.material.normalMap.anisotropy = 8;
       });
 
       const lion = new Group();

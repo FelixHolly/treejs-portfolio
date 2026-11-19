@@ -20,7 +20,7 @@ export interface GalleryViewOptions {
   assets: { dracoPath: string; lionModel: string };
   /** Called once if the film cannot be played, so the page can withdraw its control. */
   onFilmLost(): void;
-  /** Called once if the first frames average under 30 fps. */
+  /** Called once if the scene is still too slow to watch after giving up all the quality it can. */
   onSlow(): void;
 }
 

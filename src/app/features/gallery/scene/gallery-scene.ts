@@ -51,23 +51,36 @@ import {
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
 import { hangPortrait, portraitMaterial } from "./portrait";
+import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
+import { ShaderWarmup } from "./shader-warmup";
 import { Post } from "./post";
 import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
 
 const BACKGROUND = 0x141417;
 const MAX_PIXEL_RATIO = 2;
+/** A full-HD window at that ratio; beyond it the cost keeps growing and the picture does not. */
+const MAX_DRAWN_PIXELS = 1920 * 1080 * MAX_PIXEL_RATIO ** 2;
+/** Bare frames watched at the start for the display's own pace, the fastest any quality could reach. */
+const DISPLAY_FRAMES = 20;
 /** Higher is a quicker glide towards the scroll position. */
 const GLIDE = 4.5;
 const LOOK = { yaw: 0.06, pitch: 0.035, ease: 6 } as const;
 const INTRO_MS = 2200;
 const EMPTY_PLINTH_LEVEL = 0.3;
-const SLOW = { frames: 60, fps: 30 } as const;
 const ROOM_INSCRIPTIONS = ["Room I", "Room II", "Room III", "Room IV"] as const;
 /** The board of names above the visitors' book: its width, and the height each name adds. */
 const NAME_BOARD = { width: 2.3, line: 0.31, margin: 0.17, bottom: 1.6 } as const;
 
+function displayRatio(width: number, height: number): number {
+  return Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO, Math.sqrt(MAX_DRAWN_PIXELS / (width * height)));
+}
+
+// What this visit has already stepped down to: a scene opened again starts there instead of stumbling again.
+let reached = QUALITY_LADDER[0];
+
 export class GalleryScene implements GalleryView {
   private readonly renderer: WebGLRenderer;
+  private readonly quality: QualityController;
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(fieldOfView(1), 1, 0.1, 80);
   private readonly palette: Palette = createPalette();
@@ -98,15 +111,23 @@ export class GalleryScene implements GalleryView {
   private paused = false;
   private disposed = false;
   private compiled = false;
-  private measuredFrames = 0;
-  private measuredSeconds = 0;
+  /** What the graphics card held after the last frame; a change means that frame paid for an upload. */
+  private held: number[] = [];
+  /** Shaders for a hall without the statue's shadow, compiling in the background until it can be dropped. */
+  private shadowless?: ShaderWarmup;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly options: GalleryViewOptions,
   ) {
     this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+    this.quality = new QualityController(
+      QUALITY_LADDER,
+      QUALITY_LADDER.indexOf(reached),
+      (tier) => this.applyQuality(tier),
+      () => options.onSlow(),
+    );
+    if (!options.reducedMotion) this.watchDisplay(DISPLAY_FRAMES);
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.shadowMap.enabled = true;
@@ -133,6 +154,7 @@ export class GalleryScene implements GalleryView {
       () => this.raiseLights(),
     );
 
+    this.lights.setStatueShadow(this.quality.tier.statueShadow);
     this.resize({ labelShare: 0, statueBand: OPEN_BAND });
     // Shaders compile in the background; a blocking first render would freeze the page for most of a second.
     this.renderer.compileAsync(this.scene, this.camera).finally(() => {
@@ -161,9 +183,9 @@ export class GalleryScene implements GalleryView {
   }
 
   resize(framing: PageFraming): void {
-    const width = this.canvas.clientWidth || window.innerWidth;
-    const height = this.canvas.clientHeight || window.innerHeight;
-    this.renderer.setSize(width, height, false);
+    const [width, height] = this.canvasSize();
+    this.renderer.setDrawingBufferSize(width, height, this.pixelRatio(width, height));
+    this.quality.settle();
     this.camera.aspect = width / height;
     this.camera.fov = fieldOfView(this.camera.aspect);
     this.camera.updateProjectionMatrix();
@@ -226,8 +248,16 @@ export class GalleryScene implements GalleryView {
   private readonly frame = (now: number): void => {
     this.rafId = 0;
     if (this.disposed) return;
-    const seconds = Math.min(Math.max(now - this.lastFrame, 0) / 1000, 0.25);
+    const elapsed = Math.max(now - this.lastFrame, 0) / 1000;
+    const seconds = Math.min(elapsed, 0.25);
     this.lastFrame = now;
+    const warming = this.shadowless !== undefined;
+    if (this.shadowless?.done()) {
+      this.shadowless = undefined;
+      this.lights.setStatueShadow(false);
+    }
+    // Before drawing: a step down empties the canvas, and this frame fills it again
+    this.measure(elapsed, warming);
 
     const gap = this.target - this.progress;
     const gliding = Math.abs(gap) > 0.0004;
@@ -250,9 +280,40 @@ export class GalleryScene implements GalleryView {
     this.renderer.render(this.scene, this.camera);
 
     this.running = gliding || looking || rising || posting || filming;
-    this.measure(seconds);
     if (this.running) this.invalidate();
   };
+
+  private canvasSize(): [width: number, height: number] {
+    return [this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight];
+  }
+
+  private pixelRatio(width: number, height: number): number {
+    return Math.min(displayRatio(width, height), this.quality.tier.pixelRatio);
+  }
+
+  private watchDisplay(frames: number, before?: number): void {
+    requestAnimationFrame((now) => {
+      if (this.disposed) return;
+      if (before !== undefined) this.quality.displayFrame((now - before) / 1000);
+      if (frames > 1) this.watchDisplay(frames - 1, now);
+    });
+  }
+
+  private applyQuality(tier: QualityTier): void {
+    reached = tier;
+    const [width, height] = this.canvasSize();
+    const ratio = this.pixelRatio(width, height);
+    if (ratio !== this.renderer.getPixelRatio()) this.renderer.setDrawingBufferSize(width, height, ratio);
+    if (!tier.statueShadow) this.warmShadowless(this.scene);
+  }
+
+  // Only the compiling sees the light without its shadow; the hall keeps it until those shaders are ready
+  private warmShadowless(root: Scene | Group): void {
+    this.shadowless ??= new ShaderWarmup(this.renderer, this.scene, this.camera);
+    this.lights.setStatueShadow(false);
+    this.shadowless.add(root);
+    this.lights.setStatueShadow(true);
+  }
 
   private runFilm(): boolean {
     if (!this.film || !this.filmPlace) return false;
@@ -269,6 +330,7 @@ export class GalleryScene implements GalleryView {
     }
     if (this.disposed) return;
     this.scene.add(lion);
+    if (this.shadowless) this.warmShadowless(lion);
     this.renderer.shadowMap.needsUpdate = true;
     this.raiseLights();
   }
@@ -290,13 +352,14 @@ export class GalleryScene implements GalleryView {
     return t < 1;
   }
 
-  private measure(seconds: number): void {
-    if (this.measuredFrames >= SLOW.frames || !this.running || seconds <= 0) return;
-    this.measuredFrames += 1;
-    this.measuredSeconds += seconds;
-    if (this.measuredFrames === SLOW.frames && this.measuredFrames / this.measuredSeconds < SLOW.fps) {
-      this.options.onSlow();
-    }
+  /** A frame that followed a rest, an upload or shader work paid for that, so it is kept out of the pace. */
+  private measure(seconds: number, warming: boolean): void {
+    const { memory, programs } = this.renderer.info;
+    const held = [memory.textures, memory.geometries, programs?.length ?? 0];
+    const uploaded = held.some((count, kind) => count !== this.held[kind]);
+    this.held = held;
+    if (this.running && !uploaded && !warming) this.quality.frame(seconds, this.renderer.getPixelRatio());
+    else this.quality.settle();
   }
 
   private furnish(): void {

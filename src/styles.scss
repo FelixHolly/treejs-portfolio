@@ -240,6 +240,11 @@ html.gallery-active {
   scroll-snap-type: y proximity;
 }
 
+/* The page's foot is a resting place too, or the last label's snap pulls the visitor back up from it */
+html.gallery-active footer {
+  scroll-snap-align: end;
+}
+
 /* Tabbing backwards must not park the focused control under the gallery's fixed header */
 html.gallery-active {
   scroll-padding-top: 5.25rem;

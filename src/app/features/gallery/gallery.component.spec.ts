@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
+import { Work } from "../../core/content/work.model";
+import { WorksService } from "../../core/content/works.service";
 import { PlaceService } from "../../core/place/place.service";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
@@ -10,6 +12,7 @@ import { FakeViewEnvironment } from "../../testing/fake-view-environment";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { GalleryComponent } from "./gallery.component";
 import { GallerySceneFactory, GalleryView, GalleryViewOptions } from "./scene/gallery-view";
+import { DOOR_XS, pieceSlots, WALL_THICKNESS } from "./scene/layout";
 
 /** Lets the first paint, the deferred scene start and its promise all run. */
 function sceneStarted(): Promise<void> {
@@ -83,6 +86,7 @@ describe("GalleryComponent", () => {
         "Küchenschelle",
         "WheelWallet",
         "ReLoo",
+        "This Gallery",
         "Visitors' Book",
         "Write to me",
       ]);
@@ -103,20 +107,22 @@ describe("GalleryComponent", () => {
     it("summarises the wall and offers a jump to each work", () => {
       const room = element.querySelector('[data-stop="2"]')!;
 
-      expect(room.textContent).toContain("One commission and two studies hang on this wall.");
+      expect(room.textContent).toContain("One commission, two studies and one self-portrait hang on this wall.");
       expect(Array.from(room.querySelectorAll("button")).map((button) => button.textContent!.replace(/\s+/g, " ").replace(" ,", ",").trim())).toEqual([
         "Küchenschelle, Commission",
         "WheelWallet, Study",
         "ReLoo, Study",
+        "This Gallery, Self-portrait",
       ]);
     });
 
-    it("gives every work a closer look and only the commission a live link", () => {
+    it("gives every work a closer look, the commission a live link and the self-portrait its code", () => {
       const closer = Array.from(element.querySelectorAll("button")).filter((button) => button.textContent?.trim() === "Closer look");
 
-      expect(closer.length).toBe(3);
+      expect(closer.length).toBe(4);
       expect(Array.from(element.querySelectorAll("app-wall-label a")).map((link) => link.getAttribute("href"))).toEqual([
         "https://kuechenschelle.at",
+        "https://github.com/FelixHolly/treejs-portfolio",
       ]);
     });
 
@@ -165,6 +171,7 @@ describe("GalleryComponent", () => {
         "commission:kuechenschelle:3",
         "study:wheelwallet:1",
         "study:reloo:1",
+        "self-portrait:this-gallery:1",
       ]);
       expect(options?.works[1].images[0].portrait).toBeTrue();
       expect(options?.frieze).toContain("Angular");
@@ -459,6 +466,125 @@ describe("GalleryComponent", () => {
 
       expect(scene.setPaused).toHaveBeenCalledOnceWith(document.hidden);
     });
+  });
+
+  describe("the gallery hung in itself", () => {
+    beforeEach(() => open());
+
+    it("stands at its own stop in Room II, the last work before the visitors' book", () => {
+      const stop = element.querySelector('[data-stop="6"]')!;
+
+      expect(stop.querySelector("h3")?.textContent?.trim()).toBe("This Gallery");
+      expect(stop.querySelector(".room-number")?.textContent?.trim()).toBe("Self-portrait");
+      expect(stop.classList.contains("stop--hop")).toBeTrue();
+      expect(element.querySelector('[data-stop="7"] h2')?.textContent?.trim()).toBe("Visitors' Book");
+    });
+
+    it("fits on the wall of Room II with the works before it, a metre short of the wall to Room III", () => {
+      const slots = pieceSlots(options!.works);
+      const last = slots[slots.length - 1];
+
+      expect(last.slug).toBe("this-gallery");
+      expect(last.centre.x + last.span / 2).toBeLessThan(DOOR_XS[2] - WALL_THICKNESS / 2 - 1);
+    });
+
+    it("links to its code and not to a live site, since the visitor is standing in it", () => {
+      const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('[data-stop="6"] a'));
+
+      expect(links.length).toBe(1);
+      expect(links[0].textContent).toContain("View the code");
+      expect(links[0].getAttribute("href")).toBe("https://github.com/FelixHolly/treejs-portfolio");
+      expect(links[0].target).toBe("_blank");
+      expect(links[0].rel).toContain("noopener");
+    });
+
+    it("is walked to from the Room II list, which leaves its own address behind for Back", () => {
+      element.querySelectorAll<HTMLButtonElement>('[data-stop="2"] button')[3].click();
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(document.activeElement?.textContent?.trim()).toBe("This Gallery");
+      expect(location.hash).toBe("#works/this-gallery");
+    });
+
+    it("is walked to when its address is typed, in the gallery's form or the catalogue's", () => {
+      for (const hash of ["#works/this-gallery", "#works-this-gallery"]) {
+        scrollTo.calls.reset();
+        history.replaceState(null, "", hash);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+
+        expect(scrollTo).withContext(hash).toHaveBeenCalledTimes(1);
+        expect(scrollTo.calls.mostRecent().args[0].top).withContext(hash).toBeGreaterThan(0);
+      }
+    });
+
+    it("keeps the floor plan and the live region in Room II while the visitor stands at it", () => {
+      fixture.componentInstance.activeIndex.set(6);
+      fixture.detectChanges();
+
+      expect(element.querySelector("app-floor-plan [aria-current]")?.textContent).toContain("Room II, The Works");
+      expect(element.querySelector("[aria-live]")?.textContent?.trim()).toBe("Room II, The Works");
+      expect(element.querySelector(".stop--active h3")?.textContent?.trim()).toBe("This Gallery");
+    });
+
+    it("opens a closer look at its three pictures, each described", async () => {
+      element.querySelector<HTMLButtonElement>('[data-stop="6"] .view-switch')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const dialog = element.querySelector("dialog")!;
+      const pictures = Array.from(dialog.querySelectorAll("img"));
+
+      expect(dialog.open).toBeTrue();
+      expect(dialog.querySelector("h2")?.textContent?.trim()).toBe("This Gallery");
+      expect(pictures.map((picture) => picture.getAttribute("src")?.split("/").pop())).toEqual([
+        "this-gallery-entrance.webp",
+        "this-gallery-room-1.webp",
+        "this-gallery-room-4.webp",
+      ]);
+      expect(pictures.every((picture) => picture.alt.length > 10)).toBeTrue();
+
+      dialog.close();
+    });
+  });
+
+  describe("the summary of the wall", () => {
+    const hang = (...kinds: Work["kind"][]): Work[] =>
+      kinds.map((kind, index) => ({
+        slug: `piece-${index}`,
+        title: `Piece ${index}`,
+        kind,
+        year: "2026",
+        materials: [],
+        role: "Alone.",
+        problem: "A question.",
+        built: "A draft.",
+        images: [{ src: "assets/works/reloo.webp", alt: "A screen", caption: "Fig.", orientation: "portrait" }],
+      }));
+
+    async function summaryOf(works: Work[]): Promise<string | undefined> {
+      TestBed.overrideProvider(WorksService, { useValue: { works: () => works } });
+      await open();
+      return element.querySelector('[data-stop="2"] .grid-subtext')?.textContent?.trim();
+    }
+
+    const collections: [string, Work[], string][] = [
+      ["one work", hang("self-portrait"), "One self-portrait hangs on this wall."],
+      ["several of one kind", hang("study", "study", "study"), "Three studies hang on this wall."],
+      ["two kinds", hang("study", "self-portrait", "study"), "Two studies and one self-portrait hang on this wall."],
+      [
+        "three kinds, named in the same order however they hang",
+        hang("self-portrait", "study", "commission", "self-portrait", "commission"),
+        "Two commissions, one study and two self-portraits hang on this wall.",
+      ],
+      ["more works than there are number words", hang(...Array<Work["kind"]>(7).fill("study")), "7 studies hang on this wall."],
+      ["an empty wall", [], ""],
+    ];
+
+    for (const [name, works, sentence] of collections) {
+      it(`reads naturally for ${name}`, async () => {
+        expect(await summaryOf(works)).toBe(sentence);
+        expect(element.querySelectorAll('[data-stop="2"] li').length).toBe(works.length);
+      });
+    }
   });
 
   describe("arriving with a hash", () => {

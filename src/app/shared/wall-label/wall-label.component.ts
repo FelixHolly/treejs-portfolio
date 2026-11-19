@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from "@angular/core";
-import { Work } from "../../core/content/work.model";
+import { ChangeDetectionStrategy, Component, computed, input } from "@angular/core";
+import { KIND_LABEL, Work } from "../../core/content/work.model";
 import { ArrowOutIconComponent } from "../icons/arrow-out.icon";
 
 @Component({
@@ -11,4 +11,5 @@ import { ArrowOutIconComponent } from "../icons/arrow-out.icon";
 })
 export class WallLabelComponent {
   readonly work = input.required<Work>();
+  readonly kindLabel = computed(() => KIND_LABEL[this.work().kind]);
 }

@@ -4,7 +4,7 @@
 }
 
 .commission,
-.study {
+.plain-work {
   scroll-margin-top: 6rem;
 }
 
@@ -27,11 +27,58 @@
   }
 }
 
-.study-frame {
-  width: min(60%, 14rem);
+.plain-frames {
+  display: grid;
+  gap: 4rem 2.5rem;
+  max-width: 56rem;
   margin-inline: auto;
 
   @media (min-width: 768px) {
-    margin-inline: 0;
+    grid-template-columns: 1fr 1fr;
   }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 3rem;
+    max-width: 72rem;
+  }
+}
+
+.plain-work {
+  display: grid;
+  row-gap: 2rem;
+
+  /* Frames share one row and labels the next, so every label starts level whatever its picture's shape */
+  @media (min-width: 768px) {
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+  }
+
+  /* Alone on the last row of two columns, a work would otherwise sit under an empty half of the wall */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    &:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 1.25rem);
+    }
+  }
+}
+
+.plain-frame {
+  width: min(60%, 14rem);
+  justify-self: center;
+
+  /* Hung on one centre line, as on the gallery wall */
+  @media (min-width: 768px) {
+    justify-self: start;
+    align-self: center;
+  }
+
+  @media (min-width: 1024px) {
+    width: min(100%, 14rem);
+  }
+}
+
+.plain-frame--wide {
+  width: min(100%, 22rem);
 }

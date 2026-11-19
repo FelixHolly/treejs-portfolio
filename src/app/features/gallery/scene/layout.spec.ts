@@ -3,9 +3,11 @@ import {
   DESK,
   DOOR,
   DOOR_XS,
+  END_WALL_X,
   ENFILADE,
   fieldOfView,
   HALF_DEPTH,
+  LECTERN,
   LETTERBOX,
   MEDALLION,
   PEDESTAL_RADIUS,
@@ -14,6 +16,7 @@ import {
   ROOM_ONE_X,
   ROTUNDA,
   WALL_HEIGHT,
+  WALL_THICKNESS,
 } from "./layout";
 
 const landscape = (src: string) => ({ src, portrait: false });
@@ -22,6 +25,9 @@ const portrait = (src: string) => ({ src, portrait: true });
 const COMMISSION: SceneWork = { slug: "a", kind: "commission", images: [landscape("a1"), landscape("a2"), landscape("a3")] };
 const STUDY_B: SceneWork = { slug: "b", kind: "study", images: [portrait("b1")] };
 const STUDY_C: SceneWork = { slug: "c", kind: "study", images: [landscape("c1")] };
+const SELF_PORTRAIT: SceneWork = { slug: "d", kind: "self-portrait", images: [landscape("d1"), landscape("d2")] };
+/** Room II is sized for these shapes; the real content is checked against it in the gallery's own spec. */
+const REAL: SceneWork[] = [COMMISSION, STUDY_B, { ...STUDY_B, slug: "c" }, SELF_PORTRAIT];
 
 describe("pieceSlots", () => {
   it("hangs a commission as one large gilded frame with two companions stacked beside it", () => {
@@ -63,15 +69,42 @@ describe("pieceSlots", () => {
     expect(c.centre.x).toBeGreaterThan(b.centre.x + 3);
   });
 
-  it("keeps the real collection inside Room II without overlaps", () => {
-    const slots = pieceSlots([COMMISSION, STUDY_B, STUDY_C]);
-    const edges = slots.map((slot) => [slot.centre.x - slot.span / 2, slot.centre.x + slot.span / 2]);
+  it("hangs a self-portrait like a study: its first image alone, in a plain frame", () => {
+    const [slot] = pieceSlots([SELF_PORTRAIT]);
+    const [study] = pieceSlots([STUDY_C]);
 
-    expect(edges[0][0]).toBeGreaterThan(15.8);
-    expect(edges[2][1]).toBeLessThan(38.8);
-    expect(edges[1][0]).toBeGreaterThan(edges[0][1]);
-    expect(edges[2][0]).toBeGreaterThan(edges[1][1]);
-    expect(ENFILADE.to).toBeGreaterThan(edges[2][1]);
+    expect(slot.frames.map((frame) => frame.src)).toEqual(["d1"]);
+    expect(slot.frames[0].gilded).toBeFalse();
+    expect(slot).toEqual({ ...study, slug: "d", frames: [{ ...study.frames[0], src: "d1" }] });
+  });
+
+  it("keeps a collection shaped like the real one inside Room II without overlaps, a metre of wall to spare", () => {
+    const edges = pieceSlots(REAL).map((slot) => [slot.centre.x - slot.span / 2, slot.centre.x + slot.span / 2]);
+
+    expect(edges.length).toBe(4);
+    expect(edges[0][0]).toBeGreaterThan(DOOR_XS[1] + WALL_THICKNESS / 2);
+    expect(edges[3][1]).toBeLessThan(DOOR_XS[2] - WALL_THICKNESS / 2 - 1);
+    for (let index = 1; index < edges.length; index++) {
+      expect(edges[index][0]).withContext(`piece ${index}`).toBeGreaterThan(edges[index - 1][1]);
+    }
+  });
+
+  it("hangs the commission and the two studies at the same places whatever hangs after them", () => {
+    const [commission, first, second] = pieceSlots(REAL);
+
+    expect(commission).toEqual(pieceSlots([COMMISSION])[0]);
+    expect(commission.frames[0].x).toBe(21.6);
+    expect(first.centre.x).toBe(32.6);
+    expect(second.centre.x).toBeCloseTo(36.8, 6);
+  });
+
+  it("hangs a wide frame further from the piece before it than a narrow one, edge included", () => {
+    const nearEdgeAfterStudy = (next: SceneWork) => {
+      const [before, after] = pieceSlots([STUDY_B, next]);
+      return after.centre.x - after.span / 2 - before.centre.x;
+    };
+
+    expect(nearEdgeAfterStudy(STUDY_C)).toBeGreaterThan(nearEdgeAfterStudy(STUDY_B) + 1);
   });
 
   it("returns nothing for an empty collection", () => {
@@ -127,6 +160,17 @@ describe("the building", () => {
     expect(DOOR_XS[1] - MEDALLION.x).toBeLessThan(0.5);
     expect(MEDALLION.z + MEDALLION.radius).toBeLessThan(-DOOR.width / 2 - 0.2);
     expect(MEDALLION.z - MEDALLION.radius).toBeGreaterThan(-HALF_DEPTH);
+  });
+
+  it("stands the lectern and the writing desk in the middle of their own rooms", () => {
+    expect(LECTERN.x).toBeCloseTo((DOOR_XS[2] + DOOR_XS[3]) / 2, 0);
+    expect(DESK.x).toBeCloseTo((DOOR_XS[3] + END_WALL_X) / 2, 0);
+    expect(DOOR_XS[3] - DOOR_XS[2]).toBeCloseTo(END_WALL_X - DOOR_XS[3], 6);
+  });
+
+  it("runs the enfilade's side walls just past the end wall, so the corners close", () => {
+    expect(ENFILADE.to).toBeGreaterThan(END_WALL_X);
+    expect(ENFILADE.to - END_WALL_X).toBeLessThan(0.5);
   });
 
   it("mounts the letterbox on the wall over the writing desk, its slot within the box", () => {

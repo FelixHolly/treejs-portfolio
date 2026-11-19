@@ -15,11 +15,12 @@
 
     <div class="plinth-rule my-16 sm:my-24" appReveal></div>
 
-    <div class="grid md:grid-cols-2 gap-x-10 lg:gap-x-20 gap-y-16 max-w-4xl mx-auto">
-        @for (work of studies(); track work.slug) {
-            <article class="study" [id]="'works-' + work.slug" appReveal [revealDelay]="$index * 120">
-                <app-framed-image class="study-frame" [image]="work.images[0]" variant="plain" sizes="(min-width: 768px) 14rem, 60vw" />
-                <app-wall-label class="mt-8" [work]="work" />
+    <div class="plain-frames">
+        @for (work of plainFramed(); track work.slug) {
+            @let wide = work.images[0].orientation === 'landscape';
+            <article class="plain-work" [id]="'works-' + work.slug" appReveal [revealDelay]="$index * 120">
+                <app-framed-image class="plain-frame" [class.plain-frame--wide]="wide" [image]="work.images[0]" variant="plain" [sizes]="wide ? '(min-width: 768px) 22rem, 90vw' : '(min-width: 768px) 14rem, 60vw'" />
+                <app-wall-label [work]="work" />
             </article>
         }
     </div>

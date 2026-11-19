@@ -15,7 +15,7 @@ import { RouterLink } from "@angular/router";
 import { environment } from "../../../environments/environment";
 import { DEVELOPER } from "../../core/content/developer.content";
 import { VISITOR_ENTRIES } from "../../core/content/visitors-book.content";
-import { Work } from "../../core/content/work.model";
+import { KIND_LABEL, Work } from "../../core/content/work.model";
 import { WorksService } from "../../core/content/works.service";
 import { placeFromHash } from "../../core/place/places";
 import { PlaceService } from "../../core/place/place.service";
@@ -84,6 +84,7 @@ export class GalleryComponent {
   readonly entries = VISITOR_ENTRIES;
   readonly year = new Date().getFullYear();
   readonly worksSummary = this.summarise();
+  readonly kindLabel = KIND_LABEL;
 
   readonly activeIndex = signal(0);
   /** True while the scene cuts between stops for visitors who asked for reduced motion. */
@@ -425,14 +426,18 @@ export class GalleryComponent {
   }
 
   private summarise(): string {
-    const phrase = (kind: Work["kind"], singular: string, plural: string) => {
-      const total = this.works.filter((work) => work.kind === kind).length;
-      return total ? `${COUNT_WORDS[total] ?? total} ${total === 1 ? singular : plural}` : "";
+    const names: Record<Work["kind"], [singular: string, plural: string]> = {
+      commission: ["commission", "commissions"],
+      study: ["study", "studies"],
+      "self-portrait": ["self-portrait", "self-portraits"],
     };
-    const text = [phrase("commission", "commission", "commissions"), phrase("study", "study", "studies")]
-      .filter(Boolean)
-      .join(" and ");
-    if (!text) return "";
+    const counted = Object.entries(names).flatMap(([kind, [singular, plural]]) => {
+      const total = this.works.filter((work) => work.kind === kind).length;
+      return total ? [`${COUNT_WORDS[total] ?? total} ${total === 1 ? singular : plural}`] : [];
+    });
+    if (!counted.length) return "";
+    const last = counted[counted.length - 1];
+    const text = counted.length > 1 ? `${counted.slice(0, -1).join(", ")} and ${last}` : last;
     return `${text[0].toUpperCase()}${text.slice(1)} ${this.works.length === 1 ? "hangs" : "hang"} on this wall.`;
   }
 }

@@ -66,6 +66,23 @@ describe("WallLabelComponent", () => {
     expect(empty.length).toBe(0);
   });
 
+  it("labels a self-portrait as one, with its outcome and a link to its code alone", () => {
+    render({ ...COMMISSION, kind: "self-portrait", href: undefined });
+
+    expect(element.querySelector(".room-number")?.textContent?.trim()).toBe("Self-portrait");
+    expect(element.textContent).toContain("It shipped.");
+    expect(Array.from(element.querySelectorAll("a")).map((link) => link.getAttribute("href"))).toEqual(["https://example.com/code"]);
+    expect(element.querySelector("a")?.textContent).toContain("View the code");
+  });
+
+  it("names the kind afresh when another work is shown in the same label", () => {
+    render(BARE_STUDY);
+    fixture.componentRef.setInput("work", COMMISSION);
+    fixture.detectChanges();
+
+    expect(element.querySelector(".room-number")?.textContent?.trim()).toBe("Commission");
+  });
+
   it("shows the year alone when a work lists no materials", () => {
     render(BARE_STUDY);
 

@@ -427,4 +427,41 @@ describe("RoomTitleCue", () => {
       expect(cue.holdsLabels()).toBeFalse();
     });
   });
+
+  describe("where a walk is bound for", () => {
+    it("is nowhere while the visitor stands or scrolls by hand", () => {
+      standAt(2);
+
+      expect(cue.bound).toBeUndefined();
+      scroll(2, 3, 40);
+      expect(cue.bound).toBeUndefined();
+    });
+
+    it("is the stop the page set off for, all the way there, and nowhere once it has arrived", () => {
+      standAt(0);
+      cue.walkTo(7);
+
+      expect(cue.bound).toBe(7);
+      scroll(0, 6.98, 2);
+      expect(cue.bound).toBe(7);
+      scroll(6.98, 7, 2);
+      expect(cue.bound).toBeUndefined();
+    });
+
+    it("is nowhere once the visitor scrolls the other way, or the walk is broken off", () => {
+      standAt(3);
+      cue.walkTo(7);
+      scroll(3, 3.2, 2);
+      scroll(3.2, 3.1, 40);
+      expect(cue.bound).toBeUndefined();
+
+      cue.walkTo(7);
+      cue.settle();
+      expect(cue.bound).toBeUndefined();
+
+      cue.walkTo(7);
+      rest(WALK_IDLE_MS);
+      expect(cue.bound).toBeUndefined();
+    });
+  });
 });

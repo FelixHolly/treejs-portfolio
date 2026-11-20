@@ -38,6 +38,11 @@ export class RoomTitleCue {
   /** `rooms` holds the room of every stop, in walking order. */
   constructor(private readonly rooms: readonly Room[]) {}
 
+  /** The stop a walk the page began is bound for, until it gets there or the visitor takes the walk over. */
+  get bound(): number | undefined {
+    return this.target;
+  }
+
   /** The page set off for a stop by itself: only that stop's room is titled, however many the walk passes. */
   walkTo(stop: number): void {
     if (this.progress === undefined || !this.rooms[stop]) return;

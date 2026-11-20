@@ -362,6 +362,7 @@ const SHADE = { foot: 0.33, height: 0.14, wide: 0.15, narrow: 0.075 } as const;
 /** A lit reading lamp; its light on the desk is painted on rather than computed. */
 function deskLamp(palette: Palette): Group {
   const lamp = new Group();
+  lamp.name = "lamp";
   const { foot, height, wide, narrow } = SHADE;
 
   const base = turned(

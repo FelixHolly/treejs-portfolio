@@ -43,6 +43,7 @@ import {
   SKILL_PLAQUES,
   skillPlaqueSlots,
 } from "./layout";
+import { LAMP_STEP, lampPlan, Lamps } from "./lamps";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
 import { partitionWalls, pieceTargets, PieceTarget, stopHit } from "./picking";
@@ -74,6 +75,8 @@ function displayRatio(width: number, height: number): number {
 
 // What this visit has already stepped down to: a scene opened again starts there instead of stumbling again.
 let reached = QUALITY_LADDER[0];
+// How many rooms this visit has lit: a scene opened again finds them lit instead of staging them again.
+let litRooms = 0;
 
 export class GalleryScene implements GalleryView {
   private readonly renderer: WebGLRenderer;
@@ -102,6 +105,7 @@ export class GalleryScene implements GalleryView {
   private film?: FilmScreen;
   private targets: PieceTarget[] = [];
   private pointedLight!: PointedLight;
+  private lamps!: Lamps;
   private dust!: Dust;
   private aiming = false;
   private pointed: number | null = null;
@@ -110,6 +114,8 @@ export class GalleryScene implements GalleryView {
   private filmHeld = false;
   private progress = 0;
   private target = 0;
+  /** Where on the route the walk is bound for: the scroll position, or the stop a walk the page began ends at. */
+  private heading = 0;
   private lionLevel: number;
   private introStart: number | null = null;
   private picturesRequested = false;
@@ -172,8 +178,9 @@ export class GalleryScene implements GalleryView {
     });
   }
 
-  setProgress(progress: number): void {
+  setProgress(progress: number, bound = progress): void {
     this.target = progress;
+    this.heading = bound;
     this.dust.stir();
     this.requestPictures();
     this.invalidate();
@@ -182,6 +189,9 @@ export class GalleryScene implements GalleryView {
   jumpTo(progress: number): void {
     this.target = progress;
     this.progress = progress;
+    this.heading = progress;
+    this.path.sample(progress, this.pose);
+    this.lamps.arrive({ progress, x: this.pose.position.x });
     this.requestPictures();
     this.invalidate();
   }
@@ -248,6 +258,7 @@ export class GalleryScene implements GalleryView {
 
   dispose(): void {
     this.disposed = true;
+    litRooms = Math.max(litRooms, this.lamps.lit);
     cancelAnimationFrame(this.rafId);
     this.cancelLion();
     this.film?.dispose();
@@ -308,11 +319,12 @@ export class GalleryScene implements GalleryView {
     this.camera.rotateY(-this.look.x * LOOK.yaw);
     this.camera.rotateX(-this.look.y * LOOK.pitch);
     this.lights.update(this.progress, this.lionLevel);
+    const lighting = this.lamps.update(Math.min(seconds, LAMP_STEP), { progress: this.progress, x: this.pose.position.x }, this.heading);
     this.atmosphere.update(this.progress, this.lionLevel);
     const mirroring = this.mirror.render(this.renderer, this.scene, this.camera, seconds);
     this.renderer.render(this.scene, this.camera);
 
-    this.running = gliding || looking || rising || posting || filming || mirroring || brightening || drifting;
+    this.running = gliding || looking || rising || posting || filming || mirroring || brightening || drifting || lighting;
     if (this.running) this.invalidate();
   };
 
@@ -472,6 +484,13 @@ export class GalleryScene implements GalleryView {
         }
       });
     });
+
+    this.lamps = new Lamps(
+      lampPlan(this.slots, names ? board : undefined, this.options.skills.length),
+      this.options.reducedMotion ? Infinity : litRooms,
+    );
+    this.scene.add(...this.lamps.objects);
+    this.lamps.adopt(this.scene);
   }
 
   /** The screenshots are fetched once the visitor leaves the entrance, not before. */

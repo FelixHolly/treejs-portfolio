@@ -40,8 +40,11 @@ export const OPEN_BAND: PageFraming["statueBand"] = [0.33, 0.82];
 
 /** What the page needs from the 3D scene; keeps three.js out of the page's own chunk. */
 export interface GalleryView {
-  /** Glide towards a position on the route, measured in stops (2.5 is halfway between stops 2 and 3). */
-  setProgress(progress: number): void;
+  /**
+   * Glide towards a position on the route, measured in stops (2.5 is halfway between stops 2 and 3).
+   * `bound` is the stop a walk the page began is headed for, while that walk lasts.
+   */
+  setProgress(progress: number, bound?: number): void;
   jumpTo(progress: number): void;
   /** Mouse position in -1..1 on both axes, for the look-around offset. */
   setPointer(x: number, y: number): void;

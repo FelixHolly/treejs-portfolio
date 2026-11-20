@@ -388,8 +388,8 @@ export class GalleryComponent {
     if (this.reducedMotion) {
       this.crossFadeTo(index);
     } else {
-      this.scene?.setProgress(this.progress);
       this.title.follow(this.progress);
+      this.scene?.setProgress(this.progress, this.title.bound);
     }
     if (index !== this.activeIndex()) this.arrive(index);
   }

@@ -94,6 +94,7 @@ export function pictureLight(slot: FrameSlot, palette: Palette): Group {
   const top = innerHeight / 2 + bar;
   const length = Math.min((innerWidth + bar * 2) * PICTURE_LIGHT.share, PICTURE_LIGHT.longest);
   const light = new Group();
+  light.name = "lamp";
 
   const trough = new CylinderGeometry(hood, hood, length, 12, 1, false, 0, Math.PI);
   const lamp = new Group();

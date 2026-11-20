@@ -161,8 +161,8 @@ export function buildTopLight(): Mesh<BufferGeometry, ShaderMaterial> {
  */
 export const SHAFT = {
   foot: 2.6,
-  strength: 0.044,
-  thin: 0.42,
+  strength: 0.13,
+  thin: 0.44,
   thinsOver: [2, 4.2],
   /** The height over which it comes up from the floor it lands on. */
   lands: 0.5,

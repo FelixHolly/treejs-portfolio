@@ -246,7 +246,7 @@ describe("buildArchitecture", () => {
     });
 
     it("keeps dome and cornice dark, for the page sets its name over them", () => {
-      // What the eyebrow over the name can stand behind it and stay at 4.5 to 1: about #242424
+      // About #242424: the shaft's light comes on top of it, and the eyebrow over both has to stay at 4.5 to 1
       const limit = 0.0185;
       const dome = painted.filter((corner) => inHall(corner) && corner.at.y < ROTUNDA.height - 0.01);
       const high = stone.filter((corner) => inHall(corner) && corner.at.y > DOME.springing - 1);

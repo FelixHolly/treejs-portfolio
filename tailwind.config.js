@@ -34,7 +34,10 @@ export default {
           800: '#1B1B1F',
           700: '#26262C',
         },
-        stone: '#8E8B84',
+        stone: {
+          DEFAULT: '#8E8B84',
+          light: '#B9B6AE',
+        },
         bone: '#E8E5DE',
         gold: {
           DEFAULT: '#C7A44A',

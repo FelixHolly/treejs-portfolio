@@ -5,7 +5,7 @@ import { framedPicture, letteredBoard, pictureLight } from "./exhibits";
 import { FIRST_WORK_STOP } from "./film";
 import { writingDesk } from "./furniture";
 import { OPEN_BAND, SceneWork } from "./gallery-view";
-import { LAMP_OFF_LEVEL, LAMP_REACH, LAMP_TIMING, LampCascade, lampPlan, LampRoom, LampRoomPlan, Lamps } from "./lamps";
+import { LAMP_OFF_LEVEL, LAMP_REACH, LAMP_SET_OFF, LAMP_TIMING, LampCascade, lampPlan, LampRoom, LampRoomPlan, Lamps } from "./lamps";
 import { DESK, DOOR_XS, END_WALL_X, HANG_Z, LECTERN, pieceSlots, PORTRAIT, portraitSlot, ROTUNDA, SKILL_PLAQUES } from "./layout";
 import { GalleryLights } from "./lights";
 
@@ -76,7 +76,8 @@ describe("LampCascade", () => {
     expect(stand(1, beside)).toBeFalse();
     expect(levels(cascade, 2)).toEqual([0]);
 
-    expect(stand(FRAME, { ...beside, progress: beside.progress + 0.01 })).toBeTrue();
+    expect(stand(FRAME, { ...beside, progress: beside.progress + LAMP_SET_OFF - 0.01 })).toBeFalse();
+    expect(stand(FRAME, { ...beside, progress: beside.progress + LAMP_SET_OFF })).toBeTrue();
   });
 
   it("brings the lamps on one after another, the one nearest the doorway first", () => {
@@ -201,6 +202,19 @@ describe("LampCascade", () => {
     expect(cascade.level(2, 0)).toBeLessThan(1);
   });
 
+  it("leaves the rooms ahead dark when the visitor walks back", () => {
+    cascade.arrive(INSIDE[1]);
+
+    expect(stand(1, INSIDE[0], 0)).toBeFalse();
+    expect(stand(1, ENTRANCE, 0)).toBeFalse();
+    expect(levels(cascade, 2)).toEqual([0]);
+    expect(levels(cascade, 3)).toEqual([0, 0]);
+  });
+
+  it("veils only as many plaques as hang", () => {
+    expect(lampPlan(SLOTS, BOARD, 2)[0].sites[1].pictures.length).toBe(2);
+  });
+
   it("lights the room a visitor is set down in, and every room before it, without a show", () => {
     cascade.arrive(INSIDE[1]);
 
@@ -215,7 +229,7 @@ describe("LampCascade", () => {
     cascade.arrive({ progress: 7, x: ROOMS[2].door - 0.5 });
     expect(levels(cascade, 2)).toEqual([0]);
 
-    expect(stand(0, { progress: 7.05, x: ROOMS[2].door - 0.4 })).toBeTrue();
+    expect(stand(0, { progress: 7.2, x: ROOMS[2].door - 0.4 })).toBeTrue();
   });
 
   it("leaves no room dark behind a camera that leaps several doorways in one slow frame", () => {
@@ -348,6 +362,7 @@ describe("the lamps on the real route", () => {
         }
 
         expect(progress).withContext(`room ${index + 1}`).toBeLessThan(room.first - 0.1);
+        expect(progress).withContext(`room ${index + 1}`).toBeGreaterThanOrEqual(room.first - 1 + LAMP_SET_OFF);
         expect(at(progress).x).withContext(`room ${index + 1}`).toBeLessThan(room.door);
       });
     }

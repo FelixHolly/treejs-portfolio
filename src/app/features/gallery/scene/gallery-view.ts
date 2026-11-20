@@ -42,7 +42,7 @@ export const OPEN_BAND: PageFraming["statueBand"] = [0.33, 0.82];
 export interface GalleryView {
   /**
    * Glide towards a position on the route, measured in stops (2.5 is halfway between stops 2 and 3).
-   * `bound` is the stop a walk the page began is headed for, when that lies further on.
+   * `bound` is the stop a walk the page began is headed for, while that walk lasts.
    */
   setProgress(progress: number, bound?: number): void;
   jumpTo(progress: number): void;

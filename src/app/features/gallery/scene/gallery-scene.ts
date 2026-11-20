@@ -43,7 +43,7 @@ import {
   SKILL_PLAQUES,
   skillPlaqueSlots,
 } from "./layout";
-import { lampPlan, Lamps } from "./lamps";
+import { LAMP_STEP, lampPlan, Lamps } from "./lamps";
 import { GalleryLights } from "./lights";
 import { loadLion } from "./lion";
 import { partitionWalls, pieceTargets, PieceTarget, stopHit } from "./picking";
@@ -319,7 +319,7 @@ export class GalleryScene implements GalleryView {
     this.camera.rotateY(-this.look.x * LOOK.yaw);
     this.camera.rotateX(-this.look.y * LOOK.pitch);
     this.lights.update(this.progress, this.lionLevel);
-    const lighting = this.lamps.update(seconds, { progress: this.progress, x: this.pose.position.x }, this.heading);
+    const lighting = this.lamps.update(Math.min(seconds, LAMP_STEP), { progress: this.progress, x: this.pose.position.x }, this.heading);
     this.atmosphere.update(this.progress, this.lionLevel);
     const mirroring = this.mirror.render(this.renderer, this.scene, this.camera, seconds);
     this.renderer.render(this.scene, this.camera);
@@ -485,7 +485,10 @@ export class GalleryScene implements GalleryView {
       });
     });
 
-    this.lamps = new Lamps(lampPlan(this.slots, names ? board : undefined), this.options.reducedMotion ? Infinity : litRooms);
+    this.lamps = new Lamps(
+      lampPlan(this.slots, names ? board : undefined, this.options.skills.length),
+      this.options.reducedMotion ? Infinity : litRooms,
+    );
     this.scene.add(...this.lamps.objects);
     this.lamps.adopt(this.scene);
   }

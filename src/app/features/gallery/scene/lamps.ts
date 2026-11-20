@@ -9,6 +9,10 @@ export const LAMP_OFF_LEVEL = 0.3;
 export const LAMP_TIMING = { ramp: 0.35, stagger: 0.22 } as const;
 /** How far short of a room's doorway, in metres, the visitor walking towards it sets its lamps off. */
 export const LAMP_REACH = 1.2;
+/** The share of the stride into a room walked before its lamps start: by then the visitor has turned to its doorway. */
+export const LAMP_SET_OFF = 0.12;
+/** The most a lamp moves on in one frame, in seconds, so a hitch never shows as a jump in its light. */
+export const LAMP_STEP = 0.05;
 /** What the glass of a fitting keeps of its lit colour while it is off. */
 const UNLIT_GLASS = 0.12;
 /** How far off the wall a veil hangs: just in front of a framed picture, and of a lettered board. */
@@ -20,7 +24,6 @@ const READING_LAMP = 0.55;
 export interface LampRoom {
   /** Where its doorway stands along the building, in metres. */
   door: number;
-  /** Its first and last stop. */
   first: number;
   last: number;
   /** How many lamps hang in it, counted from the doorway. */
@@ -87,9 +90,8 @@ export class LampCascade {
     return since === undefined ? 0 : comeOn(since - lamp * LAMP_TIMING.stagger);
   }
 
-  /** On the stride into the room, or past it, and within reach of its doorway. */
   private reached(room: LampRoom, at: Whereabouts): boolean {
-    return at.progress > room.first - 1 && at.x >= room.door - LAMP_REACH;
+    return at.progress >= room.first - 1 + LAMP_SET_OFF && at.x >= room.door - LAMP_REACH;
   }
 }
 
@@ -114,9 +116,11 @@ function site(x: number, pictures: readonly WallRect[] = [], face: number = FACE
 }
 
 /** Every room's lamps: one over the portrait, the plaques, each column of frames and the board of names, and two at the desk. */
-export function lampPlan(slots: readonly PieceSlot[], nameBoard?: WallRect): LampRoomPlan[] {
+export function lampPlan(slots: readonly PieceSlot[], nameBoard?: WallRect, plaqueCount: number = SKILL_PLAQUES.count): LampRoomPlan[] {
   const visitorsBook = FIRST_WORK_STOP + slots.length;
-  const plaques = skillPlaqueSlots().map((plaque) => ({ ...plaque, width: SKILL_PLAQUES.width, height: SKILL_PLAQUE_HEIGHT }));
+  const plaques = skillPlaqueSlots()
+    .slice(0, plaqueCount)
+    .map((plaque) => ({ ...plaque, width: SKILL_PLAQUES.width, height: SKILL_PLAQUE_HEIGHT }));
 
   const columns = new Map<number, WallRect[]>();
   for (const frame of slots.flatMap((slot) => slot.frames)) columns.set(frame.x, [...(columns.get(frame.x) ?? []), frame]);
@@ -152,7 +156,6 @@ export class Lamps {
   private readonly cascade: LampCascade;
   private readonly rooms: { door: number; lamps: Lamp[] }[];
 
-  /** `lit` rooms, counted from the first, are lit from the start. */
   constructor(plan: readonly LampRoomPlan[], lit: number) {
     this.cascade = new LampCascade(
       plan.map(({ door, first, last, sites }) => ({ door, first, last, lamps: sites.length })),
@@ -174,7 +177,10 @@ export class Lamps {
     this.show();
   }
 
-  /** Takes over what stands under `root`: each spotlight aimed into a room and each fitting named "lamp" joins the lamp nearest to it along the wall. */
+  /**
+   * Takes over what stands under `root`, once: each spotlight aimed into a room and each fitting named "lamp"
+   * joins the lamp nearest to it along the wall.
+   */
   adopt(root: Object3D): void {
     root.traverse((object) => {
       if (object instanceof SpotLight) {
@@ -196,7 +202,10 @@ export class Lamps {
     this.show();
   }
 
-  /** Call once a frame, after the lights have set their own strengths: a lamp scales what its spotlights were given. True while a lamp is coming on. */
+  /**
+   * Call once a frame, after the lights have set their own strengths: a lamp scales what its spotlights were given.
+   * True while a lamp is coming on.
+   */
   update(seconds: number, at: Whereabouts, heading: number): boolean {
     const coming = this.cascade.update(seconds, at, heading);
     this.show();

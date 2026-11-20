@@ -306,8 +306,8 @@ describe("GalleryComponent", () => {
 
       expect(options?.skills.length).toBe(SKILL_PLAQUES.count);
       expect(options?.skills).toBe(DEVELOPER.skills);
-      expect(options?.skills.map((group) => group.area)).toEqual(["Frontend", "Backend", "Data and operations", "Quality"]);
-      expect(options?.skills[0].tools).toEqual(["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"]);
+      expect(options?.skills.map((group) => group.area)).toEqual(["Backend", "Frontend", "Data and operations", "Quality"]);
+      expect(options?.skills[0].tools).toEqual(["Java", "Spring Boot", "Spring Security", "Keycloak", "JPA and Hibernate", "REST APIs"]);
       expect(Math.max(...(options?.skills ?? []).map((group) => group.tools.length))).toBe(SKILL_PLAQUES.lines);
     });
 

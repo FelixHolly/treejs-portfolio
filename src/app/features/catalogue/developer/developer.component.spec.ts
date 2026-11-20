@@ -40,7 +40,7 @@ describe("DeveloperComponent", () => {
     const grid = groups[0].parentElement!;
 
     expect(groups.length).toBe(4);
-    expect(texts("[data-skill-group] h4")).toEqual(["Frontend", "Backend", "Data and operations", "Quality"]);
+    expect(texts("[data-skill-group] h4")).toEqual(["Backend", "Frontend", "Data and operations", "Quality"]);
     expect(grid.classList.contains("sm:grid-cols-2")).toBeTrue();
     expect(grid.classList.contains("lg:grid-cols-4")).toBeTrue();
     expect(grid.classList.contains("grid-cols-2")).toBeFalse();

@@ -1,14 +1,14 @@
 import { DEVELOPER } from "./developer.content";
 
 describe("DEVELOPER", () => {
-  it("groups the skills into four areas, the visitor's side of the stack first", () => {
-    expect(DEVELOPER.skills.map((group) => group.area)).toEqual(["Frontend", "Backend", "Data and operations", "Quality"]);
+  it("groups the skills into four areas, the server's side of the stack first", () => {
+    expect(DEVELOPER.skills.map((group) => group.area)).toEqual(["Backend", "Frontend", "Data and operations", "Quality"]);
   });
 
   it("lists the tools of each area in the order they are lettered", () => {
     expect(DEVELOPER.skills.map((group) => [...group.tools])).toEqual([
+      ["Java", "Spring Boot", "Spring Security", "Keycloak", "JPA and Hibernate", "REST APIs"],
       ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"],
-      ["Java", "Spring Boot", "Spring Security", "JPA and Hibernate", "REST APIs", "Python"],
       ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "AWS"],
       ["Vitest and Jest", "Playwright and Cypress", "JUnit", "Accessibility testing", "Nx monorepos"],
     ]);

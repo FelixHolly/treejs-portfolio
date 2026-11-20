@@ -10,8 +10,8 @@ export const DEVELOPER = {
   portrait: { src: "assets/portrait.webp", alt: "Portrait of Felix Hollndonner" },
   /** Skills by area: one plaque each on Room I's wall, one column each in the catalogue. */
   skills: [
+    { area: "Backend", tools: ["Java", "Spring Boot", "Spring Security", "Keycloak", "JPA and Hibernate", "REST APIs"] },
     { area: "Frontend", tools: ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"] },
-    { area: "Backend", tools: ["Java", "Spring Boot", "Spring Security", "JPA and Hibernate", "REST APIs", "Python"] },
     { area: "Data and operations", tools: ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "AWS"] },
     { area: "Quality", tools: ["Vitest and Jest", "Playwright and Cypress", "JUnit", "Accessibility testing", "Nx monorepos"] },
   ],

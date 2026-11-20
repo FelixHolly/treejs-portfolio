@@ -413,6 +413,26 @@ describe("GalleryComponent", () => {
       expect(scene.dispose).toHaveBeenCalledTimes(1);
       expect(scene.jumpTo.calls.count()).toBe(1);
     });
+
+    it("is told where the page has scrolled to, bound nowhere further while the visitor scrolls by hand", async () => {
+      await open();
+
+      arriveAt(2);
+
+      expect(scene.setProgress.calls.mostRecent().args).toEqual([2, undefined]);
+    });
+
+    it("is told which stop a walk the page began is bound for, at every stop passed on the way, until the walk gets there", async () => {
+      await open();
+      const last = fixture.componentInstance.last;
+
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      arriveAt(3);
+      expect(scene.setProgress.calls.mostRecent().args).toEqual([3, last]);
+
+      arriveAt(last);
+      expect(scene.setProgress.calls.mostRecent().args).toEqual([last, undefined]);
+    });
   });
 
   describe("walking with the keyboard", () => {

@@ -1,0 +1,1 @@
+var t={pointer:.1,scroll:.3},s=.22,n={level:.1,from:.12,to:.85};function o(r,e,i){return Math.min(Math.max(r,e),i)}function u(r,e){return e>0?o(r/e,0,1):0}function m(r,e){return o(r,-1,1)*t.pointer+o(e,0,1)*t.scroll}function c(r){return o(r,-1,1)*s}function a(r){let e=o((r-n.from)/(n.to-n.from),0,1);return 1-(1-n.level)*e*e*(3-2*e)}export{u as a,m as b,c,a as d};

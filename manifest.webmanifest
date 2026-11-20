@@ -1,7 +1,7 @@
 {
-  "name": "Felix Hollndonner - 3D Portfolio",
+  "name": "Felix Hollndonner, Technical Lead and Full-Stack Developer",
   "short_name": "FH Portfolio",
-  "description": "Interactive 3D portfolio showcasing web development projects built with Angular, Three.js, and modern web technologies",
+  "description": "Portfolio of Felix Hollndonner: web applications built end to end with Java, Spring Boot and Angular, shown as a walk through a small museum.",
   "theme_color": "#141417",
   "background_color": "#141417",
   "display": "standalone",

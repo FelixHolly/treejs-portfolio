@@ -1,13 +1,4 @@
-<section class="entrance relative w-full min-h-screen flex flex-col justify-between items-center pt-32 pb-10" id="home">
-    @if (lion() !== 'failed') {
-        <picture class="lion" [class.lion--ready]="lion() === 'ready'">
-            <source media="(max-aspect-ratio: 1/1)" srcset="assets/lion-960.webp" width="960" height="1634">
-            <img ngSrc="assets/lion-1600.webp" fill priority
-                 alt="Statue of a Viennese lion, the Vienna Löwe"
-                 (load)="lion.set('ready')" (error)="lion.set('failed')">
-        </picture>
-    }
-
+<section class="entrance relative w-full flex flex-col items-center pt-32 pb-10" id="home">
     <div class="z-10 flex flex-col items-center gap-4 c-space">
         <p class="eyebrow">Full-Stack Developer</p>
         <h1 class="font-display font-medium text-bone text-center leading-none text-5xl sm:text-6xl xl:text-8xl">
@@ -15,9 +6,9 @@
         </h1>
     </div>
 
-    <div class="z-10 w-full max-w-4xl flex flex-col items-center gap-4 c-space">
-        <div class="plinth-rule intro-item intro-rule"></div>
-        <div class="foot intro-item intro-row">
+    <div class="stage">
+        <app-entrance-statue />
+        <div class="foot c-space intro-item">
             <p class="stack font-mono text-xs sm:text-sm text-stone tracking-wider">
                 Angular · TypeScript · Java · Spring Boot
             </p>

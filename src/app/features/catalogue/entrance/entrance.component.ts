@@ -1,19 +1,15 @@
-import { ChangeDetectionStrategy, Component, signal } from "@angular/core";
-import { NgOptimizedImage } from "@angular/common";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { ArrowDownIconComponent } from "../../../shared/icons/arrow-down.icon";
 import { GalleryDoorComponent } from "../navbar/gallery-door.component";
 import { SectionLinkDirective } from "../navbar/section-link.directive";
-
-type LionState = "loading" | "ready" | "failed";
+import { StatueComponent } from "./statue/statue.component";
 
 @Component({
   selector: "app-entrance",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, RouterLink, ArrowDownIconComponent, GalleryDoorComponent, SectionLinkDirective],
+  imports: [RouterLink, ArrowDownIconComponent, GalleryDoorComponent, SectionLinkDirective, StatueComponent],
   templateUrl: "./entrance.component.html",
   styleUrl: "./entrance.component.scss",
 })
-export class EntranceComponent {
-  readonly lion = signal<LionState>("loading");
-}
+export class EntranceComponent {}

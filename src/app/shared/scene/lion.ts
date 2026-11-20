@@ -1,14 +1,21 @@
 import { Box3, Group, Mesh, MeshStandardMaterial, Vector3 } from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { LION_YAW, ROTUNDA } from "./layout";
 
 /** Multiplied into the scan's colours: warms the pale stone and leaves headroom for the key light. */
 const STONE_TINT = 0xcbb893;
 
-/** Loads the Viennese lion onto its plinth. Returns a function that cancels the load and frees the decoder. */
+/** Where the statue stands: its height in metres, the point under the middle of its base, and its turn about the vertical. */
+export interface LionStand {
+  height: number;
+  at: readonly [x: number, y: number, z: number];
+  yaw: number;
+}
+
+/** Returns a function that cancels the load and frees the decoder. */
 export function loadLion(
   assets: { dracoPath: string; lionModel: string },
+  stand: LionStand,
   onReady: (lion: Group) => void,
   onFail: () => void,
 ): () => void {
@@ -39,9 +46,9 @@ export function loadLion(
 
       const lion = new Group();
       lion.add(model);
-      lion.scale.setScalar(ROTUNDA.lionHeight / size.y);
-      lion.position.set(ROTUNDA.x, ROTUNDA.plinthHeight, 0);
-      lion.rotation.y = LION_YAW;
+      lion.scale.setScalar(stand.height / size.y);
+      lion.position.set(...stand.at);
+      lion.rotation.y = stand.yaw;
       onReady(lion);
     },
     undefined,

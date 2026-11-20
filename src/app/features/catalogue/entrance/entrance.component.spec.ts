@@ -7,6 +7,7 @@ import { ViewModeService } from "../../../core/view-mode/view-mode.service";
 import { FakeViewEnvironment } from "../../../testing/fake-view-environment";
 import { SectionLinkDirective } from "../navbar/section-link.directive";
 import { EntranceComponent } from "./entrance.component";
+import { HERO_SCENE_FACTORY } from "./statue/hero-scene.factory";
 
 describe("EntranceComponent", () => {
   let fixture: ComponentFixture<EntranceComponent>;
@@ -16,7 +17,13 @@ describe("EntranceComponent", () => {
   beforeEach(() => {
     environment = new FakeViewEnvironment();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideLocationMocks(), { provide: ViewEnvironment, useValue: environment }],
+      providers: [
+        provideRouter([]),
+        provideLocationMocks(),
+        { provide: ViewEnvironment, useValue: environment },
+        // The statue's live scene is its own spec's business; here it never arrives
+        { provide: HERO_SCENE_FACTORY, useValue: () => new Promise(() => undefined) },
+      ],
     });
     fixture = TestBed.createComponent(EntranceComponent);
   });
@@ -72,6 +79,118 @@ describe("EntranceComponent", () => {
     });
   });
 
+  describe("the composition", () => {
+    let frame: HTMLIFrameElement | undefined;
+
+    beforeEach(render);
+    afterEach(() => {
+      frame?.remove();
+      frame = undefined;
+    });
+
+    const box = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+    const middle = (rect: DOMRect) => (rect.top + rect.bottom) / 2;
+    /** The box of an element's text alone, without its padding. */
+    function ink(selector: string): DOMRect {
+      const range = element.ownerDocument.createRange();
+      range.selectNodeContents(element.querySelector(selector)!);
+      return range.getBoundingClientRect();
+    }
+    /** Where the statue and its plinth fall in the picture: the scene's camera puts them at these shares of its height. */
+    function stone(): { statue: DOMRect; plinth: DOMRect } {
+      const picture = box(".frame");
+      const centre = picture.left + picture.width / 2;
+      return {
+        statue: new DOMRect(centre - picture.height * 0.11, picture.top + picture.height * 0.39, picture.height * 0.22, picture.height * 0.5),
+        plinth: new DOMRect(centre - picture.height * 0.262, picture.top + picture.height * 0.845, picture.height * 0.524, picture.height * 0.125),
+      };
+    }
+    const over = (a: DOMRect, b: DOMRect) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+
+    /** Moves the entrance into a window of its own of that size, with the page's styles, so the layout answers to it. */
+    async function inWindow(width: number, height: number): Promise<void> {
+      frame = document.createElement("iframe");
+      frame.style.cssText = `width:${width}px;height:${height}px;border:0`;
+      document.body.appendChild(frame);
+      const inside = frame.contentDocument!;
+      inside.open();
+      inside.write("<!doctype html><html><head></head><body style='margin:0'></body></html>");
+      inside.close();
+      const sheets = Array.from(document.querySelectorAll<HTMLElement>('style, link[rel="stylesheet"]')).map((sheet) => inside.head.appendChild(sheet.cloneNode(true)));
+      await Promise.all(
+        sheets.filter((sheet) => sheet instanceof HTMLLinkElement).map((link) => new Promise((resolve) => ["load", "error"].forEach((event) => link.addEventListener(event, resolve)))),
+      );
+      inside.body.appendChild(element);
+    }
+
+    it("stands the statue in a band of its own under the name", () => {
+      const band = box("app-entrance-statue");
+
+      expect(band.height).toBeGreaterThanOrEqual(208);
+      expect(box("h1").bottom).toBeLessThanOrEqual(band.top);
+    });
+
+    it("lays nothing over the statue or its plinth: the name above them, the foot row below or to either side", () => {
+      const { statue, plinth } = stone();
+
+      expect(box(".frame").height).toBeGreaterThan(200);
+      expect(box("h1").bottom).toBeLessThanOrEqual(statue.top);
+      for (const part of [ink(".stack"), box(".actions a"), box(".plaque-outline")]) {
+        expect(over(part, statue)).toBeFalse();
+        expect(over(part, plinth)).toBeFalse();
+      }
+    });
+
+    it("fills at least the screen, so the foot row rests at its bottom", () => {
+      expect(box("section#home").height).toBeGreaterThanOrEqual(window.innerHeight);
+    });
+
+    it("does not make the page scroll sideways", () => {
+      const section = element.querySelector("section#home")!;
+
+      expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth);
+    });
+
+    it("reads in order: the name, then the statue's picture, then the foot row", () => {
+      const order = Array.from(element.querySelectorAll("h1, app-entrance-statue img, .stack, .actions a")).map((node) => node.tagName);
+
+      expect(order).toEqual(["H1", "IMG", "P", "A", "A"]);
+    });
+
+    it("on a phone stacks the foot row under the statue's band: the stack line, then the actions", async () => {
+      await inWindow(390, 844);
+      const { statue } = stone();
+
+      expect(box("h1").bottom).toBeLessThanOrEqual(statue.top);
+      expect(box(".foot").top).toBeGreaterThanOrEqual(box("app-entrance-statue").bottom);
+      expect(ink(".stack").bottom).toBeLessThanOrEqual(box(".actions a").top);
+      expect(statue.height).toBeGreaterThan(200);
+      expect(box("section#home").bottom).toBeLessThanOrEqual(844);
+    });
+
+    it("in a window as tall as it is wide sets the foot row on one line under the band", async () => {
+      await inWindow(1024, 768);
+
+      expect(box(".foot").top).toBeGreaterThanOrEqual(box("app-entrance-statue").bottom);
+      expect(ink(".stack").right).toBeLessThan(box(".actions a").left);
+      expect(Math.abs(middle(ink(".stack")) - middle(box(".actions a")))).toBeLessThan(2);
+    });
+
+    it("in a wide, low window gives the statue the whole height and parts the foot row round its plinth", async () => {
+      await inWindow(1280, 720);
+      const { statue, plinth } = stone();
+      const [stack, works, letter] = [ink(".stack"), box(".actions a"), box(".plaque-outline")];
+
+      expect(box("h1").bottom).toBeLessThanOrEqual(statue.top);
+      expect(box("app-entrance-statue").bottom).toBe(box(".stage").bottom);
+      expect(stack.right).toBeLessThanOrEqual(plinth.left);
+      expect(works.left).toBeGreaterThanOrEqual(plinth.right);
+      expect(Math.abs(middle(stack) - middle(works))).toBeLessThan(2);
+      expect(letter.bottom).toBeLessThanOrEqual(box("section#home").bottom);
+      for (const part of [stack, works, letter]) expect(over(part, statue)).toBeFalse();
+    });
+  });
+
   describe("the actions", () => {
     beforeEach(render);
 
@@ -101,17 +220,12 @@ describe("EntranceComponent", () => {
       expect(sectionLinks.map((link) => link.nativeElement)).toEqual(actions());
     });
 
-    it("give the outlined letter a backing of its own, because it lies over the statue", () => {
-      const backing = getComputedStyle(actions()[1]).backgroundColor;
-
-      expect(backing).toMatch(/^rgba\(20, 20, 23, 0\.9\d*\)$/);
-    });
-
-    it("keep the stack line, on a backing of its own", () => {
+    it("stand straight on the wall, the stack line and the outlined letter without a backing of their own", () => {
       const stack = element.querySelector<HTMLElement>(".stack")!;
 
       expect(stack.textContent?.trim()).toBe("Angular · TypeScript · Java · Spring Boot");
-      expect(getComputedStyle(stack).backgroundColor).toMatch(/^rgba\(20, 20, 23, 0\.9\d*\)$/);
+      expect(getComputedStyle(stack).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+      expect(getComputedStyle(actions()[1]).backgroundColor).toBe("rgba(0, 0, 0, 0)");
     });
   });
 

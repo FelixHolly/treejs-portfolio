@@ -120,17 +120,17 @@ describe("LetterComponent", () => {
       expect(element.querySelector("app-letter-envelope")).toBeNull();
     });
 
-    it("names the other ways to reach the owner under the sheet: no CV until one exists, and never an email address", () => {
+    it("names the other ways to reach the owner under the sheet: the CV to download, the profiles, and never an email address", () => {
       const elsewhere = element.querySelector("app-letter-elsewhere")!;
-      const links = Array.from(elsewhere.querySelectorAll("a"));
+      const [cv, ...links] = Array.from(elsewhere.querySelectorAll("a"));
 
-      expect(text(elsewhere)).toBe("Or find me on LinkedIn (opens in a new tab) or GitHub (opens in a new tab).");
+      expect(text(elsewhere)).toBe("Or download my CV, or find me on LinkedIn (opens in a new tab) or GitHub (opens in a new tab).");
       expect(follows(sheet(), elsewhere)).toBeTrue();
       expect(sheet().contains(elsewhere)).toBeFalse();
+      expect(cv.getAttribute("href")).toBe("assets/felix-hollndonner-resume.pdf");
+      expect(cv.hasAttribute("download")).toBeTrue();
       expect(links.map((link) => link.getAttribute("href"))).toEqual(CORRESPONDENCE.links.map((link) => link.href));
       expect(links.every((link) => link.target === "_blank" && link.rel === "noopener noreferrer")).toBeTrue();
-      expect(CORRESPONDENCE.cvHref).toBeNull();
-      expect(text(elsewhere)).not.toContain("CV");
       expect(element.querySelector('a[href^="mailto:"]')).toBeNull();
       expect(element.textContent).not.toMatch(/[\w.]+@[\w-]+\.\w+/);
     });
@@ -256,7 +256,7 @@ describe("LetterComponent", () => {
     it("is the next stop for the Tab key after the signing lines, ahead of the links", () => {
       const stops = Array.from(element.querySelectorAll<HTMLElement>("textarea, input, button, a")).map((stop) => stop.id || stop.tagName);
 
-      expect(stops).toEqual(["letter-message", "letter-name", "letter-email", "BUTTON", "A", "A"]);
+      expect(stops).toEqual(["letter-message", "letter-name", "letter-email", "BUTTON", "A", "A", "A"]);
       expect(element.querySelector("[tabindex]")).toBeNull();
     });
 
@@ -328,7 +328,7 @@ describe("LetterComponent", () => {
 
       expect(element.querySelector("h2")).toBe(heading);
       expect(element.querySelectorAll("h1, h2, h3, h4").length).toBe(1);
-      expect(element.querySelectorAll("app-letter-elsewhere a").length).toBe(CORRESPONDENCE.links.length);
+      expect(element.querySelectorAll("app-letter-elsewhere a").length).toBe(CORRESPONDENCE.links.length + 1);
       expect(element.textContent!.replace("ada@example.com", "")).not.toMatch(/[\w.]+@[\w-]+\.\w+/);
     });
 

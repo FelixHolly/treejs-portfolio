@@ -13,7 +13,7 @@ export const CORRESPONDENCE: {
   addressee: "Felix Hollndonner",
   room: "Room IV, Correspondence",
   invitation: "Hiring for a role, or want to talk a project through? A few lines are enough.",
-  cvHref: null,
+  cvHref: "assets/felix-hollndonner-resume.pdf",
   links: [
     { label: "LinkedIn", href: "https://www.linkedin.com/in/felix-hollndonner" },
     { label: "GitHub", href: "https://github.com/FelixHolly" },

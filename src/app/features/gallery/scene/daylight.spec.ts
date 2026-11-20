@@ -305,7 +305,7 @@ describe("Daylight", () => {
     expect(from).toBeLessThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight);
     expect(to).toBeLessThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 1);
     expect(SHAFT.thin).toBeLessThan(0.5);
-    expect(behindName).toBeLessThan(0.08);
+    expect(behindName).toBeLessThan(0.25);
   });
 
   describe("drawn", () => {
@@ -343,7 +343,7 @@ describe("Daylight", () => {
       scene = new Scene();
       scene.add(floor, shaft);
       daylight.update(0, 1, true);
-      // Several times its own strength, so that eight bits can tell its parts apart
+      // Stronger than it is ever shown, so that eight bits can tell its parts apart
       shaft.material.uniforms["strength"].value = 0.25;
     });
 

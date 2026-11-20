@@ -263,6 +263,14 @@ describe("GalleryComponent", () => {
       expect(element.querySelector('[data-stop="1"]')?.classList.contains("stop--left")).toBeFalse();
     });
 
+    it("sets the line over the name as the static shell in index.html paints it, in the entrance's lighter stone and nowhere else", () => {
+      const eyebrow = element.querySelector(".stop--entrance .entrance-head .eyebrow")!;
+
+      expect(eyebrow.className).toBe("eyebrow eyebrow-entrance");
+      expect(eyebrow.nextElementSibling).toBe(element.querySelector("h1"));
+      expect(Array.from(element.querySelectorAll(".eyebrow-entrance"))).toEqual([eyebrow]);
+    });
+
     it("offers the arrow keys in its hint in a part a touch screen can drop", () => {
       const hint = element.querySelector(".hint")!;
 

@@ -103,6 +103,11 @@ select:focus-visible,
     @apply font-mono uppercase tracking-[0.25em] text-xs sm:text-sm text-stone;
   }
 
+  /* Over the entrance the line stands on the lit hall, where stone alone would sink into the shaft of light */
+  .eyebrow-entrance {
+    @apply text-stone-light;
+  }
+
   .plinth-rule {
     @apply h-px w-full bg-gradient-to-r from-transparent via-gold/70 to-transparent;
   }

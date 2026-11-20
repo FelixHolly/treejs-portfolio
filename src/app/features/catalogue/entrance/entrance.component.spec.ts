@@ -71,7 +71,7 @@ describe("EntranceComponent", () => {
       const eyebrow = element.querySelector(".eyebrow")!;
 
       expect(name.className).toBe("font-display font-medium text-bone text-center leading-none text-5xl sm:text-6xl xl:text-8xl");
-      expect(eyebrow.className).toBe("eyebrow");
+      expect(eyebrow.className).toBe("eyebrow eyebrow-entrance");
       expect(name.parentElement).toBe(eyebrow.parentElement);
       expect(name.parentElement?.className).toBe("z-10 flex flex-col items-center gap-4 c-space");
       expect(Array.from(name.parentElement!.children)).toEqual([eyebrow, name]);

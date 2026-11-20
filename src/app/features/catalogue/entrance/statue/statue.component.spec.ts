@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ViewEnvironment } from "../../../../core/view-mode/view-environment";
-import { FakeViewEnvironment } from "../../../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "../../../../core/view-mode/fake-view-environment";
 import { HERO_SCENE_FACTORY } from "./hero-scene.factory";
 import { HeroSceneFactory, HeroView, HeroViewOptions } from "./scene/hero-view";
 import { StatueComponent } from "./statue.component";

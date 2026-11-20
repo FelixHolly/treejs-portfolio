@@ -11,7 +11,7 @@ import {
 } from "@angular/core";
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
 import { CORRESPONDENCE } from "../../core/content/correspondence.content";
-import { EmailService } from "../../services/email.service";
+import { EmailService } from "../../core/email/email.service";
 import { ElsewhereComponent } from "./elsewhere.component";
 import { EnvelopeComponent } from "./envelope.component";
 

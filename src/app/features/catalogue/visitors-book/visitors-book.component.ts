@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { VISITOR_ENTRIES } from "../../../core/content/visitors-book.content";
-import { RevealDirective } from "../../../directives/reveal.directive";
+import { RevealDirective } from "../../../shared/reveal/reveal.directive";
 import { RoomLabelComponent } from "../../../shared/room-label/room-label.component";
 
 @Component({

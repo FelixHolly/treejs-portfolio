@@ -1,5 +1,5 @@
 import { BufferAttribute, BufferGeometry, Mesh, MeshBasicMaterial, Raycaster, Triangle, Vector3 } from "three";
-import { luminance } from "../../../testing/corners";
+import { luminance } from "./corners";
 import { BEAMS, beams, buildCeilings, wells } from "./ceilings";
 import { STONE } from "./fabric";
 import { HALF_DEPTH, LAYLIGHT, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";

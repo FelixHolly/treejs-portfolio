@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { ViewportScroller } from "@angular/common";
 import { RouterOutlet } from "@angular/router";
-import { NotificationToastComponent } from "./components/notification-toast/notification-toast.component";
-import { TorchComponent } from "./components/torch/torch.component";
+import { NotificationToastComponent } from "./core/notification/notification-toast.component";
+import { TorchComponent } from "./shared/torch/torch.component";
 import { ViewModeService } from "./core/view-mode/view-mode.service";
 
 @Component({

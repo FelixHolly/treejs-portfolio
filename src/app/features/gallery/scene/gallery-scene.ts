@@ -340,7 +340,11 @@ export class GalleryScene implements GalleryView {
   }
 
   private pieceUnderAim(): number | null {
-    if (this.walking()) return null;
+    if (this.walking()) {
+      // No stop is this far along, so the mouse is tested again once the camera stands, wherever that is
+      this.aimedAt = Number.POSITIVE_INFINITY;
+      return null;
+    }
     this.aimedAt = this.progress;
     // Aimed from where the look-around comes to rest, not from where its easing has got to
     this.path.sample(this.progress, this.pose);
@@ -363,8 +367,13 @@ export class GalleryScene implements GalleryView {
 
   /** Nothing is pointed at during a walk; the resting mouse is tested once more when the camera stands again. */
   private followPointer(seconds: number): boolean {
-    if (this.walking()) this.point(null);
-    else if (this.aiming && Math.abs(this.progress - this.aimedAt) > WALKING) this.point(this.pieceUnderAim());
+    if (this.walking()) {
+      this.point(null);
+    } else if (this.aiming && Math.abs(this.progress - this.aimedAt) > WALKING) {
+      const stop = this.pieceUnderAim();
+      // The walk may have brought a label under the mouse, which only the page can see
+      this.point(this.options.mouseOnScene() ? stop : null);
+    }
     return this.pointedLight.update(seconds);
   }
 

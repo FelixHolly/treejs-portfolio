@@ -1,4 +1,4 @@
-import { Corner, corners, luminance } from "../../../testing/corners";
+import { Corner, corners, luminance } from "./corners";
 import { casing, CASING_TOP, doorOpening, doorReveal, ROOM_WALLS, STONE } from "./fabric";
 import { DOOR, DOOR_CASING, HALF_DEPTH, WALL_THICKNESS } from "./layout";
 import { Stonework, Tone, WallFace } from "./stonework";

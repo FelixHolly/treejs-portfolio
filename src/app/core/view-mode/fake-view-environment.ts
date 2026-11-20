@@ -1,4 +1,4 @@
-import { ViewEnvironment } from "../core/view-mode/view-environment";
+import { ViewEnvironment } from "./view-environment";
 
 /** A browser the specs can shape: by default a capable desktop with nothing stored. */
 export class FakeViewEnvironment implements Pick<

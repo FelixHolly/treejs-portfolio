@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { RevealDirective } from "../../../directives/reveal.directive";
+import { RevealDirective } from "../../../shared/reveal/reveal.directive";
 
 @Component({
   selector: "app-footer",

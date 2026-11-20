@@ -99,7 +99,7 @@
           }
           @case ("visitors-book") {
             <app-room-label numeral="III" title="Visitors' Book" />
-            @for (entry of entries; track entry.company) {
+            @for (entry of entries; track entry.quote) {
               <figure class="entry">
                 <blockquote class="font-display italic text-lg text-bone leading-relaxed">{{ entry.quote }}</blockquote>
                 <figcaption class="mt-3 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-stone">

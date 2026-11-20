@@ -12,7 +12,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, viewChild } 
   selector: "app-torch",
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<div class="torch" #glow aria-hidden="true"></div>`,
-  styleUrls: ["./torch.component.scss"],
+  styleUrl: "./torch.component.scss",
   host: { "(document:mousemove)": "onMouseMove($event)" },
 })
 export class TorchComponent implements OnDestroy {

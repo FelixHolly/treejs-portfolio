@@ -1,5 +1,5 @@
 import { Color, Vector3 } from "three";
-import { corners } from "../../../testing/corners";
+import { corners } from "./corners";
 import { blend, onRound, ringSweep, scaled, Step, Stonework, Tone, tone, WallFace } from "./stonework";
 
 const GREY: Tone = [0.5, 0.5, 0.5];

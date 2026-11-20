@@ -3,6 +3,8 @@ import { ROTUNDA } from "./layout";
 
 /** Gone `thinsBy` stops towards Room I; settles over `settles` seconds after `idleAfter` idle ones, back over `wakes`; a mote fades from `clear` to `near` metres off the camera. */
 export const DUST = { motes: 44, thinsBy: 0.4, idleAfter: 60, settles: 4, wakes: 1.5, near: 0.6, clear: 2 } as const;
+/** A mote sinks `rate` metres a second through `drop` metres about where it hangs, then begins again at the top. */
+export const FALL = { rate: 0.014, drop: 0.6 } as const;
 /** The statue's key light, as `lights.ts` hangs it: the motes drift in its beam, the only place dust would show. */
 const BEAM = { from: [ROTUNDA.x - 4.4, 6.6, -3.6], to: [ROTUNDA.x, 2.5, 0], angle: 0.44, near: 0.58, far: 1.04, fill: 0.55 } as const;
 const WARM = 0xffd9a0;
@@ -16,13 +18,17 @@ const VERTEX = /* glsl */ `
   varying float vLight;
   void main() {
     float t = time * mote.w + mote.x;
-    vec3 drifted = position + vec3(sin(t * 0.61) * 0.11, sin(t * 0.43) * 0.05 - 0.014 * time * mote.w, cos(t * 0.37) * 0.11);
+    // Sinking on for as long as the visitor stays, the cloud would end up under the floor: a mote falls a short way, over and over
+    float fallen = fract(t * ${(FALL.rate / FALL.drop).toFixed(5)});
+    vec3 drifted = position + vec3(sin(t * 0.61) * 0.11, sin(t * 0.43) * 0.05 + (0.5 - fallen) * ${FALL.drop.toFixed(2)}, cos(t * 0.37) * 0.11);
     vec4 seen = modelViewMatrix * vec4(drifted, 1.0);
     gl_Position = projectionMatrix * seen;
     gl_PointSize = max(mote.y * halfHeight * projectionMatrix[1][1] / -seen.z, 3.0);
     // Walked through, a mote would swell into a blob: it fades out as the camera comes up to it
     float clearOfCamera = smoothstep(${DUST.near.toFixed(2)}, ${DUST.clear.toFixed(2)}, -seen.z);
-    vLight = mote.z * level * clearOfCamera * (0.7 + 0.3 * sin(t * 1.7));
+    // Dark at the foot of its fall and at the top, so it is never seen to jump between them
+    float midFall = smoothstep(0.0, 0.1, fallen) * (1.0 - smoothstep(0.9, 1.0, fallen));
+    vLight = mote.z * level * clearOfCamera * midFall * (0.7 + 0.3 * sin(t * 1.7));
   }
 `;
 

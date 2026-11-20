@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
-import { FakeViewEnvironment } from "../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "../../core/view-mode/fake-view-environment";
 import { ViewSwitchComponent } from "./view-switch.component";
 
 describe("ViewSwitchComponent", () => {

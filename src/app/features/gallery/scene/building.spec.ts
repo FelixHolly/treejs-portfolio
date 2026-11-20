@@ -1,5 +1,5 @@
 import { BufferGeometry, Intersection, Mesh, Raycaster, Vector3 } from "three";
-import { Corner, corners, luminance } from "../../../testing/corners";
+import { Corner, corners, luminance } from "./corners";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { STONE } from "./fabric";
 import {

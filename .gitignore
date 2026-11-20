@@ -5,7 +5,6 @@
 
 # Compiled TypeScript
 *.js.map
-*.d.ts
 
 # Node modules
 /node_modules
@@ -37,10 +36,6 @@ temp/
 /coverage
 /coverage-final.json
 .nyc_output
-
-# Compiled SCSS/CSS if applicable
-*.css
-*.css.map
 
 # misc
 *.log

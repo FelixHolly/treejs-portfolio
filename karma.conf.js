@@ -1,6 +1,6 @@
 // Karma configuration
 // ChromeHeadlessWebGL: headless Chrome with software WebGL (SwiftShader),
-// required because Hero/Projects components create a WebGLRenderer on init.
+// required because the gallery scene specs create a WebGLRenderer.
 module.exports = function (config) {
   config.set({
     basePath: '',

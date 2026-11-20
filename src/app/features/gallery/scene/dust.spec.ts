@@ -1,5 +1,5 @@
-import { AdditiveBlending, Scene, Vector3 } from "three";
-import { Dust, DUST, dustLevel, DustMoment, dustPresence } from "./dust";
+import { AdditiveBlending, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
+import { Dust, DUST, dustLevel, DustMoment, dustPresence, FALL } from "./dust";
 import { ROTUNDA } from "./layout";
 
 const DARK = 0.3;
@@ -136,6 +136,50 @@ describe("Dust", () => {
     expect(DUST.clear).toBe(2);
     expect(vertexShader).toContain("smoothstep(0.60, 2.00, -seen.z)");
     expect(vertexShader).toMatch(/vLight = [^;]*clearOfCamera/);
+  });
+
+  it("lets a mote fall a short way and begin again at the top, so the cloud never sinks out of the beam however long the visitor stays", () => {
+    const { vertexShader } = new Dust(false).objects[0].material;
+
+    expect(FALL.drop).toBeLessThanOrEqual(1);
+    expect(vertexShader).toContain(`float fallen = fract(t * ${(FALL.rate / FALL.drop).toFixed(5)});`);
+    expect(vertexShader).toContain(`(0.5 - fallen) * ${FALL.drop.toFixed(2)}`);
+    expect(vertexShader).not.toMatch(/drifted = [^;]*time/);
+  });
+
+  it("keeps every mote clear of the floor through the whole of its fall", () => {
+    const position = new Dust(false).objects[0].geometry.getAttribute("position");
+
+    for (let index = 0; index < position.count; index++) {
+      expect(position.getY(index) - FALL.drop / 2).withContext(`mote ${index}`).toBeGreaterThan(0.4);
+    }
+  });
+
+  it("dims a mote at the foot of its fall and at the top, so it is never seen to jump from one to the other", () => {
+    const { vertexShader } = new Dust(false).objects[0].material;
+
+    expect(vertexShader).toContain("float midFall = smoothstep(0.0, 0.1, fallen) * (1.0 - smoothstep(0.9, 1.0, fallen));");
+    expect(vertexShader).toMatch(/vLight = [^;]*midFall/);
+  });
+
+  it("compiles and draws every mote", () => {
+    if (!document.createElement("canvas").getContext("webgl2")) pending("needs WebGL");
+    const renderer = new WebGLRenderer({ canvas: document.createElement("canvas") });
+    renderer.setSize(16, 16, false);
+    const failed = jasmine.createSpy("shader error");
+    renderer.debug.onShaderError = failed;
+    const scene = new Scene();
+    scene.add(...drifting().objects);
+    const camera = new PerspectiveCamera(50, 1, 0.1, 50);
+    camera.position.set(ROTUNDA.x - 9, 3, 0);
+    camera.lookAt(ROTUNDA.x, 3, 0);
+
+    renderer.render(scene, camera);
+
+    expect(failed).not.toHaveBeenCalled();
+    expect(renderer.info.render.points).toBe(DUST.motes);
+    renderer.dispose();
+    renderer.forceContextLoss();
   });
 
   it("waits, asking for no frames and drawing nothing, until the statue's lights begin to rise", () => {

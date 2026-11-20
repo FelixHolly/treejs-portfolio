@@ -9,9 +9,9 @@ import { WorksService } from "../../core/content/works.service";
 import { PlaceService } from "../../core/place/place.service";
 import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
-import { EmailService } from "../../services/email.service";
+import { EmailService } from "../../core/email/email.service";
 import { LetterComponent } from "../../shared/letter/letter.component";
-import { FakeViewEnvironment } from "../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "../../core/view-mode/fake-view-environment";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { GalleryComponent } from "./gallery.component";
 import { GallerySceneFactory, GalleryView, GalleryViewOptions } from "./scene/gallery-view";
@@ -866,6 +866,116 @@ describe("GalleryComponent", () => {
 
       expect(scrollTo).toHaveBeenCalledTimes(1);
     });
+
+    // Few openings for many expectations: every one of them writes to the address bar, and Chrome drops such calls when a page makes too many
+    describe("while the page still settles", () => {
+      const main = () => element.querySelector<HTMLElement>("main")!;
+      const root = document.documentElement;
+      const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+
+      // The page really scrolls here, and nothing but the page itself may keep it at a stop
+      beforeEach(() => {
+        scrollTo.and.callThrough();
+        root.style.scrollSnapType = "none";
+        root.style.overflowAnchor = "none";
+      });
+
+      afterEach(() => {
+        root.style.removeProperty("scroll-snap-type");
+        root.style.removeProperty("overflow-anchor");
+      });
+
+      /** Opens the gallery at an address and returns where the page came to rest. */
+      async function openAt(hash: string): Promise<number> {
+        history.replaceState(null, "", hash);
+        await open();
+        await nextFrame();
+        scrollTo.calls.reset();
+        return window.scrollY;
+      }
+
+      /** Moves every label down the page, as a stylesheet or a font arriving late does, and lets the page notice. */
+      async function labelsMove(by: number): Promise<void> {
+        const spacer = main().querySelector<HTMLElement>("[data-spacer]") ?? main().insertBefore(document.createElement("div"), main().firstChild);
+        spacer.dataset["spacer"] = "";
+        spacer.style.height = `${by}px`;
+        await nextFrame();
+        await nextFrame();
+      }
+
+      it("stays with the stop its address named each time the labels move, until the visitor first acts", async () => {
+        const top = await openAt("#visitors-book");
+        expect(location.hash).toBe("#visitors-book");
+        expect(top).toBeGreaterThan(0);
+
+        window.dispatchEvent(new Event("scroll"));
+        await nextFrame();
+        expect(scrollTo).withContext("while nothing moves").not.toHaveBeenCalled();
+
+        await labelsMove(900);
+        fixture.detectChanges();
+        expect(Math.abs(window.scrollY - (top + 900))).withContext("the labels moved once").toBeLessThan(2);
+        expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("instant");
+        expect(location.hash).toBe("#visitors-book");
+        expect(document.title).toBe("Visitors' Book - Felix Hollndonner");
+
+        await labelsMove(400);
+        expect(Math.abs(window.scrollY - (top + 400))).withContext("and again").toBeLessThan(2);
+
+        // Near enough to stay at the stop, so that no address is written for leaving it
+        window.dispatchEvent(new WheelEvent("wheel"));
+        window.scrollBy({ top: -60, behavior: "instant" });
+        await nextFrame();
+        scrollTo.calls.reset();
+        await labelsMove(460);
+        expect(scrollTo).withContext("after the visitor scrolled").not.toHaveBeenCalled();
+        expect(Math.abs(window.scrollY - (top + 340))).toBeLessThan(2);
+      });
+
+      it("reaches the stop once a page that was too short for it has grown", async () => {
+        const top = await openAt("#visitors-book");
+        // Where a short page would have stopped the opening scroll: no one acted, so the stop is still owed
+        window.scrollTo({ top: top - 300, behavior: "instant" });
+        await nextFrame();
+
+        await labelsMove(10);
+
+        expect(Math.abs(window.scrollY - (top + 10))).toBeLessThan(2);
+        expect(location.hash).toBe("#visitors-book");
+      });
+
+      for (const type of ["keydown", "pointerdown", "touchmove"]) {
+        it(`lets go at the visitor's first ${type}, so a label that grows later moves nothing under them`, async () => {
+          await openAt("#visitors-book");
+
+          window.dispatchEvent(new Event(type));
+          await labelsMove(200);
+
+          expect(scrollTo).not.toHaveBeenCalled();
+        });
+      }
+
+      it("lets go when the visitor walks on, here by tabbing into another stop's label", async () => {
+        await openAt("#visitors-book");
+        scrollTo.and.stub();
+
+        element.querySelector('[data-stop="2"] .onward')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+        expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+        scrollTo.calls.reset();
+        await labelsMove(60);
+
+        expect(scrollTo).not.toHaveBeenCalled();
+      });
+
+      it("holds nothing for a visitor who arrived at the entrance", async () => {
+        await open();
+
+        await labelsMove(900);
+
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(window.scrollY).toBe(0);
+      });
+    });
   });
 
   describe("the film in the commission's frame", () => {
@@ -1152,6 +1262,64 @@ describe("GalleryComponent", () => {
       expect(canvas.getAttribute("role")).toBeNull();
     });
 
+    describe("a mouse that rested through a walk, which the scene asks about before testing it again", () => {
+      it("still has the scene under it where the page shows the scene there", () => {
+        const under = spyOn(document, "elementFromPoint").and.returnValue(main());
+        mouse("pointermove", main(), [200, 150]);
+
+        expect(options!.mouseOnScene()).toBeTrue();
+        expect(under).toHaveBeenCalledOnceWith(200, 150);
+      });
+
+      it("has not once the walk has brought a label's text under it", () => {
+        spyOn(document, "elementFromPoint").and.returnValue(labelText(0));
+        mouse("pointermove", main(), [200, 150]);
+
+        expect(options!.mouseOnScene()).toBeFalse();
+      });
+
+      it("has not anywhere within the label of the stop walked to, shown or still held back by a room's title", () => {
+        arriveAt(1);
+        const label = element.querySelector('[data-stop="1"] [data-label]')!.getBoundingClientRect();
+        const under = spyOn(document, "elementFromPoint").and.returnValue(main());
+
+        mouse("pointermove", main(), [label.left + label.width / 2, label.top + label.height / 2]);
+        expect(options!.mouseOnScene()).toBeFalse();
+        expect(under).not.toHaveBeenCalled();
+
+        mouse("pointermove", main(), [label.left - 8, label.top + 8]);
+        expect(options!.mouseOnScene()).toBeTrue();
+      });
+
+      it("is not held off by the entrance's label, which spans the screen and shows the scene between its parts", () => {
+        const label = element.querySelector('[data-stop="0"] [data-label]')!.getBoundingClientRect();
+        spyOn(document, "elementFromPoint").and.returnValue(element.querySelector('[data-stop="0"] [data-label]'));
+
+        mouse("pointermove", main(), [label.left + label.width / 2, label.top + label.height / 2]);
+
+        expect(options!.mouseOnScene()).toBeTrue();
+      });
+
+      it("is not spoken for before it has moved, nor once it has left the window", () => {
+        spyOn(document, "elementFromPoint").and.returnValue(main());
+        expect(options!.mouseOnScene()).toBeFalse();
+
+        mouse("pointermove", main());
+        expect(options!.mouseOnScene()).toBeTrue();
+
+        document.documentElement.dispatchEvent(new PointerEvent("pointerleave", { pointerType: "mouse" }));
+        expect(options!.mouseOnScene()).toBeFalse();
+      });
+
+      it("is a mouse only: a finger never speaks for one", () => {
+        spyOn(document, "elementFromPoint").and.returnValue(main());
+
+        mouse("pointermove", main(), [200, 150], "touch");
+
+        expect(options!.mouseOnScene()).toBeFalse();
+      });
+    });
+
     it("passes a click on the bare scene to the scene, at the place it happened", () => {
       const width = document.documentElement.clientWidth;
 
@@ -1292,6 +1460,13 @@ describe("GalleryComponent", () => {
 
         expect(scrollTo).not.toHaveBeenCalled();
         expect(dialog().querySelector("h2")?.textContent?.trim()).toBe("Küchenschelle");
+      });
+
+      it("tells the scene that a resting mouse has no scene under it", () => {
+        spyOn(document, "elementFromPoint").and.returnValue(main());
+        mouse("pointermove", main(), [4, 4]);
+
+        expect(options!.mouseOnScene()).toBeFalse();
       });
     });
   });

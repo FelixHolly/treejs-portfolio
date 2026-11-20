@@ -3,6 +3,7 @@ import { provideRouter, Router } from "@angular/router";
 import { RouterTestingHarness } from "@angular/router/testing";
 import { routes } from "./app.routes";
 import { ViewEnvironment } from "./core/view-mode/view-environment";
+import { HERO_SCENE_FACTORY } from "./features/catalogue/entrance/statue/hero-scene.factory";
 import { GALLERY_SCENE_FACTORY } from "./features/gallery/gallery-scene.factory";
 import { GalleryView } from "./features/gallery/scene/gallery-view";
 import { FakeViewEnvironment } from "./testing/fake-view-environment";
@@ -27,6 +28,8 @@ describe("routes", () => {
         provideRouter(routes),
         { provide: ViewEnvironment, useValue: environment },
         { provide: GALLERY_SCENE_FACTORY, useValue: () => Promise.resolve(scene) },
+        // The catalogue's statue would otherwise fetch its model and open a graphics context in these specs
+        { provide: HERO_SCENE_FACTORY, useValue: () => new Promise(() => undefined) },
       ],
     });
     harness = await RouterTestingHarness.create();

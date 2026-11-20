@@ -1,0 +1,18 @@
+<div class="band">
+    <div class="frame">
+        @if (still() !== 'failed') {
+            <picture class="lion" [class.lion--ready]="still() === 'ready'">
+                <source media="(max-aspect-ratio: 1/1)" sizes="160vw"
+                        srcset="assets/lion-hall-tall-800.webp 800w, assets/lion-hall-tall-1200.webp 1200w">
+                <source sizes="calc(235vh - 720px)"
+                        srcset="assets/lion-hall-1200.webp 1200w, assets/lion-hall-1800.webp 1800w, assets/lion-hall-2400.webp 2400w">
+                <img ngSrc="assets/lion-hall-1800.webp" fill priority
+                     alt="Statue of a Viennese lion, the Vienna Löwe"
+                     (load)="still.set('ready')" (error)="still.set('failed')">
+            </picture>
+        }
+        @if (animated()) {
+            <canvas #canvas class="live" [class.live--on]="live()" aria-hidden="true"></canvas>
+        }
+    </div>
+</div>

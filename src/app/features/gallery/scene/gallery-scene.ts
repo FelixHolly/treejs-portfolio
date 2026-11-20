@@ -36,18 +36,20 @@ import {
   HANG_Z,
   LECTERN,
   LETTERBOX,
+  LION_YAW,
   pieceSlots,
   PieceSlot,
   portraitSlot,
+  ROTUNDA,
   SKILL_PLAQUE_HEIGHT,
   SKILL_PLAQUES,
   skillPlaqueSlots,
 } from "./layout";
 import { GalleryLights } from "./lights";
-import { loadLion } from "./lion";
+import { loadLion } from "../../../shared/scene/lion";
 import { partitionWalls, pieceTargets, PieceTarget, stopHit } from "./picking";
 import { hangPortrait, portraitMaterial } from "./portrait";
-import { QUALITY_LADDER, QualityController, QualityTier } from "./quality";
+import { QUALITY_LADDER, QualityController, QualityTier } from "../../../shared/scene/quality";
 import { ShaderWarmup } from "./shader-warmup";
 import { Post } from "./post";
 import { coverFit, inscriptionTexture, nameBoardTexture, plaqueTexture } from "./textures";
@@ -158,6 +160,7 @@ export class GalleryScene implements GalleryView {
 
     this.cancelLion = loadLion(
       options.assets,
+      { height: ROTUNDA.lionHeight, at: [ROTUNDA.x, ROTUNDA.plinthHeight, 0], yaw: LION_YAW },
       (lion) => void this.unveil(lion),
       () => this.raiseLights(),
     );

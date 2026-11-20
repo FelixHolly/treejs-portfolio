@@ -23,6 +23,7 @@ import {
 import { PointedLight, RotundaAtmosphere } from "./atmosphere";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { buildPoses, buildWaypoints, CameraPath, Pose } from "./camera-path";
+import { Daylight } from "./daylight";
 import { Dust } from "./dust";
 import { FramedPicture, framedPicture, hang, letteredBoard, pictureLight } from "./exhibits";
 import { filmPlacement, FilmPlacement, filmShouldPlay } from "./film";
@@ -87,6 +88,7 @@ export class GalleryScene implements GalleryView {
   private readonly portrait: FramedPicture<ShaderMaterial>;
   private readonly lights: GalleryLights;
   private readonly atmosphere = new RotundaAtmosphere();
+  private readonly daylight = new Daylight();
   private readonly mirror = new FloorMirror(this.palette.floor);
   private readonly pose: Pose = { position: new Vector3(), target: new Vector3() };
   private readonly pointer = new Vector2();
@@ -152,7 +154,7 @@ export class GalleryScene implements GalleryView {
     this.lionLevel = EMPTY_PLINTH_LEVEL;
     this.portrait = framedPicture(portraitSlot(options.portrait), this.palette, this.plainFrame, portraitMaterial());
 
-    this.scene.add(buildArchitecture(this.palette), ...this.lights.objects, ...this.atmosphere.objects);
+    this.scene.add(buildArchitecture(this.palette), ...this.lights.objects, ...this.atmosphere.objects, ...this.daylight.objects);
     this.furnish();
     void this.inscribe();
 
@@ -164,6 +166,7 @@ export class GalleryScene implements GalleryView {
 
     this.lights.setStatueShadow(this.quality.tier.statueShadow);
     this.mirror.enabled = this.quality.allowsCostlyEffects;
+    this.palette.gold.glints = this.quality.allowsCostlyEffects;
     this.resize({ labelShare: 0, statueBand: OPEN_BAND });
     // Shaders compile in the background; a blocking first render would freeze the page for most of a second.
     this.renderer.compileAsync(this.scene, this.camera).finally(() => {
@@ -309,6 +312,7 @@ export class GalleryScene implements GalleryView {
     this.camera.rotateX(-this.look.y * LOOK.pitch);
     this.lights.update(this.progress, this.lionLevel);
     this.atmosphere.update(this.progress, this.lionLevel);
+    this.daylight.update(this.progress, this.lionLevel, this.quality.allowsCostlyEffects);
     const mirroring = this.mirror.render(this.renderer, this.scene, this.camera, seconds);
     this.renderer.render(this.scene, this.camera);
 
@@ -368,6 +372,7 @@ export class GalleryScene implements GalleryView {
   private applyQuality(tier: QualityTier): void {
     reached = tier;
     this.mirror.enabled = tier.reflections;
+    this.palette.gold.glints = tier.reflections;
     const [width, height] = this.canvasSize();
     const ratio = this.pixelRatio(width, height);
     if (ratio !== this.renderer.getPixelRatio()) this.renderer.setDrawingBufferSize(width, height, ratio);

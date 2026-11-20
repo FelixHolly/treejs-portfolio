@@ -23,6 +23,43 @@ export const LION_YAW = Math.PI - 0.35;
 export const PEDESTAL_RADIUS = 1.4;
 export const DOOR_XS = [5.2, 18.4, 47.6, 56] as const;
 export const END_WALL_X = 64.4;
+/** The hall's dome, which rises to the hall's full height: where its cornice runs, and the round opening at its crown. */
+export const DOME = { springing: 10.9, oculus: 1.5 } as const;
+/** A door's stone surround: its architrave's width, how far that stands off the wall, and the frieze and shelf over it. */
+export const DOOR_CASING = { width: 0.24, proud: 0.1, frieze: 0.2, shelf: 0.1 } as const;
+/** The panelled base of every wall, up to the top of the rail that caps it; nothing hangs lower. Room III's is `tall`. */
+export const DADO = { height: 0.56, tall: 1.16, skirting: 0.14 } as const;
+/** The cornice under a room's ceiling: how far down the wall it begins and how far out it reaches. */
+export const CORNICE = { drop: 0.46, reach: 0.32 } as const;
+/** The glazed opening in a room's ceiling: half its width, how far short of the room's ends it stops, how deep its well is. */
+export const LAYLIGHT = { halfWidth: 1.25, inset: 1.5, well: 0.42 } as const;
+/** The tall window that ends the enfilade, on its axis in the last wall. */
+export const END_WINDOW = { width: 1.7, sill: 1 } as const;
+
+export type RoomFeature = "plain" | "beams" | "panelled" | "window";
+
+/** A room of the enfilade between the faces of the walls that close it, and the one thing that sets it apart. */
+export interface RoomSpan {
+  from: number;
+  to: number;
+  feature: RoomFeature;
+}
+
+const ROOM_FEATURES: readonly RoomFeature[] = ["plain", "beams", "panelled", "window"];
+
+/** How high a room's panelled base stands. */
+export function dadoHeight(span: RoomSpan): number {
+  return span.feature === "panelled" ? DADO.tall : DADO.height;
+}
+
+export function roomSpans(): RoomSpan[] {
+  return DOOR_XS.map((door, index) => ({
+    from: door + WALL_THICKNESS / 2,
+    to: (DOOR_XS[index + 1] ?? END_WALL_X) - WALL_THICKNESS / 2,
+    feature: ROOM_FEATURES[index],
+  }));
+}
+
 /** The portrait hangs first in Room I, near the door from the hall; the picture's own size, without mat and frame. */
 export const PORTRAIT = { x: 7.7, y: 1.72, width: 1, height: 1.25 } as const;
 /** The skill plaques further along Room I, hung `columns` to a row in a block around `x` and `y`. A plaque is `head`, a `line` for each of `lines` tools, and `foot` tall. */

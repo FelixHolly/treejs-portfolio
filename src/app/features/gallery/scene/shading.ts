@@ -2,6 +2,7 @@ import { BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, ShaderMateria
 import {
   BENCH,
   DOOR,
+  DOOR_CASING,
   DOOR_XS,
   END_WALL_X,
   HALF_DEPTH,
@@ -73,7 +74,7 @@ export function groundShadows(): GroundShadow[] {
 export const CORNERS = {
   floor: { reach: 1.15, strength: 0.42 },
   foot: { reach: 0.95, strength: 0.34 },
-  head: { reach: 1.5, strength: 0.5 },
+  head: { reach: 1.3, strength: 0.5 },
 } as const;
 
 /** Collects flat patches of shade; each corner carries how dark the patch is there and how far out from its dark edge. */
@@ -147,16 +148,23 @@ function around(shade: Shade, shadow: GroundShadow): void {
 /** The hall's wall is built of this many flat faces, from one jamb of the door to Room I round to the other. */
 export const HALL_FACES = 72;
 
+/** Half the turn the door to Room I takes out of the hall's round wall. */
+export const HALL_DOOR_TURN = Math.asin(DOOR.width / 2 / ROTUNDA.radius);
+
+/** Where the hall's wall turns from one flat face to the next, round from +Z towards +X, from one jamb to the other. */
+export function hallTurn(face: number): number {
+  return Math.PI / 2 + HALL_DOOR_TURN + (face / HALL_FACES) * (Math.PI * 2 - HALL_DOOR_TURN * 2);
+}
+
 /** The hall is round: its corner with the floor is a ring, left open where the door to Room I stands. */
 function hallCorners(shade: Shade): void {
   const { x, radius } = ROTUNDA;
-  const door = Math.asin(DOOR.width / 2 / radius);
+  const door = HALL_DOOR_TURN;
   const sweep = Math.PI * 2 - door * 2;
-  // Face for face with the wall: a rounder ring would dip behind the wall's flat faces and show through in stripes
-  const angle = (face: number) => Math.PI / 2 + door + (face / HALL_FACES) * sweep;
   // Gone at the door's jamb, and back in full a door's width further round
   const beside = (face: number) => Math.min((Math.min(face, HALL_FACES - face) / HALL_FACES) * sweep / (door * 2), 1);
-  const at = (face: number, r: number, y: number): Point => [x + Math.sin(angle(face)) * r, y, Math.cos(angle(face)) * r];
+  // Face for face with the wall: a rounder ring would dip behind the wall's flat faces and show through in stripes
+  const at = (face: number, r: number, y: number): Point => [x + Math.sin(hallTurn(face)) * r, y, Math.cos(hallTurn(face)) * r];
   const { floor, foot } = CORNERS;
   const wall = radius - OFF_WALL;
 
@@ -210,7 +218,7 @@ function wallCorner(
 }
 
 /** Half the opening a door leaves in a wall's foot, its casing included, and where the floor's shade beside it is back in full. */
-const BESIDE_DOOR = { jamb: DOOR.width / 2 + 0.12, full: DOOR.width / 2 + 1.1 } as const;
+const BESIDE_DOOR = { jamb: DOOR.width / 2 + DOOR_CASING.width, full: DOOR.width / 2 + 1.1 } as const;
 
 function roomCorners(shade: Shade): void {
   const first = DOOR_XS[0] + WALL_THICKNESS / 2;

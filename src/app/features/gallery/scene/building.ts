@@ -97,7 +97,6 @@ function pedestal(palette: Palette): Group {
   return group;
 }
 
-/** The hall's floor with its gold inlay, and the statue's drum in the middle of it. */
 function hallFloor(palette: Palette): Group {
   const group = new Group();
 

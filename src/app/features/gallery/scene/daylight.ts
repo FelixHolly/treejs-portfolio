@@ -14,13 +14,11 @@ import {
   Vector3,
 } from "three";
 import { wells } from "./ceilings";
-import { DOME_CROWN } from "./hall";
 import { CORNICE, dadoHeight, DOME, DOOR, DOOR_CASING, DOOR_XS, END_WINDOW, HALF_DEPTH, LAYLIGHT, ROTUNDA, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";
+import { Point } from "./stonework";
 
 /** The light that comes in from above: pale, a shade cooler than the lamps. */
 const PALE = 0xe4e7ee;
-
-type Point = readonly [x: number, y: number, z: number];
 
 const WASH_VERTEX = /* glsl */ `
   #include <fog_pars_vertex>
@@ -36,8 +34,8 @@ const WASH_VERTEX = /* glsl */ `
   }
 `;
 
-// Light laid over what is there. It is fullest along the middle of its patch and gone at both long edges, and
-// fades in from either end. It thins out with the fog, as the painted shade does, and is worked out per pixel.
+// It thins out with the fog, as the painted shade does, or a far room's light would glow through it.
+// The falloff is worked out per pixel: a gradient image would show its rounding on a wall this dark.
 const WASH_FRAGMENT = /* glsl */ `
   #include <fog_pars_fragment>
   uniform vec3 tint;
@@ -61,6 +59,12 @@ const OFF = 0.005;
 export const TOP_LIGHT = { wall: 0.12, floor: 0.14, door: 0.15, window: 0.16, hall: 0.1 } as const;
 /** How far past the glass over it a pool of light on the floor spreads. */
 const POOL_SPREAD = 1.3;
+/** The light through a door: how far before the door it lies, how far past it, and its half width as a share of the door's. */
+const THROUGH_DOOR = { before: 3.4, past: 1, half: 1.24 } as const;
+/** The light before the end window: how far into the room it lies, and how far to either side of the window's middle. */
+const BEFORE_WINDOW = { reach: 3.6, half: END_WINDOW.width } as const;
+/** The pool under the dome's opening, as wide as it is long. */
+const UNDER_DOME = 3;
 
 /** Collects patches of painted light. A patch runs from `a` to `b` along one long edge and from `d` to `c` along the other. */
 class Wash {
@@ -93,16 +97,14 @@ class Wash {
   }
 }
 
-/** A patch lying on the floor, `along` x. */
 function onFloor(wash: Wash, fromX: number, toX: number, halfZ: number, strength: number, soft: number): void {
   wash.patch([fromX, OFF, halfZ], [toX, OFF, halfZ], [toX, OFF, -halfZ], [fromX, OFF, -halfZ], strength, soft);
 }
 
-/** The top light down both long walls of a room and on the walls that close it, fullest about where the pictures hang. */
 function wallWashes(wash: Wash, span: RoomSpan): void {
   const { from, to } = span;
-  const [foot, head] = [dadoHeight(span) + 0.02, WALL_HEIGHT - CORNICE.drop - 0.02];
-  // The patch's own middle lies above the middle of the wall, so more of it falls low than high
+  const [foot, head] = [dadoHeight(span), WALL_HEIGHT - CORNICE.drop - 0.02];
+  // The patch's own middle lies above the middle of the wall, so more of it falls where the pictures hang than high up
   const rows = [0.24, 1] as const;
   const beside = DOOR.width / 2 + DOOR_CASING.width + 0.12;
 
@@ -120,22 +122,22 @@ function wallWashes(wash: Wash, span: RoomSpan): void {
   }
 }
 
-/** Every painted light that never changes, as one mesh: the top light in the rooms and what falls through each door. */
+/** Every painted light that never changes, as one mesh, so that all of it costs one draw. */
 export function buildTopLight(): Mesh<BufferGeometry, ShaderMaterial> {
   const wash = new Wash();
 
   for (const span of roomSpans()) {
     wallWashes(wash, span);
     for (const well of wells(span)) {
-      // The pool is wider than the glass over it, and stops at the room's own walls
+      // Stopped at the room's own walls, or the pool would lie on the next room's floor
       const [from, to] = [Math.max(well.from - POOL_SPREAD, span.from), Math.min(well.to + POOL_SPREAD, span.to)];
       onFloor(wash, from, to, LAYLIGHT.halfWidth + POOL_SPREAD, TOP_LIGHT.floor, Math.min((POOL_SPREAD * 2) / (to - from), 0.5));
     }
-    if (span.feature === "window") onFloor(wash, span.to - 3.6, span.to, END_WINDOW.width, TOP_LIGHT.window, 0.5);
+    if (span.feature === "window") onFloor(wash, span.to - BEFORE_WINDOW.reach, span.to, BEFORE_WINDOW.half, TOP_LIGHT.window, 0.5);
   }
   // The room beyond a door is the lighter one: its light lies on the floor before the door
-  for (const x of DOOR_XS) onFloor(wash, x - 3.4, x + 1, DOOR.width * 0.62, TOP_LIGHT.door, 0.5);
-  onFloor(wash, ROTUNDA.x - 3, ROTUNDA.x + 3, 3, TOP_LIGHT.hall, 0.5);
+  for (const x of DOOR_XS) onFloor(wash, x - THROUGH_DOOR.before, x + THROUGH_DOOR.past, (DOOR.width / 2) * THROUGH_DOOR.half, TOP_LIGHT.door, 0.5);
+  onFloor(wash, ROTUNDA.x - UNDER_DOME, ROTUNDA.x + UNDER_DOME, UNDER_DOME, TOP_LIGHT.hall, 0.5);
 
   const material = new ShaderMaterial({
     uniforms: { ...UniformsUtils.clone(UniformsLib.fog), tint: { value: new Color(PALE) } },
@@ -153,8 +155,22 @@ export function buildTopLight(): Mesh<BufferGeometry, ShaderMaterial> {
   return mesh;
 }
 
-/** The shaft from the dome's opening: its radius at the floor, and how strong it is with the lights up. */
-export const SHAFT = { foot: 2.6, strength: 0.044, thinsFrom: 0.5, goneBy: 0.85 } as const;
+/**
+ * The shaft from the dome's opening: its radius at the floor and its strength with the lights up.
+ * It thins to `thin` over the heights in `thinsOver`: the page sets its name over it above the statue.
+ */
+export const SHAFT = {
+  foot: 2.6,
+  strength: 0.044,
+  thin: 0.42,
+  thinsOver: [2, 4.2],
+  /** The height over which it comes up from the floor it lands on. */
+  lands: 0.5,
+  /** The share of it the near side of its skin adds; the far side adds the rest. */
+  near: 0.3,
+  /** The stops between which it goes as the visitor leaves the hall. */
+  leaves: [0.5, 0.85],
+} as const;
 
 const SHAFT_VERTEX = /* glsl */ `
   varying vec3 vWorld;
@@ -165,8 +181,10 @@ const SHAFT_VERTEX = /* glsl */ `
   }
 `;
 
-// What a hazy column gives back along a line of sight, worked out and not drawn: the line's length through it, weighted
-// towards the column's middle. The far side of its skin adds most, so the statue inside hides that and keeps its darks.
+const glsl = (value: number) => value.toFixed(3);
+
+// What a hazy column gives back along a line of sight: the line's length through it, weighted towards its middle.
+// The far side of its skin adds most, so the statue inside hides that and keeps its darks.
 const SHAFT_FRAGMENT = /* glsl */ `
   uniform vec3 tint;
   uniform float strength;
@@ -196,9 +214,10 @@ const SHAFT_FRAGMENT = /* glsl */ `
         float middle = dot(from.xz, ray.xz);
         float gone = (cylinder * (far * far * far - near * near * near) / 3.0 + middle * (far * far - near * near) + dot(from.xz, from.xz) * (far - near)) / (radius * radius);
         float through = max(far - near - gone, 0.0);
-        // Thin above the statue, where the page's name is set over it, and gone just above the floor it lands on
-        float haze = mix(1.0, 0.42, smoothstep(2.0, 4.2, height)) * smoothstep(0.0, 0.5, height);
-        light = (gl_FrontFacing ? 0.3 : 0.7) * strength * through * haze;
+        float haze = mix(1.0, ${glsl(SHAFT.thin)}, smoothstep(${glsl(SHAFT.thinsOver[0])}, ${glsl(SHAFT.thinsOver[1])}, height)) * smoothstep(0.0, ${glsl(SHAFT.lands)}, height);
+        // The far side fades out by its own height: at full strength down to the floor, its rim would show as an edge there
+        float skin = gl_FrontFacing ? ${glsl(SHAFT.near)} : ${glsl(1 - SHAFT.near)} * smoothstep(0.0, ${glsl(SHAFT.lands)}, vWorld.y);
+        light = skin * strength * through * haze;
       }
     }
     gl_FragColor = vec4(tint, light);
@@ -209,17 +228,18 @@ const SHAFT_FRAGMENT = /* glsl */ `
 /** How much of the shaft shows: it comes up with the statue's lights and is gone before the visitor reaches Room I. */
 export function shaftLevel(progress: number, lionLevel: number, costly: boolean): number {
   if (!costly) return 0;
-  return MathUtils.clamp(lionLevel, 0, 1) * MathUtils.clamp((SHAFT.goneBy - progress) / (SHAFT.goneBy - SHAFT.thinsFrom), 0, 1);
+  const [from, by] = SHAFT.leaves;
+  return MathUtils.clamp(lionLevel, 0, 1) * MathUtils.clamp((by - progress) / (by - from), 0, 1);
 }
 
-// Light from above, painted and not computed: a pale wash in every room that never changes, and in the hall a
-// shaft from the dome's opening down onto the statue. The shaft is the costly part and goes with the quality.
+// Light from above, painted and not computed. The rooms' wash never changes and asks for no frames; the shaft
+// on the statue is the costly part and goes with the quality.
 export class Daylight {
   readonly objects: Object3D[] = [];
   private readonly shaft: Mesh<CylinderGeometry, ShaderMaterial>;
 
   constructor() {
-    const top = DOME_CROWN + 0.4;
+    const top = ROTUNDA.height;
     this.shaft = new Mesh(
       new CylinderGeometry(DOME.oculus, SHAFT.foot, top, 48, 1, true),
       new ShaderMaterial({

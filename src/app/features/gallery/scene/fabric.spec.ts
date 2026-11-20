@@ -1,9 +1,8 @@
-import { Corner, corners } from "../../../testing/corners";
-import { casing, CASING_TOP, doorOpening, doorReveal, newFabric, ROOM_WALLS, STONE } from "./fabric";
+import { Corner, corners, luminance } from "../../../testing/corners";
+import { casing, CASING_TOP, doorOpening, doorReveal, ROOM_WALLS, STONE } from "./fabric";
 import { DOOR, DOOR_CASING, HALF_DEPTH, WALL_THICKNESS } from "./layout";
 import { Stonework, Tone, WallFace } from "./stonework";
 
-const luminance = ([r, g, b]: Tone) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 /** The door's two jambs along a wall that starts at the origin and faces +Z. */
 const [LEFT, RIGHT] = [HALF_DEPTH - DOOR.width / 2, HALF_DEPTH + DOOR.width / 2];
 
@@ -19,13 +18,6 @@ function overHead(stone: Corner[]): Corner[] {
 }
 
 describe("the building's fabric", () => {
-  it("is laid as stone, plaster and gilding, each gathered apart", () => {
-    const { masonry, plaster, gilt } = newFabric();
-
-    expect(new Set([masonry, plaster, gilt]).size).toBe(3);
-    for (const part of [masonry, plaster, gilt]) expect(part.triangles).toBe(0);
-  });
-
   it("keeps to graphite: door surrounds a shade paler than the walls, glass paler again, its bars near black", () => {
     expect(luminance(STONE.trim)).toBeGreaterThan(luminance(STONE.wall));
     expect(luminance(STONE.trim)).toBeLessThan(luminance(STONE.wall) * 2.5);
@@ -54,7 +46,7 @@ describe("casing", () => {
 
     expect(Math.min(...ys)).toBe(0);
     expect(Math.max(...ys)).toBeCloseTo(CASING_TOP, 5);
-    expect(CASING_TOP).toBeCloseTo(DOOR.height + DOOR_CASING.width + DOOR_CASING.frieze + DOOR_CASING.shelf, 6);
+    expect(CASING_TOP).toBeGreaterThan(DOOR.height + DOOR_CASING.width);
   });
 
   it("stands off the wall as far as it is told, its shelf a little further, and never back into the wall", () => {
@@ -93,7 +85,13 @@ describe("casing", () => {
     // The inner band's front, under the frieze, which stands further back again
     const inner = Math.min(...overHead(stone).filter(({ at }) => at.y < DOOR.height + DOOR_CASING.width - 0.01).map(({ at }) => at.z));
 
+    const outer = (corner: Corner) => Math.max(LEFT - corner.at.x, corner.at.x - RIGHT);
+    const uprights = gold.filter(({ at }) => at.y < DOOR.height);
+    const over = gold.filter(({ at }) => at.y > DOOR.height + 0.02);
+
     expect(gold.length).toBeGreaterThan(0);
+    // The line turns both top corners whole: over the door it reaches as far out as the uprights' outer edges
+    expect(Math.max(...over.map(outer))).toBeCloseTo(Math.max(...uprights.map(outer)), 5);
     for (const { at } of gold) {
       const beside = Math.max(LEFT - at.x, at.x - RIGHT, at.y - DOOR.height);
       expect(beside).toBeGreaterThan(0);

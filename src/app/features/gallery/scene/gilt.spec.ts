@@ -22,7 +22,7 @@ describe("Gilt", () => {
     return shader;
   };
 
-  it("is the gallery's gold as it was, lit like everything else", () => {
+  it("is the gallery's gold, a metal lit like everything else", () => {
     const gilt = new Gilt();
 
     expect(gilt).toBeInstanceOf(MeshStandardMaterial);

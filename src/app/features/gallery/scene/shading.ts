@@ -6,6 +6,9 @@ import {
   DOOR_XS,
   END_WALL_X,
   HALF_DEPTH,
+  HALL_DOOR_TURN,
+  HALL_FACES,
+  hallTurn,
   LECTERN,
   PEDESTAL_RADIUS,
   ROTUNDA,
@@ -145,17 +148,6 @@ function around(shade: Shade, shadow: GroundShadow): void {
   }
 }
 
-/** The hall's wall is built of this many flat faces, from one jamb of the door to Room I round to the other. */
-export const HALL_FACES = 72;
-
-/** Half the turn the door to Room I takes out of the hall's round wall. */
-export const HALL_DOOR_TURN = Math.asin(DOOR.width / 2 / ROTUNDA.radius);
-
-/** Where the hall's wall turns from one flat face to the next, round from +Z towards +X, from one jamb to the other. */
-export function hallTurn(face: number): number {
-  return Math.PI / 2 + HALL_DOOR_TURN + (face / HALL_FACES) * (Math.PI * 2 - HALL_DOOR_TURN * 2);
-}
-
 /** The hall is round: its corner with the floor is a ring, left open where the door to Room I stands. */
 function hallCorners(shade: Shade): void {
   const { x, radius } = ROTUNDA;
@@ -189,7 +181,8 @@ function hallCorners(shade: Shade): void {
   }
 }
 
-type Corner = keyof typeof CORNERS;
+/** A room's walls are shaded where they meet floor and ceiling only: their panelled base stands where a shade at their foot would lie. */
+type Corner = "floor" | "head";
 
 /**
  * One corner of a straight wall that runs `along` an axis at `wallAt` and faces `faces` (+1 or -1) across it, between
@@ -210,9 +203,7 @@ function wallCorner(
   const [dark, gone] =
     corner === "floor"
       ? [(run: number) => point(run, ON_FLOOR.corners, 0), (run: number) => point(run, ON_FLOOR.corners, reach)]
-      : corner === "foot"
-        ? [(run: number) => point(run, 0, OFF_WALL), (run: number) => point(run, reach, OFF_WALL)]
-        : [(run: number) => point(run, WALL_HEIGHT, OFF_WALL), (run: number) => point(run, WALL_HEIGHT - reach, OFF_WALL)];
+      : [(run: number) => point(run, WALL_HEIGHT, OFF_WALL), (run: number) => point(run, WALL_HEIGHT - reach, OFF_WALL)];
 
   shade.quad(dark(from), dark(to), gone(to), gone(from), strength * fromShare, strength * toShare);
 }
@@ -226,11 +217,11 @@ function roomCorners(shade: Shade): void {
   const across = [-HALF_DEPTH, HALF_DEPTH] as const;
 
   for (const side of [-1, 1]) {
-    for (const corner of ["floor", "foot", "head"] as const) {
+    for (const corner of ["floor", "head"] as const) {
       wallCorner(shade, corner, "x", side * HALF_DEPTH, -side, [first, last]);
     }
   }
-  for (const corner of ["floor", "foot", "head"] as const) wallCorner(shade, corner, "z", last, -1, across);
+  for (const corner of ["floor", "head"] as const) wallCorner(shade, corner, "z", last, -1, across);
 
   const { jamb, full } = BESIDE_DOOR;
   DOOR_XS.forEach((x, index) => {
@@ -240,7 +231,6 @@ function roomCorners(shade: Shade): void {
       const face = x + (faces * WALL_THICKNESS) / 2;
       wallCorner(shade, "head", "z", face, faces, across);
       for (const side of [-1, 1]) {
-        wallCorner(shade, "foot", "z", face, faces, [side * jamb, side * HALF_DEPTH]);
         wallCorner(shade, "floor", "z", face, faces, [side * full, side * HALF_DEPTH]);
         wallCorner(shade, "floor", "z", face, faces, [side * jamb, side * full], [0, 1]);
       }

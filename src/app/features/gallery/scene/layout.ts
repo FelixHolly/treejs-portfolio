@@ -23,6 +23,16 @@ export const LION_YAW = Math.PI - 0.35;
 export const PEDESTAL_RADIUS = 1.4;
 export const DOOR_XS = [5.2, 18.4, 47.6, 56] as const;
 export const END_WALL_X = 64.4;
+/** The hall's wall is built of this many flat faces, from one jamb of the door to Room I round to the other. */
+export const HALL_FACES = 72;
+/** Half the turn the door to Room I takes out of the hall's round wall. */
+export const HALL_DOOR_TURN = Math.asin(DOOR.width / 2 / ROTUNDA.radius);
+
+/** Where the hall's wall turns from one flat face to the next, round from +Z towards +X, from one jamb to the other. */
+export function hallTurn(face: number): number {
+  return Math.PI / 2 + HALL_DOOR_TURN + (face / HALL_FACES) * (Math.PI * 2 - HALL_DOOR_TURN * 2);
+}
+
 /** The hall's dome, which rises to the hall's full height: where its cornice runs, and the round opening at its crown. */
 export const DOME = { springing: 10.9, oculus: 1.5 } as const;
 /** A door's stone surround: its architrave's width, how far that stands off the wall, and the frieze and shelf over it. */
@@ -47,7 +57,6 @@ export interface RoomSpan {
 
 const ROOM_FEATURES: readonly RoomFeature[] = ["plain", "beams", "panelled", "window"];
 
-/** How high a room's panelled base stands. */
 export function dadoHeight(span: RoomSpan): number {
   return span.feature === "panelled" ? DADO.tall : DADO.height;
 }

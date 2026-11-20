@@ -47,7 +47,6 @@ const FILLET = { width: 0.022, proud: 0.008, off: 0.012 } as const;
 /** The shelf over the frieze and the moulding under it: how far each oversails the casing, and stands off it. */
 const SHELF = { wider: 0.09, proud: 0.1, bed: 0.045, bedWider: 0.03, bedProud: 0.03, friezeBack: 0.04 } as const;
 
-/** How high a casing stands from the floor to the top of its shelf. */
 export const CASING_TOP = DOOR.height + DOOR_CASING.width + DOOR_CASING.frieze + DOOR_CASING.shelf;
 
 /**
@@ -72,7 +71,9 @@ export function casing(face: WallFace, gilt: WallFace, { middle, width, height, 
   }
   face.block(left - INNER.width, right + INNER.width, height, height + INNER.width, 0, inner, trim);
   face.block(left - INNER.width, right + INNER.width, height + INNER.width, head, 0, proud, trim);
-  gilt.block(left - FILLET.off, right + FILLET.off, height + FILLET.off, height + FILLET.off + FILLET.width, inner, inner + FILLET.proud, GILT);
+  // As far out as the uprights' outer edges, so the line turns the corner whole
+  const corner = FILLET.off + FILLET.width;
+  gilt.block(left - corner, right + corner, height + FILLET.off, height + corner, inner, inner + FILLET.proud, GILT);
 
   face.block(left - band, right + band, head, frieze, 0, proud - SHELF.friezeBack, trim);
   face.block(left - band - SHELF.bedWider, right + band + SHELF.bedWider, frieze - SHELF.bed, frieze, 0, proud + SHELF.bedProud, trim);

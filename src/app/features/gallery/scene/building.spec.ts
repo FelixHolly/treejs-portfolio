@@ -1,8 +1,7 @@
 import { BufferGeometry, Intersection, Mesh, Raycaster, Vector3 } from "three";
-import { Corner, corners } from "../../../testing/corners";
+import { Corner, corners, luminance } from "../../../testing/corners";
 import { buildArchitecture, createPalette, Palette } from "./building";
 import { STONE } from "./fabric";
-import { DOME_CROWN } from "./hall";
 import {
   CORNICE,
   DADO,
@@ -25,7 +24,6 @@ type Part = Mesh<BufferGeometry>;
 
 const EAST = new Vector3(1, 0, 0);
 const UP = new Vector3(0, 1, 0);
-const luminance = ([r, g, b]: readonly [number, number, number]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 /** The first thing of `parts` a line of sight meets, seen only from the side it faces. */
 function seen(parts: Part[], from: Vector3, towards: Vector3): Intersection | undefined {
@@ -60,6 +58,9 @@ describe("buildArchitecture", () => {
     for (const part of masonry) expect(part.material).toBe(palette.masonry);
     for (const part of plaster) expect(part.material).toBe(palette.plaster);
     expect(gilt.material).toBe(palette.gold);
+  });
+
+  it("is fewer meshes in all than the walls alone used to be", () => {
     expect(meshes).toBeLessThan(18);
   });
 
@@ -221,23 +222,33 @@ describe("buildArchitecture", () => {
       const overStatue = seen(plaster, new Vector3(ROTUNDA.x, ROTUNDA.plinthHeight, 0), UP);
       const beside = seen(plaster, new Vector3(ROTUNDA.x + DOME.oculus + 1.5, ROTUNDA.plinthHeight, 0), UP);
 
-      expect(overStatue?.point.y).toBeGreaterThan(DOME_CROWN + 0.5);
-      expect(beside?.point.y).toBeLessThan(DOME_CROWN);
+      expect(overStatue?.point.y).toBeGreaterThan(ROTUNDA.height + 0.5);
+      expect(beside?.point.y).toBeLessThan(ROTUNDA.height);
       expect(beside?.point.y).toBeGreaterThan(DOME.springing);
       expect(DOME.oculus).toBeLessThan(ROTUNDA.radius / 3);
     });
 
     it("shows a paler sky through the opening than anything it paints on the dome", () => {
-      const dome = painted.filter((corner) => inHall(corner) && corner.at.y < DOME_CROWN - 0.01);
-      const sky = painted.filter((corner) => inHall(corner) && corner.at.y > DOME_CROWN + 0.5);
+      const dome = painted.filter((corner) => inHall(corner) && corner.at.y < ROTUNDA.height - 0.01);
+      const sky = painted.filter((corner) => inHall(corner) && corner.at.y > ROTUNDA.height + 0.5);
 
       expect(Math.min(...sky.map(({ tone }) => luminance(tone)))).toBeGreaterThan(Math.max(...dome.map(({ tone }) => luminance(tone))) * 3);
+    });
+
+    it("paints the dome palest at the rim of its opening, where the sky's light catches it", () => {
+      const onDome = painted.filter((corner) => inHall(corner) && corner.normal.y < -0.05 && corner.at.y <= ROTUNDA.height + 1e-4);
+      const rim = onDome.filter(({ at }) => at.y > ROTUNDA.height - 1e-4);
+      const below = onDome.filter(({ at }) => at.y < ROTUNDA.height - 1e-4);
+
+      expect(rim.length).toBeGreaterThan(0);
+      for (const { at } of rim) expect(fromAxis(at)).toBeCloseTo(DOME.oculus, 4);
+      expect(Math.min(...rim.map(({ tone }) => luminance(tone)))).toBeGreaterThan(Math.max(...below.map(({ tone }) => luminance(tone))));
     });
 
     it("keeps dome and cornice dark, for the page sets its name over them", () => {
       // What the eyebrow over the name can stand behind it and stay at 4.5 to 1: about #242424
       const limit = 0.0185;
-      const dome = painted.filter((corner) => inHall(corner) && corner.at.y < DOME_CROWN - 0.01);
+      const dome = painted.filter((corner) => inHall(corner) && corner.at.y < ROTUNDA.height - 0.01);
       const high = stone.filter((corner) => inHall(corner) && corner.at.y > DOME.springing - 1);
 
       for (const { tone } of dome) expect(luminance(tone)).toBeLessThan(limit);

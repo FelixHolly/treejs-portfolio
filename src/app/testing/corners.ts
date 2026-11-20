@@ -7,6 +7,11 @@ export interface Corner {
   tone: readonly [number, number, number];
 }
 
+/** How light a linear colour is, as the contrast rules weigh it. */
+export function luminance([r, g, b]: readonly [number, number, number]): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 /** Every corner of every triangle of a geometry that is not indexed, with single-precision noise rounded off. */
 export function corners(geometry: BufferGeometry): Corner[] {
   const position = geometry.getAttribute("position");

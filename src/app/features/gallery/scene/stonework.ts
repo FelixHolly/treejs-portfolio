@@ -3,11 +3,9 @@ import { BufferGeometry, Color, Float32BufferAttribute } from "three";
 export type Point = readonly [x: number, y: number, z: number];
 /** A colour as the renderer works with it: linear red, green and blue. */
 export type Tone = readonly [r: number, g: number, b: number];
-/** One tone for a whole face, or one for each of its corners in the order they are given. */
 export type Tones = Tone | readonly [Tone, Tone, Tone, Tone];
 /** A corner of a moulding's outline: how far it stands off the wall, and how high. */
 export type Step = readonly [off: number, y: number];
-/** A place on a wall's face: how far along it, how far off it, and how high. */
 export type Place = readonly [run: number, off: number, y: number];
 /** What a moulding is painted with: one tone, or for each piece of its outline a tone or one for either edge. */
 export type Paint = Tone | ((low: Step, high: Step) => Tone | readonly [low: Tone, high: Tone]);
@@ -29,12 +27,16 @@ function isTone(tones: Tone | readonly Tone[]): tones is Tone {
   return typeof tones[0] === "number";
 }
 
+/** For a cornice: what faces down and out has only the floor's own light on it, and unlifted would be one black band. */
+export function lifted(base: Tone, lift: number): Paint {
+  return ([lowOff, lowY], [highOff, highY]) => scaled(base, highOff > lowOff && highY > lowY ? lift : 1);
+}
+
 function edgeTones(paint: Paint, low: Step, high: Step): readonly [low: Tone, high: Tone] {
   const tones = typeof paint === "function" ? paint(low, high) : paint;
   return isTone(tones) ? [tones, tones] : tones;
 }
 
-/** A face's four corners as the corners of its two triangles. */
 const TWO_TRIANGLES = [0, 1, 2, 0, 2, 3] as const;
 
 function facing(a: Point, b: Point, c: Point): Point {
@@ -93,10 +95,7 @@ export interface Sinking {
   slope: number;
 }
 
-/**
- * One upright face of a wall, to lay stonework against. Places on it are given by how far `run` along it they lie
- * (from its left end, as seen by someone facing it), how far `off` it they stand, and how high.
- */
+/** One upright face of a wall. `run` is measured from its left end as seen by someone facing it, `off` towards them. */
 export class WallFace {
   private readonly along: readonly [x: number, z: number];
 
@@ -141,25 +140,25 @@ export class WallFace {
     }
   }
 
-  /** A block standing on the wall from `off` to `proud` of it: its front, its two ends, its top and its underside. */
-  block(from: number, to: number, bottom: number, top: number, off: number, proud: number, tones: Tone): void {
-    this.rect(from, to, bottom, top, proud, tones);
-    this.sweep(from, to, [[off, bottom], [proud, bottom]], tones);
-    this.sweep(from, to, [[proud, top], [off, top]], tones);
-    this.stone.quad(this.at(from, off, bottom), this.at(from, proud, bottom), this.at(from, proud, top), this.at(from, off, top), tones);
-    this.stone.quad(this.at(to, proud, bottom), this.at(to, off, bottom), this.at(to, off, top), this.at(to, proud, top), tones);
+  /** A block standing from `off` to `proud` of the wall. It has no back: that side is never seen. */
+  block(from: number, to: number, bottom: number, top: number, off: number, proud: number, tint: Tone): void {
+    this.rect(from, to, bottom, top, proud, tint);
+    this.sweep(from, to, [[off, bottom], [proud, bottom]], tint);
+    this.sweep(from, to, [[proud, top], [off, top]], tint);
+    this.stone.quad(this.at(from, off, bottom), this.at(from, proud, bottom), this.at(from, proud, top), this.at(from, off, top), tint);
+    this.stone.quad(this.at(to, proud, bottom), this.at(to, off, bottom), this.at(to, off, top), this.at(to, proud, top), tint);
   }
 
-  /** A panel sunk into a face standing `off` the wall: four slopes down to a field whose top lies in their shade. */
-  panel(from: number, to: number, bottom: number, top: number, off: number, { depth, slope }: Sinking, tones: Tone): void {
+  /** A panel sunk into a face standing `off` the wall. Its field is painted darker towards the top, where the slope over it shades it. */
+  panel(from: number, to: number, bottom: number, top: number, off: number, { depth, slope }: Sinking, tint: Tone): void {
     const [left, right, low, high, back] = [from + slope, to - slope, bottom + slope, top - slope, off - depth];
-    const side = scaled(tones, 0.8);
-    const shade = scaled(tones, 0.62);
-    this.stone.quad(this.at(from, off, top), this.at(left, back, high), this.at(right, back, high), this.at(to, off, top), tones);
-    this.stone.quad(this.at(from, off, bottom), this.at(to, off, bottom), this.at(right, back, low), this.at(left, back, low), tones);
+    const side = scaled(tint, 0.8);
+    const shade = scaled(tint, 0.62);
+    this.stone.quad(this.at(from, off, top), this.at(left, back, high), this.at(right, back, high), this.at(to, off, top), tint);
+    this.stone.quad(this.at(from, off, bottom), this.at(to, off, bottom), this.at(right, back, low), this.at(left, back, low), tint);
     this.stone.quad(this.at(from, off, bottom), this.at(left, back, low), this.at(left, back, high), this.at(from, off, top), side);
     this.stone.quad(this.at(to, off, bottom), this.at(to, off, top), this.at(right, back, high), this.at(right, back, low), side);
-    this.rect(left, right, low, high, back, [tones, tones, shade, shade]);
+    this.rect(left, right, low, high, back, [tint, tint, shade, shade]);
   }
 }
 

@@ -1,11 +1,11 @@
 import { BufferAttribute, BufferGeometry, Mesh, MeshBasicMaterial, Raycaster, Triangle, Vector3 } from "three";
+import { luminance } from "../../../testing/corners";
 import { BEAMS, beams, buildCeilings, wells } from "./ceilings";
 import { STONE } from "./fabric";
 import { HALF_DEPTH, LAYLIGHT, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";
 import { Stonework } from "./stonework";
 
 const GLASS = WALL_HEIGHT + LAYLIGHT.well;
-const luminance = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 const middleOf = (span: { from: number; to: number }) => (span.from + span.to) / 2;
 
 describe("wells", () => {
@@ -64,7 +64,7 @@ describe("buildCeilings", () => {
     const color = overhead.geometry.getAttribute("color");
     const { a, b, c } = hit.face;
     const tone = Triangle.getInterpolatedAttribute(color as BufferAttribute, a, b, c, hit.barycoord, new Vector3());
-    return { y: hit.point.y, light: luminance(tone.x, tone.y, tone.z) };
+    return { y: hit.point.y, light: luminance([tone.x, tone.y, tone.z]) };
   }
 
   beforeAll(() => {
@@ -108,13 +108,13 @@ describe("buildCeilings", () => {
 
     expect(pane?.light).toBeGreaterThan((ceiling?.light ?? 0) * 4);
     expect(bar?.light).toBeLessThan(ceiling?.light ?? 0);
-    expect(bar?.light).toBeCloseTo(luminance(...STONE.bar), 6);
+    expect(bar?.light).toBeCloseTo(luminance(STONE.bar), 6);
   });
 
   it("keeps the glass pale and not bright: under a third of white", () => {
     const color = overhead.geometry.getAttribute("color");
     let brightest = 0;
-    for (let index = 0; index < color.count; index++) brightest = Math.max(brightest, luminance(color.getX(index), color.getY(index), color.getZ(index)));
+    for (let index = 0; index < color.count; index++) brightest = Math.max(brightest, luminance([color.getX(index), color.getY(index), color.getZ(index)]));
 
     expect(brightest).toBeLessThan(0.3);
     expect(brightest).toBeGreaterThan(0.1);
@@ -127,10 +127,12 @@ describe("buildCeilings", () => {
     expect(above(x, HALF_DEPTH - 0.6)?.light).toBeLessThan(above(x, LAYLIGHT.halfWidth + 0.1)?.light ?? 0);
   });
 
-  it("hangs Room II's beams under its ceiling, and no beam anywhere else", () => {
+  it("hangs Room II's beams under its ceiling from wall to wall, and no beam anywhere else", () => {
     for (const span of roomSpans()) {
       const across = beams(span);
-      for (const x of across) expect(above(x, 2.6)?.y).toBeCloseTo(WALL_HEIGHT - BEAMS.drop, 5);
+      for (const x of across) {
+        for (const z of [2.6, HALF_DEPTH - 0.02, -(HALF_DEPTH - 0.02)]) expect(above(x, z)?.y).toBeCloseTo(WALL_HEIGHT - BEAMS.drop, 5);
+      }
       if (!across.length) expect(above(middleOf(span), 2.6)?.y).toBeCloseTo(WALL_HEIGHT, 5);
     }
   });

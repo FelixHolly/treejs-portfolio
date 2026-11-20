@@ -1,6 +1,6 @@
 import { casing, doorOpening, doorReveal, Fabric, GILT, Opening, ROOM_WALLS, STONE } from "./fabric";
 import { CORNICE, DADO, dadoHeight, DOOR_CASING, DOOR_XS, END_WINDOW, HALF_DEPTH, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";
-import { Paint, scaled, Sinking, Step, Tone, WallFace } from "./stonework";
+import { lifted, scaled, Sinking, Step, Tone, WallFace } from "./stonework";
 
 const DEPTH = HALF_DEPTH * 2;
 /** The panelled base: how far it, its skirting and its capping rail stand off the wall, its stiles, and a panel's most width for its height. */
@@ -11,7 +11,6 @@ const PICTURE_RAIL = { y: 4.5, height: 0.03, proud: 0.022 } as const;
 /** The last room's window: how far it is set into its wall, the panes it is glazed in, and the stone apron under its sill. */
 const WINDOW = { recess: 0.24, columns: 2, rows: 3, bar: 0.05, sill: 0.07, apron: { proud: 0.02, margin: 0.14, foot: 0.2 } } as const;
 
-/** Skirting, a row of sunk panels and a capping rail along a stretch of wall, up to `height`. */
 function wainscot(face: WallFace, from: number, to: number, wall: Tone, height: number): void {
   const { proud, stile, margin } = WAINSCOT;
   const { skirting } = DADO;
@@ -49,20 +48,19 @@ function corniceOutline(): Step[] {
   ];
 }
 
-/** What faces down has only the floor's own light on it; lifted, or a cornice would be one black band. */
-function corniceTone(wall: Tone): Paint {
-  return ([lowOff, lowY], [highOff, highY]) => scaled(wall, highOff > lowOff && highY > lowY ? 1.6 : 1);
-}
+const CORNICE_LIFT = 1.6;
 
-/** A wall across the enfilade with an opening in its middle: the wall round it, its base either side, cornice and casing. */
 function piercedWall(face: WallFace, gilt: WallFace, wall: Tone, dado: number, opening: Opening): void {
   const [left, right] = [opening.middle - opening.width / 2, opening.middle + opening.width / 2];
-  face.rect(0, left, 0, WALL_HEIGHT, 0, wall);
-  face.rect(right, DEPTH, 0, WALL_HEIGHT, 0, wall);
+  // In pieces that meet corner to corner: an edge that ended part way along another could let a pixel through
+  for (const [from, to] of [[0, left], [right, DEPTH]]) {
+    face.rect(from, to, 0, opening.height, 0, wall);
+    face.rect(from, to, opening.height, WALL_HEIGHT, 0, wall);
+  }
   face.rect(left, right, opening.height, WALL_HEIGHT, 0, wall);
   wainscot(face, 0, left - DOOR_CASING.width, wall, dado);
   wainscot(face, right + DOOR_CASING.width, DEPTH, wall, dado);
-  face.sweep(0, DEPTH, corniceOutline(), corniceTone(wall));
+  face.sweep(0, DEPTH, corniceOutline(), lifted(wall, CORNICE_LIFT));
   casing(face, gilt, opening);
 }
 
@@ -115,7 +113,7 @@ function room({ masonry, plaster, gilt }: Fabric, span: RoomSpan, index: number)
     const face = new WallFace(masonry, x, z, out);
     face.rect(0, length, 0, WALL_HEIGHT, 0, wall);
     wainscot(face, 0, length, wall, dado);
-    face.sweep(0, length, corniceOutline(), corniceTone(wall));
+    face.sweep(0, length, corniceOutline(), lifted(wall, CORNICE_LIFT));
     const { y, height, proud } = PICTURE_RAIL;
     new WallFace(gilt, x, z, out).block(0, length, y - height / 2, y + height / 2, 0, proud, GILT);
   }
@@ -133,7 +131,6 @@ function room({ masonry, plaster, gilt }: Fabric, span: RoomSpan, index: number)
   }
 }
 
-/** The four rooms' walls with all that is built onto them, and the linings of the doorways between them. */
 export function buildRooms(fabric: Fabric): void {
   roomSpans().forEach((span, index) => room(fabric, span, index));
   for (const x of DOOR_XS) doorReveal(fabric.masonry, x);

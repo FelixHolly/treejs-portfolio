@@ -7,8 +7,8 @@ const FRAGMENT_PARS = /* glsl */ `
   uniform float giltSheen;
 `;
 
-// Gilding with nothing to mirror looks painted: this gives it one soft upright band of light to mirror, a little ahead
-// of the visitor, so a glint runs along a frame as they pass. It is dimmer where the gilding itself stands in the dark.
+// Gilding with nothing to mirror looks painted. It mirrors one soft band of light just ahead of the visitor,
+// so a glint runs along a frame as they pass, dimmer where the gilding is in the dark.
 const SHEEN_FRAGMENT = /* glsl */ `
   if (giltSheen > 0.0) {
     vec3 mirrored = inverseTransformDirection(reflect(-normalize(vViewPosition), normal), viewMatrix);

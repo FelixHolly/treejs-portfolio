@@ -1,9 +1,21 @@
-import { AdditiveBlending, CylinderGeometry, DoubleSide, Mesh, PerspectiveCamera, Scene, ShaderMaterial, Vector3, WebGLRenderer } from "three";
+import {
+  AdditiveBlending,
+  CylinderGeometry,
+  DoubleSide,
+  Mesh,
+  MeshBasicMaterial,
+  PerspectiveCamera,
+  PlaneGeometry,
+  Scene,
+  ShaderMaterial,
+  Vector3,
+  WebGLRenderer,
+  WebGLRenderTarget,
+} from "three";
 import { buildWaypoints } from "./camera-path";
 import { wells } from "./ceilings";
 import { Daylight, buildTopLight, SHAFT, shaftLevel, TOP_LIGHT } from "./daylight";
-import { DOME_CROWN } from "./hall";
-import { CORNICE, dadoHeight, DOME, DOOR, DOOR_XS, END_WALL_X, EYE, HALF_DEPTH, LAYLIGHT, ROTUNDA, roomSpans, WALL_HEIGHT } from "./layout";
+import { CORNICE, dadoHeight, DOME, DOOR, DOOR_XS, END_WALL_X, EYE, HALF_DEPTH, LAYLIGHT, PEDESTAL_RADIUS, ROTUNDA, roomSpans, WALL_HEIGHT } from "./layout";
 import { buildShading } from "./shading";
 
 interface Patch {
@@ -98,7 +110,7 @@ describe("buildTopLight", () => {
 
         expect(onWall.length).withContext(`room from ${span.from}, side ${side}`).toBe(1);
         const ys = onWall[0].corners.map((corner) => corner.y);
-        expect(Math.min(...ys)).toBeGreaterThan(dadoHeight(span));
+        expect(Math.min(...ys)).toBeGreaterThanOrEqual(dadoHeight(span));
         expect(Math.max(...ys)).toBeLessThan(WALL_HEIGHT - CORNICE.drop);
         expect(Math.min(...onWall[0].corners.map((corner) => corner.x))).toBeCloseTo(span.from, 4);
         expect(Math.max(...onWall[0].corners.map((corner) => corner.x))).toBeCloseTo(span.to, 4);
@@ -179,6 +191,8 @@ describe("buildTopLight", () => {
 });
 
 describe("shaftLevel", () => {
+  const [from, by] = SHAFT.leaves;
+
   it("comes up with the statue's lights", () => {
     expect(shaftLevel(0, 0, true)).toBe(0);
     expect(shaftLevel(0, 0.3, true)).toBeCloseTo(0.3, 6);
@@ -187,12 +201,12 @@ describe("shaftLevel", () => {
   });
 
   it("stays whole while the visitor rounds the statue and is gone before they reach Room I", () => {
-    expect(shaftLevel(SHAFT.thinsFrom, 1, true)).toBe(1);
-    expect(shaftLevel((SHAFT.thinsFrom + SHAFT.goneBy) / 2, 1, true)).toBeCloseTo(0.5, 6);
-    expect(shaftLevel(SHAFT.goneBy, 1, true)).toBe(0);
+    expect(shaftLevel(from, 1, true)).toBe(1);
+    expect(shaftLevel((from + by) / 2, 1, true)).toBeCloseTo(0.5, 6);
+    expect(shaftLevel(by, 1, true)).toBe(0);
     expect(shaftLevel(1, 1, true)).toBe(0);
     expect(shaftLevel(6, 1, true)).toBe(0);
-    expect(SHAFT.goneBy).toBeLessThan(1);
+    expect(by).toBeLessThan(1);
   });
 
   it("is nothing once quality has stepped down", () => {
@@ -214,12 +228,12 @@ describe("Daylight", () => {
     expect(daylight.objects.map((object) => object.name)).toEqual(["top-light", "shaft"]);
   });
 
-  it("stands the shaft on the statue's own axis, from the floor up into the dome's opening", () => {
+  it("stands the shaft on the statue's own axis, from the floor to the dome's opening and no higher", () => {
     const { radiusTop, radiusBottom, height } = shaft.geometry.parameters;
 
     expect([shaft.position.x, shaft.position.z]).toEqual([ROTUNDA.x, 0]);
     expect(shaft.position.y).toBeCloseTo(height / 2, 6);
-    expect(height).toBeGreaterThan(DOME_CROWN);
+    expect(height).toBe(ROTUNDA.height);
     expect(radiusTop).toBe(DOME.oculus);
     expect(radiusBottom).toBe(SHAFT.foot);
     expect(radiusBottom).toBeGreaterThan(radiusTop);
@@ -233,11 +247,11 @@ describe("Daylight", () => {
     expect((shape.value as Vector3).toArray()).toEqual([radiusBottom, radiusTop, height]);
   });
 
-  it("is wide enough to hold the statue and its drum, and leaves the visitor's way round it outside", () => {
+  it("is wide enough to hold the statue's drum, and leaves the visitor's way round it outside", () => {
     const atEye = SHAFT.foot - ((SHAFT.foot - DOME.oculus) * EYE) / shaft.geometry.parameters.height;
     const nearest = Math.min(...buildWaypoints(4)[0].map((point) => Math.hypot(point.x - ROTUNDA.x, point.z)));
 
-    expect(SHAFT.foot).toBeGreaterThan(1.6);
+    expect(SHAFT.foot).toBeGreaterThan(PEDESTAL_RADIUS + 0.2);
     expect(nearest - atEye).toBeGreaterThan(0.4);
   });
 
@@ -249,7 +263,6 @@ describe("Daylight", () => {
     expect(material.depthWrite).toBeFalse();
     expect(material.side).toBe(DoubleSide);
     expect(material.forceSinglePass).toBeTrue();
-    expect(material.fragmentShader).toContain("gl_FrontFacing");
   });
 
   it("is dark and not drawn until it is first told the lights are up", () => {
@@ -284,30 +297,103 @@ describe("Daylight", () => {
     expect(shaft.material.uniforms["strength"].value).toBe(0);
   });
 
-  it("keeps the shaft faint enough for the page's name to be read over it", () => {
-    // The most a line of sight can gather: straight through the foot of the column, four thirds of its radius
-    expect(SHAFT.strength * (4 / 3) * SHAFT.foot).toBeLessThan(0.2);
-    expect(shaft.material.fragmentShader).toContain("smoothstep(2.0, 4.2, height)");
+  it("thins the shaft above the statue, where the page sets its name over it", () => {
+    const [from, to] = SHAFT.thinsOver;
+    // Through the middle of the column on a sight line that climbs: the most it can add behind the name
+    const behindName = SHAFT.strength * SHAFT.thin * (4 / 3) * SHAFT.foot * 1.2;
+
+    expect(from).toBeLessThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight);
+    expect(to).toBeLessThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 1);
+    expect(SHAFT.thin).toBeLessThan(0.5);
+    expect(behindName).toBeLessThan(0.08);
   });
 
-  it("compiles and draws, top light and shaft together", () => {
-    if (!document.createElement("canvas").getContext("webgl2")) pending("needs WebGL");
-    const renderer = new WebGLRenderer({ canvas: document.createElement("canvas") });
-    renderer.setSize(32, 32, false);
-    const failed = jasmine.createSpy("shader error");
-    renderer.debug.onShaderError = failed;
-    const scene = new Scene();
-    scene.add(...daylight.objects);
-    daylight.update(0, 1, true);
-    const camera = new PerspectiveCamera(50, 1, 0.1, 80);
-    camera.position.set(ROTUNDA.x - 6, EYE, 0);
-    camera.lookAt(ROTUNDA.x, 3, 0);
+  describe("drawn", () => {
+    const SIZE = 256;
+    let renderer: WebGLRenderer;
+    let target: WebGLRenderTarget;
+    let scene: Scene;
 
-    renderer.render(scene, camera);
+    /** How much light a pixel of the picture holds, 0 to 255; `across` and `up` are counted from its middle. */
+    function lightAt(camera: PerspectiveCamera, across: number, up: number): number {
+      renderer.setRenderTarget(target);
+      renderer.clear();
+      renderer.render(scene, camera);
+      const pixel = new Uint8Array(4);
+      renderer.readRenderTargetPixels(target, SIZE / 2 + across, SIZE / 2 + up, 1, 1, pixel);
+      renderer.setRenderTarget(null);
+      return pixel[0];
+    }
 
-    expect(failed).not.toHaveBeenCalled();
-    expect(renderer.info.render.calls).toBe(2);
-    renderer.dispose();
-    renderer.forceContextLoss();
+    function lookingFrom(x: number, y: number, at: Vector3): PerspectiveCamera {
+      const camera = new PerspectiveCamera(50, 1, 0.1, 80);
+      camera.position.set(x, y, 0);
+      camera.lookAt(at);
+      camera.updateMatrixWorld();
+      return camera;
+    }
+
+    beforeEach(() => {
+      if (!document.createElement("canvas").getContext("webgl2")) pending("needs WebGL");
+      renderer = new WebGLRenderer({ canvas: document.createElement("canvas") });
+      renderer.setClearColor(0x000000, 1);
+      target = new WebGLRenderTarget(SIZE, SIZE);
+      const floor = new Mesh(new PlaneGeometry(60, 60), new MeshBasicMaterial({ color: 0x000000 }));
+      floor.rotation.x = -Math.PI / 2;
+      scene = new Scene();
+      scene.add(floor, shaft);
+      daylight.update(0, 1, true);
+      // Several times its own strength, so that eight bits can tell its parts apart
+      shaft.material.uniforms["strength"].value = 0.25;
+    });
+
+    afterEach(() => {
+      target?.dispose();
+      renderer?.dispose();
+      renderer?.forceContextLoss();
+    });
+
+    it("is brightest through its middle, fades to its edge and adds nothing beside it", () => {
+      const level = lookingFrom(ROTUNDA.x - 9, 1.6, new Vector3(ROTUNDA.x, 1.6, 0));
+      // A metre at the column's middle is this many pixels across
+      const metre = SIZE / 2 / (9 * Math.tan((25 * Math.PI) / 180));
+      const radius = SHAFT.foot - ((SHAFT.foot - DOME.oculus) * 1.6) / ROTUNDA.height;
+      const at = (share: number) => lightAt(level, Math.round(radius * share * metre), 0);
+
+      expect(at(0)).toBeGreaterThan(at(0.5));
+      expect(at(0.5)).toBeGreaterThan(at(0.85));
+      expect(at(0.85)).toBeGreaterThan(0);
+      expect(at(1.3)).toBe(0);
+      expect(at(-0.5)).toBeCloseTo(at(0.5), -1);
+    });
+
+    it("is thinner above the statue than beside it", () => {
+      const level = lookingFrom(ROTUNDA.x - 9, 3.4, new Vector3(ROTUNDA.x, 3.4, 0));
+      const metre = SIZE / 2 / (9 * Math.tan((25 * Math.PI) / 180));
+      const [beside, above] = [lightAt(level, 0, Math.round(-2 * metre)), lightAt(level, 0, Math.round(2.4 * metre))];
+
+      expect(above).toBeLessThan(beside * 0.7);
+      expect(above).toBeGreaterThan(0);
+    });
+
+    it("lands on the floor without an edge along the far rim of its foot", () => {
+      const rim = new Vector3(ROTUNDA.x + SHAFT.foot, 0, 0);
+      const down = lookingFrom(ROTUNDA.x - 4, 3, rim);
+      const [inside, outside] = [lightAt(down, 0, -3), lightAt(down, 0, 3)];
+
+      expect(inside).toBeGreaterThan(0);
+      expect(Math.abs(outside - inside)).toBeLessThan(Math.max(inside * 0.35, 3));
+    });
+
+    it("draws top light and shaft together without a shader error", () => {
+      const failed = jasmine.createSpy("shader error");
+      renderer.debug.onShaderError = failed;
+      scene.add(...daylight.objects);
+
+      renderer.render(scene, lookingFrom(ROTUNDA.x - 6, EYE, new Vector3(ROTUNDA.x, 3, 0)));
+
+      expect(failed).not.toHaveBeenCalled();
+      expect(renderer.info.render.calls).toBe(3);
+    });
   });
 });

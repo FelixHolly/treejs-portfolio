@@ -1,5 +1,5 @@
 import { STONE } from "./fabric";
-import { CORNICE, HALF_DEPTH, LAYLIGHT, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";
+import { HALF_DEPTH, LAYLIGHT, RoomSpan, roomSpans, WALL_HEIGHT } from "./layout";
 import { blend, scaled, Stonework, tone, Tones, WallFace } from "./stonework";
 
 /** A ceiling is painted, not lit: dark towards the walls, a little paler round the glass it is lit from. */
@@ -27,28 +27,26 @@ function uneven(column: number, row: number): number {
   return 0.93 + 0.14 * (mixed - Math.floor(mixed));
 }
 
-/** The glazed openings of a room with a long laylight, one to a bay where beams part the ceiling. */
+const bayOf = (span: RoomSpan) => (span.to - span.from) / BEAMS.bays;
+
+/** The glazed openings of a room: one long laylight, or one to a bay where beams part the ceiling. */
 export function wells(span: RoomSpan): Well[] {
   if (span.feature !== "beams") return [{ from: span.from + LAYLIGHT.inset, to: span.to - LAYLIGHT.inset }];
-  const bay = (span.to - span.from) / BEAMS.bays;
   return Array.from({ length: BEAMS.bays }, (_, index) => ({
-    from: span.from + index * bay + BEAMS.margin,
-    to: span.from + (index + 1) * bay - BEAMS.margin,
+    from: span.from + index * bayOf(span) + BEAMS.margin,
+    to: span.from + (index + 1) * bayOf(span) - BEAMS.margin,
   }));
 }
 
-/** Where Room II's beams cross its ceiling. */
 export function beams(span: RoomSpan): number[] {
   if (span.feature !== "beams") return [];
-  const bay = (span.to - span.from) / BEAMS.bays;
-  return Array.from({ length: BEAMS.bays - 1 }, (_, index) => span.from + (index + 1) * bay);
+  return Array.from({ length: BEAMS.bays - 1 }, (_, index) => span.from + (index + 1) * bayOf(span));
 }
 
 function level(plaster: Stonework, fromX: number, toX: number, fromZ: number, toZ: number, y: number, tones: Tones): void {
   plaster.soffit([fromX, y, fromZ], [toX, y, fromZ], [toX, y, toZ], [fromX, y, toZ], tones);
 }
 
-/** A well's four sides and its glass: panes paler along the middle of the room, in dark bars. */
 function glazedWell(plaster: Stonework, { from, to }: Well): void {
   const half = LAYLIGHT.halfWidth;
   const length = to - from;
@@ -79,9 +77,9 @@ function glazedWell(plaster: Stonework, { from, to }: Well): void {
   }
 }
 
-/** A beam across the room under the ceiling, from one cornice to the other. */
 function beam(plaster: Stonework, x: number): void {
-  const [half, reach, foot] = [BEAMS.width / 2, HALF_DEPTH - CORNICE.reach + 0.02, WALL_HEIGHT - BEAMS.drop];
+  // From wall to wall, through the cornices: stopped at their lips it would end short of their lower mouldings
+  const [half, reach, foot] = [BEAMS.width / 2, HALF_DEPTH, WALL_HEIGHT - BEAMS.drop];
   const { under, dim, lit } = BEAM_TONES;
   level(plaster, x - half, x + half, -reach, reach, foot, under);
   for (const [at, z, out] of [[x - half, -reach, [-1, 0]], [x + half, reach, [1, 0]]] as const) {
@@ -91,7 +89,6 @@ function beam(plaster: Stonework, x: number): void {
   }
 }
 
-/** One room's ceiling: the plaster round its glass, the glass itself, and whatever beams cross it. */
 function ceiling(plaster: Stonework, span: RoomSpan): void {
   const half = LAYLIGHT.halfWidth;
   const { far, near } = CEILING;

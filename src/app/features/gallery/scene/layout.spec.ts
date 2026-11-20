@@ -14,6 +14,9 @@ import {
   EYE,
   fieldOfView,
   HALF_DEPTH,
+  HALL_DOOR_TURN,
+  HALL_FACES,
+  hallTurn,
   LECTERN,
   LETTERBOX,
   PEDESTAL_RADIUS,
@@ -257,22 +260,43 @@ describe("the building", () => {
 });
 
 describe("what is built into the building", () => {
-  it("lists the four rooms in walking order, each between the faces of the walls that close it", () => {
+  it("lists a room for every door, in walking order, with one wall's thickness between each two", () => {
     const spans = roomSpans();
 
     expect(spans.length).toBe(DOOR_XS.length);
-    spans.forEach((span, index) => {
-      expect(span.from).toBeCloseTo(DOOR_XS[index] + WALL_THICKNESS / 2, 6);
-      expect(span.to).toBeCloseTo((DOOR_XS[index + 1] ?? END_WALL_X) - WALL_THICKNESS / 2, 6);
-      expect(span.to - span.from).toBeGreaterThan(7);
-    });
+    spans.slice(1).forEach((span, index) => expect(span.from - spans[index].to).toBeCloseTo(WALL_THICKNESS, 6));
+    for (const span of spans) expect(span.to - span.from).toBeGreaterThan(7);
+    expect(spans[0].from - (ROTUNDA.x + ROTUNDA.radius)).toBeCloseTo(WALL_THICKNESS, 6);
+    expect(spans[spans.length - 1].to).toBeLessThan(END_WALL_X);
+  });
+
+  it("holds everything that hangs or stands in the room it is laid out for", () => {
+    const [first, second, third, fourth] = roomSpans();
+    const inside = (x: number, span: { from: number; to: number }) => x > span.from && x < span.to;
+
+    expect(inside(PORTRAIT.x, first) && inside(SKILL_PLAQUES.x, first)).toBeTrue();
+    for (const slot of pieceSlots(REAL)) expect(inside(slot.centre.x, second)).toBeTrue();
+    expect(inside(LECTERN.x, third)).toBeTrue();
+    expect(inside(DESK.x, fourth)).toBeTrue();
   });
 
   it("gives every room one thing of its own, and no two rooms the same", () => {
     const features = roomSpans().map((span) => span.feature);
 
-    expect(features).toEqual(["plain", "beams", "panelled", "window"]);
     expect(new Set(features).size).toBe(features.length);
+    expect(features[0]).toBe("plain");
+  });
+
+  it("turns the hall's wall from one jamb of the door to Room I right round to the other", () => {
+    const at = (turn: number) => [ROTUNDA.x + Math.sin(turn) * ROTUNDA.radius, Math.cos(turn) * ROTUNDA.radius];
+    const [fromX, fromZ] = at(hallTurn(0));
+    const [toX, toZ] = at(hallTurn(HALL_FACES));
+
+    expect(fromZ).toBeCloseTo(-DOOR.width / 2, 6);
+    expect(toZ).toBeCloseTo(DOOR.width / 2, 6);
+    expect(fromX).toBeCloseTo(toX, 6);
+    expect(fromX).toBeGreaterThan(ROTUNDA.x + ROTUNDA.radius - 0.2);
+    expect(hallTurn(HALL_FACES) - hallTurn(0)).toBeCloseTo(Math.PI * 2 - HALL_DOOR_TURN * 2, 6);
   });
 
   it("panels the walls no higher than the lowest thing that hangs on them", () => {

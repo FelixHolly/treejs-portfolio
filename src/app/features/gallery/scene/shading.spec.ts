@@ -9,13 +9,14 @@ import {
   DOOR_XS,
   END_WALL_X,
   HALF_DEPTH,
+  HALL_FACES,
   LECTERN,
   PEDESTAL_RADIUS,
   ROTUNDA,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
-import { buildShading, CORNERS, GroundShadow, groundShadows, HALL_FACES } from "./shading";
+import { buildShading, CORNERS, GroundShadow, groundShadows } from "./shading";
 
 /** The hall's gold inlay: its inner edge, and how high it lies above the floor. */
 const INLAY = { inner: 3.3, y: 0.004 } as const;

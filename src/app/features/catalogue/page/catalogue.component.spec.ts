@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { PlaceService } from "../../../core/place/place.service";
 import { ViewEnvironment } from "../../../core/view-mode/view-environment";
-import { EmailService } from "../../../services/email.service";
-import { FakeViewEnvironment } from "../../../testing/fake-view-environment";
+import { EmailService } from "../../../core/email/email.service";
+import { FakeViewEnvironment } from "../../../core/view-mode/fake-view-environment";
 import { CatalogueComponent } from "./catalogue.component";
 
 const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";

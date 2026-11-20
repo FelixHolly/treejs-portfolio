@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
-import { NotificationService } from "../../services/notification.service";
+import { NotificationService } from "./notification.service";
 
 @Component({
   selector: "app-notification-toast",
@@ -8,10 +8,10 @@ import { NotificationService } from "../../services/notification.service";
   styleUrl: "./notification-toast.component.scss",
 })
 export class NotificationToastComponent {
-  private notificationService = inject(NotificationService);
-  notification = this.notificationService.notification;
+  private readonly notificationService = inject(NotificationService);
+  protected readonly notification = this.notificationService.notification;
 
-  dismiss(): void {
+  protected dismiss(): void {
     this.notificationService.clearNotification();
   }
 }

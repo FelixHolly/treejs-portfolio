@@ -21,6 +21,8 @@ export interface GalleryViewOptions {
   onFilmLost(): void;
   /** Called once if the scene is still too slow to watch after giving up all the quality it can. */
   onSlow(): void;
+  /** Asked when a mouse that rested through a walk is tested again: false once the page has laid a label under it. */
+  mouseOnScene(): boolean;
   /** Called with the stop of the piece the mouse has come to point at, and with null once it points at none. */
   onPointed(stop: number | null): void;
   /** Called with the stop of a piece the visitor clicked; the page decides what that does. */

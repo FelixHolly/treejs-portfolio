@@ -5,7 +5,7 @@ import { routes } from "./app.routes";
 import { ViewEnvironment } from "./core/view-mode/view-environment";
 import { GALLERY_SCENE_FACTORY } from "./features/gallery/gallery-scene.factory";
 import { GalleryView } from "./features/gallery/scene/gallery-view";
-import { FakeViewEnvironment } from "./testing/fake-view-environment";
+import { FakeViewEnvironment } from "./core/view-mode/fake-view-environment";
 
 describe("routes", () => {
   let harness: RouterTestingHarness;

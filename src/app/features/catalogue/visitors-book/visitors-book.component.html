@@ -12,7 +12,7 @@
     }
 
     <div class="entries">
-        @for (entry of entries; track entry.company) {
+        @for (entry of entries; track entry.quote) {
             <figure class="entry" appReveal>
                 <span class="mark font-display" aria-hidden="true">&ldquo;</span>
                 <blockquote class="font-display">{{ entry.quote }}</blockquote>

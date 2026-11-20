@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { DEVELOPER } from "../../../core/content/developer.content";
-import { RevealDirective } from "../../../directives/reveal.directive";
+import { RevealDirective } from "../../../shared/reveal/reveal.directive";
 import { FramedImageComponent } from "../../../shared/framed-image/framed-image.component";
 import { RoomLabelComponent } from "../../../shared/room-label/room-label.component";
 

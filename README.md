@@ -42,20 +42,22 @@ The site has two views of the same collection:
 
 4. **Build for production**:
    ```bash
-   npm run build -- --configuration production --base-href ./
+   npm run build
+   ```
+
+5. **Lint and test**:
+   ```bash
+   npm run lint
+   npm test -- --watch=false --browsers=ChromeHeadlessWebGL
    ```
 
 ---
 
 ## Deployment
 
-This project uses [GitHub Actions](https://github.com/JamesIves/github-pages-deploy-action) to automatically deploy to GitHub Pages from the `main` branch. Output is pushed to the `gh-pages` branch.
+This project uses [GitHub Actions](https://github.com/JamesIves/github-pages-deploy-action) to automatically deploy to GitHub Pages from the `main` branch. The workflow lints, tests and builds, then pushes the output to the `gh-pages` branch.
 
-Make sure your `angular.json` has:
-
-```json
-"baseHref": "/treejs-portfolio/"
-```
+The site is served from the root of its own domain, so the base href stays `/` (set in `src/index.html`). A relative base href breaks any URL with a trailing slash or a nested path.
 
 ---
 

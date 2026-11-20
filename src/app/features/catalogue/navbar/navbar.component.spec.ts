@@ -5,7 +5,7 @@ import { provideRouter, Router } from "@angular/router";
 import { PlaceService } from "../../../core/place/place.service";
 import { ViewEnvironment } from "../../../core/view-mode/view-environment";
 import { ViewModeService } from "../../../core/view-mode/view-mode.service";
-import { FakeViewEnvironment } from "../../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "../../../core/view-mode/fake-view-environment";
 import { NavbarComponent } from "./navbar.component";
 
 @Component({

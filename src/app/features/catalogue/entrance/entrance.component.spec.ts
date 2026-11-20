@@ -4,7 +4,7 @@ import { By } from "@angular/platform-browser";
 import { provideRouter } from "@angular/router";
 import { ViewEnvironment } from "../../../core/view-mode/view-environment";
 import { ViewModeService } from "../../../core/view-mode/view-mode.service";
-import { FakeViewEnvironment } from "../../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "../../../core/view-mode/fake-view-environment";
 import { SectionLinkDirective } from "../navbar/section-link.directive";
 import { EntranceComponent } from "./entrance.component";
 

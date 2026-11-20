@@ -15,8 +15,8 @@ export const routes: Routes = [
   },
   {
     path: "privacy-policy",
-    loadComponent: () =>
-      import("./pages/privacy-policy/privacy-policy.component").then((m) => m.PrivacyPolicyComponent),
+    loadChildren: () =>
+      import("./features/privacy-policy/privacy-policy.routes").then((m) => m.PRIVACY_POLICY_ROUTES),
   },
   { path: "**", redirectTo: "" },
 ];

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
-import { RevealDirective } from "../../../directives/reveal.directive";
+import { RevealDirective } from "../../../shared/reveal/reveal.directive";
 import { LetterComponent } from "../../../shared/letter/letter.component";
 
 @Component({

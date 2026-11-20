@@ -1,13 +1,14 @@
 import { Group, MathUtils, Vector3 } from "three";
 import { Palette } from "./building";
 import { envelope } from "./exhibits";
+import { DESK_TOP } from "./furniture";
 import { HANG_Z, LETTERBOX } from "./layout";
 
 const FLIGHT_MS = 1700;
 /** The share of the flight spent rising to the slot; the rest slides the envelope in. */
 const RISE = 0.72;
 /** Where the envelope lies on the desk, in the desk's own coordinates, and how it is turned there. */
-const AT_REST = { x: 0.34, y: 0.8, z: 0.16, turn: 0.3 } as const;
+const AT_REST = { x: 0.34, y: DESK_TOP + 0.005, z: 0.16, turn: 0.3 } as const;
 
 /** The envelope on the writing desk, and its flight into the letterbox when a letter is sent. */
 export class Post {

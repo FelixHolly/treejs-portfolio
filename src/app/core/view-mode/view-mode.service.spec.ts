@@ -1,6 +1,6 @@
 import { TestBed } from "@angular/core/testing";
 import { provideRouter, Router } from "@angular/router";
-import { FakeViewEnvironment } from "../../testing/fake-view-environment";
+import { FakeViewEnvironment } from "./fake-view-environment";
 import { PlaceService } from "../place/place.service";
 import { ViewEnvironment } from "./view-environment";
 import { ViewModeService } from "./view-mode.service";

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { CORRESPONDENCE } from "../../core/content/correspondence.content";
-import { EmailService } from "../../services/email.service";
+import { EmailService } from "../../core/email/email.service";
 import { LetterComponent } from "./letter.component";
 
 describe("LetterComponent", () => {

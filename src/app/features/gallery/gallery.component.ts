@@ -54,6 +54,8 @@ const INTERACTIVE = "input, textarea, select, button, a, dialog, [contenteditabl
 const BARE = "canvas, main, .stop, .stop--entrance > .label, .entrance-foot, .plaques";
 /** A press that travels further than this before it lifts was a drag, not a click, in pixels. */
 const CLICK_SLOP = 4;
+/** What only a visitor does; the page scrolling says nothing about who moved it. */
+const INTENT = ["wheel", "touchmove", "keydown", "pointerdown"] as const;
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
 
 /** Empty at the entrance, which has its own plaque for this, and at the last stop, which leads nowhere. */
@@ -140,6 +142,10 @@ export class GalleryComponent {
   private fadeTimer = 0;
   private framing: PageFraming = { labelShare: 0, statueBand: OPEN_BAND };
   private pressedAt?: readonly [x: number, y: number];
+  /** Where the mouse last was in the window; the scene cannot see what the page has since put under it. */
+  private mouseAt?: readonly [x: number, y: number];
+  /** The stop an address opened the gallery at, held there until the visitor first acts, and the layout it was last sent to. */
+  private opened?: { stop: number; top?: number; reach?: number };
 
   constructor() {
     this.viewMode.active.set("gallery");
@@ -154,6 +160,7 @@ export class GalleryComponent {
 
   /** Walks to a stop; with `focus` the stop's heading takes keyboard focus as the walk sets off. */
   goTo(index: number, focus = false): void {
+    this.opened = undefined;
     if (focus) this.remember(index);
     this.scrollToStop(index, "smooth");
     if (focus) this.focusHeading(index);
@@ -205,11 +212,20 @@ export class GalleryComponent {
     this.place.current.set(this.stops[this.activeIndex()].place);
     this.fadeTarget = this.activeIndex();
 
+    // Labels change height when styles and fonts arrive or the letter shows its errors.
+    const remeasure = () => {
+      const before = this.framing;
+      this.measure();
+      if (!sameFraming(before, this.framing)) this.scene?.resize(this.framing);
+      this.keepOpening();
+    };
     const onScroll = () => this.syncFromScroll();
+    const onIntent = () => (this.opened = undefined);
     const onScrollEnd = () => this.title.settle();
     const onResize = () => {
       this.measure();
       this.scene?.resize(this.framing);
+      this.keepOpening();
       this.syncFromScroll();
     };
     const onKey = (event: KeyboardEvent) => this.onKey(event);
@@ -217,20 +233,24 @@ export class GalleryComponent {
     const down = (event: MouseEvent) => (event.clientY / window.innerHeight) * 2 - 1;
     const onPointer = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
+      this.mouseAt = [event.clientX, event.clientY];
       this.scene?.setPointer((event.clientX / window.innerWidth) * 2 - 1, down(event));
-      if (this.overScene(event)) this.scene?.pointAt(across(event), down(event));
+      if (this.overScene(event.target)) this.scene?.pointAt(across(event), down(event));
       else this.scene?.pointAway();
     };
-    const onLeave = () => this.scene?.pointAway();
+    const onLeave = () => {
+      this.mouseAt = undefined;
+      this.scene?.pointAway();
+    };
     const onPress = (event: PointerEvent) => {
-      const counts = event.pointerType === "mouse" && event.button === 0 && this.overScene(event);
+      const counts = event.pointerType === "mouse" && event.button === 0 && this.overScene(event.target);
       this.pressedAt = counts ? [event.clientX, event.clientY] : undefined;
     };
     // A press that began in a label and lifts over the scene is the end of a text selection, not a click
     const onClick = (event: MouseEvent) => {
       const from = this.pressedAt;
       this.pressedAt = undefined;
-      if (!from || !this.overScene(event)) return;
+      if (!from || !this.overScene(event.target)) return;
       if (Math.hypot(event.clientX - from[0], event.clientY - from[1]) > CLICK_SLOP) return;
       this.scene?.click(across(event), down(event));
     };
@@ -241,6 +261,7 @@ export class GalleryComponent {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scrollend", onScrollEnd);
+    for (const type of INTENT) window.addEventListener(type, onIntent, { passive: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointermove", onPointer, { passive: true });
@@ -252,11 +273,8 @@ export class GalleryComponent {
     this.document.addEventListener("visibilitychange", onVisibility);
     main.addEventListener("focusin", onFocus);
 
-    // Labels change height when fonts arrive or the letter shows its errors.
     const resizeObserver = new ResizeObserver(() => {
-      const before = this.framing;
-      this.measure();
-      if (!sameFraming(before, this.framing)) this.scene?.resize(this.framing);
+      remeasure();
       this.syncFromScroll();
     });
     resizeObserver.observe(main);
@@ -287,6 +305,7 @@ export class GalleryComponent {
       root.classList.remove("gallery-active");
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("scrollend", onScrollEnd);
+      for (const type of INTENT) window.removeEventListener(type, onIntent);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointermove", onPointer);
@@ -314,21 +333,35 @@ export class GalleryComponent {
         film: work.film?.src,
       })),
       portrait: this.developer.portrait.src,
-      visitors: this.entries.map((entry) => entry.company),
+      // A company with several entries in the book is lettered on the board once, as in the catalogue
+      visitors: [...new Set(this.entries.map((entry) => entry.company))],
       skills: this.developer.skills,
       reducedMotion: this.reducedMotion,
       films: this.filmsAllowed,
       onFilmLost: () => this.filmLost.set(true),
       assets: { dracoPath: environment.assets.dracoPath, lionModel: environment.assets.models.heroModel },
       onSlow: () => this.slow.set(true),
+      mouseOnScene: () => this.mouseOnScene(),
       onPointed: (stop) => this.pointed.set(stop),
       onChosen: (stop) => this.choose(stop),
     });
   }
 
-  private overScene(event: Event): boolean {
-    const target = event.target;
+  private overScene(target: EventTarget | null): boolean {
     return target instanceof Element && target.matches(BARE) && this.lightbox().work() === null;
+  }
+
+  /** False once a walk has brought a label under a resting mouse, also while a room's title still holds that label back. */
+  private mouseOnScene(): boolean {
+    const at = this.mouseAt;
+    if (!at) return false;
+    const [x, y] = at;
+    const index = this.activeIndex();
+    // The entrance's label spans the screen and lets the scene through between its parts
+    const label = index === 0 ? null : this.main().nativeElement.querySelector(`[data-stop="${index}"] [data-label]`);
+    const box = label?.getBoundingClientRect();
+    if (box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return false;
+    return this.overScene(this.document.elementFromPoint(x, y));
   }
 
   /** A clicked piece is walked to; one the visitor already stands at opens its closer look, and the statue leads on into Room I. */
@@ -440,18 +473,41 @@ export class GalleryComponent {
     const index = window.location.hash.length > 1 ? this.stops.findIndex((stop) => stop.place === place) : 0;
     if (index < 0 || index === this.activeIndex()) return;
 
-    this.scrollToStop(index, behavior);
+    // Only the address the gallery opens at arrives before the page has its final layout
+    this.opened = behavior === "instant" ? { stop: index } : undefined;
+    if (this.opened) this.keepOpening();
+    else this.scrollToStop(index, behavior);
   }
 
   private scrollToStop(index: number, behavior: ScrollBehavior): void {
     const window = this.document.defaultView;
-    const span = this.spans[index];
-    if (!window || !span) return;
+    const top = this.restingTop(index);
+    if (!window || top === undefined) return;
 
-    const top = index === 0 ? 0 : scrollTargetFor(span, window.innerHeight, HEADER_CLEARANCE);
     const walked = behavior === "smooth" && !this.reducedMotion;
     if (walked) this.title.walkTo(index);
     window.scrollTo({ top, behavior: walked ? "smooth" : "instant" });
+  }
+
+  private restingTop(index: number): number | undefined {
+    const window = this.document.defaultView;
+    const span = this.spans[index];
+    if (!window || !span) return undefined;
+    return index === 0 ? 0 : scrollTargetFor(span, window.innerHeight, HEADER_CLEARANCE);
+  }
+
+  /** Late styles and fonts move every label, or lengthen a page that was too short to reach the stop. */
+  private keepOpening(): void {
+    const window = this.document.defaultView;
+    const opened = this.opened;
+    const top = opened && this.restingTop(opened.stop);
+    if (!window || !opened || top === undefined) return;
+
+    const reach = this.document.documentElement.scrollHeight - window.innerHeight;
+    if (top === opened.top && reach === opened.reach) return;
+    opened.top = top;
+    opened.reach = reach;
+    window.scrollTo({ top, behavior: "instant" });
   }
 
   private onKey(event: KeyboardEvent): void {

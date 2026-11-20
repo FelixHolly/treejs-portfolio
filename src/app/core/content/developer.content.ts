@@ -7,8 +7,7 @@ export const DEVELOPER = {
   location: "Based in the United States",
   viennaLine:
     "The lion at the entrance is a Viennese Löwe. My first teams and clients were in Austria and Switzerland.",
-  /** `placeholder` marks the stand-in picture; it goes when the real photograph replaces the file. */
-  portrait: { src: "assets/portrait.webp", alt: "Portrait of Felix Hollndonner", placeholder: true },
+  portrait: { src: "assets/portrait.webp", alt: "Portrait of Felix Hollndonner" },
   /** Skills by area: one plaque each on Room I's wall, one column each in the catalogue. */
   skills: [
     { area: "Frontend", tools: ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"] },

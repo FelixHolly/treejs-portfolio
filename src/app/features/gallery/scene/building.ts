@@ -1,5 +1,4 @@
 import {
-  BackSide,
   BoxGeometry,
   CircleGeometry,
   CylinderGeometry,
@@ -12,28 +11,24 @@ import {
   PlaneGeometry,
   RingGeometry,
 } from "three";
+import { buildCeilings } from "./ceilings";
+import { Fabric, newFabric } from "./fabric";
 import { StoneFloor } from "./floor";
-import {
-  BENCH,
-  DOOR,
-  DOOR_XS,
-  END_WALL_X,
-  ENFILADE,
-  HALF_DEPTH,
-  PEDESTAL_RADIUS,
-  ROTUNDA,
-  WALL_HEIGHT,
-  WALL_THICKNESS,
-} from "./layout";
-import { buildShading, HALL_FACES } from "./shading";
+import { Gilt } from "./gilt";
+import { buildHall } from "./hall";
+import { BENCH, END_WALL_X, ENFILADE, HALF_DEPTH, PEDESTAL_RADIUS, ROTUNDA } from "./layout";
+import { buildRooms } from "./rooms";
+import { buildShading } from "./shading";
+import { Stonework } from "./stonework";
 import { brushedTexture, walnutTexture, writtenPageTexture } from "./textures";
 
 export interface Palette {
-  wall: Material;
-  wallInside: Material;
-  ceiling: Material;
+  /** Walls and everything built onto them, each face in its own tone. */
+  masonry: Material;
+  /** Ceilings and the dome, painted in their tones and not lit. */
+  plaster: Material;
   floor: StoneFloor;
-  gold: Material;
+  gold: Gilt;
   bone: Material;
   dark: Material;
   wood: Material;
@@ -51,12 +46,11 @@ export function createPalette(): Palette {
   const grain = walnutTexture();
 
   return {
-    wall: new MeshLambertMaterial({ color: 0x646362 }),
-    wallInside: new MeshLambertMaterial({ color: 0x646362, side: BackSide }),
+    masonry: new MeshLambertMaterial({ vertexColors: true }),
     // Unlit: a ceiling only ever faces the dark half of the ambient light and would render pure black
-    ceiling: new MeshBasicMaterial({ color: 0x1b1b1f }),
+    plaster: new MeshBasicMaterial({ vertexColors: true }),
     floor: new StoneFloor(),
-    gold: new MeshStandardMaterial({ color: 0xc7a44a, roughness: 0.38, metalness: 0.65 }),
+    gold: new Gilt(),
     bone: new MeshLambertMaterial({ color: 0xe8e5de }),
     dark: new MeshLambertMaterial({ color: 0x1c1a19 }),
     wood: new MeshLambertMaterial({ color: 0x5a4030 }),
@@ -103,30 +97,10 @@ function pedestal(palette: Palette): Group {
   return group;
 }
 
-function rotunda(palette: Palette): Group {
+function hallFloor(palette: Palette): Group {
   const group = new Group();
-  const { radius, height } = ROTUNDA;
-  // CylinderGeometry starts its sweep at +Z; the door to Room I faces +X, a quarter turn on.
-  const gap = Math.asin(DOOR.width / 2 / radius);
 
-  const wall = new Mesh(
-    new CylinderGeometry(radius, radius, height, HALL_FACES, 1, true, Math.PI / 2 + gap, Math.PI * 2 - gap * 2),
-    palette.wallInside,
-  );
-  wall.position.y = height / 2;
-
-  const lintelHeight = height - DOOR.height;
-  const lintel = new Mesh(
-    new CylinderGeometry(radius, radius, lintelHeight, 8, 1, true, Math.PI / 2 - gap, gap * 2),
-    palette.wallInside,
-  );
-  lintel.position.y = DOOR.height + lintelHeight / 2;
-
-  const ceiling = new Mesh(new CircleGeometry(radius, 48), palette.ceiling);
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.y = height;
-
-  const floor = new Mesh(new CircleGeometry(radius, 72), palette.floor);
+  const floor = new Mesh(new CircleGeometry(ROTUNDA.radius, 72), palette.floor);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
 
@@ -135,38 +109,12 @@ function rotunda(palette: Palette): Group {
   inlay.position.y = 0.004;
 
   group.position.x = ROTUNDA.x;
-  group.add(wall, lintel, ceiling, floor, inlay, pedestal(palette));
-  return group;
-}
-
-function crossWall(x: number, palette: Palette): Group {
-  const group = new Group();
-  const sideDepth = HALF_DEPTH - DOOR.width / 2;
-  const sideZ = DOOR.width / 2 + sideDepth / 2;
-  const headHeight = WALL_HEIGHT - DOOR.height;
-
-  group.add(
-    slab(WALL_THICKNESS, WALL_HEIGHT, sideDepth, x, WALL_HEIGHT / 2, -sideZ, palette.wall),
-    slab(WALL_THICKNESS, WALL_HEIGHT, sideDepth, x, WALL_HEIGHT / 2, sideZ, palette.wall),
-    slab(WALL_THICKNESS, headHeight, DOOR.width, x, DOOR.height + headHeight / 2, 0, palette.wall),
-  );
-
-  for (const face of [-1, 1]) {
-    const faceX = x + face * (WALL_THICKNESS / 2 + 0.012);
-    const jambHeight = DOOR.height + 0.12;
-    group.add(
-      slab(0.024, jambHeight, 0.12, faceX, jambHeight / 2, -(DOOR.width / 2 + 0.06), palette.gold),
-      slab(0.024, jambHeight, 0.12, faceX, jambHeight / 2, DOOR.width / 2 + 0.06, palette.gold),
-      slab(0.024, 0.12, DOOR.width + 0.24, faceX, DOOR.height + 0.06, 0, palette.gold),
-    );
-  }
+  group.add(floor, inlay, pedestal(palette));
   return group;
 }
 
 export function buildArchitecture(palette: Palette): Group {
   const building = new Group();
-  const length = ENFILADE.to - ENFILADE.from;
-  const midX = (ENFILADE.from + ENFILADE.to) / 2;
 
   // Starts in the doorway's depth and a hair above the hall's own floor, so the two never flicker where they meet
   const floorFrom = ENFILADE.from - 0.15;
@@ -175,24 +123,27 @@ export function buildArchitecture(palette: Palette): Group {
   floor.position.set((floorFrom + END_WALL_X) / 2, 0.001, 0);
   floor.receiveShadow = true;
 
-  const ceiling = new Mesh(new PlaneGeometry(length, HALF_DEPTH * 2 + 0.4), palette.ceiling);
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(midX, WALL_HEIGHT, 0);
+  // All that stands still is five meshes however much of it there is: the hall apart from the rooms, so that
+  // from most of the rooms the hall is out of sight and not drawn
+  const rooms = newFabric();
+  const hall: Fabric = { masonry: new Stonework(), plaster: new Stonework(), gilt: rooms.gilt };
+  buildHall(hall);
+  buildRooms(rooms);
+  buildCeilings(rooms.plaster);
+  const laid: [name: string, stone: Stonework, material: Material][] = [
+    ["hall-masonry", hall.masonry, palette.masonry],
+    ["hall-plaster", hall.plaster, palette.plaster],
+    ["rooms-masonry", rooms.masonry, palette.masonry],
+    ["rooms-plaster", rooms.plaster, palette.plaster],
+    ["gilt", rooms.gilt, palette.gold],
+  ];
+  const fixed = laid.map(([name, stone, material]) => {
+    const mesh = new Mesh(stone.geometry(), material);
+    mesh.name = name;
+    return mesh;
+  });
 
-  building.add(floor, ceiling, rotunda(palette), buildShading());
-
-  for (const side of [-1, 1]) {
-    const z = side * HALF_DEPTH;
-    building.add(
-      slab(length, WALL_HEIGHT, 0.2, midX, WALL_HEIGHT / 2, z + side * 0.1, palette.wall),
-      slab(length, 0.03, 0.02, midX, 4.5, z - side * 0.012, palette.gold),
-      slab(length, 0.16, 0.03, midX, 0.08, z - side * 0.016, palette.dark),
-    );
-  }
-
-  for (const x of DOOR_XS) building.add(crossWall(x, palette));
-  building.add(slab(WALL_THICKNESS, WALL_HEIGHT, HALF_DEPTH * 2, END_WALL_X, WALL_HEIGHT / 2, 0, palette.wall));
-
+  building.add(floor, hallFloor(palette), ...fixed, buildShading());
   building.add(
     slab(2.4, 0.08, 0.6, BENCH.x, 0.45, BENCH.z, palette.wood),
     slab(0.08, 0.42, 0.5, BENCH.x - 1, 0.21, BENCH.z, palette.wood),

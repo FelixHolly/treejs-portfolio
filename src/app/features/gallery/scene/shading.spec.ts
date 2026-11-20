@@ -1,19 +1,22 @@
 import { Mesh, Vector3 } from "three";
 import { buildArchitecture, createPalette } from "./building";
+import { CASING_TOP } from "./fabric";
 import { StoneFloor } from "./floor";
 import {
   BENCH,
   DOOR,
+  DOOR_CASING,
   DOOR_XS,
   END_WALL_X,
   HALF_DEPTH,
+  HALL_FACES,
   LECTERN,
   PEDESTAL_RADIUS,
   ROTUNDA,
   WALL_HEIGHT,
   WALL_THICKNESS,
 } from "./layout";
-import { buildShading, CORNERS, GroundShadow, groundShadows, HALL_FACES } from "./shading";
+import { buildShading, CORNERS, GroundShadow, groundShadows } from "./shading";
 
 /** The hall's gold inlay: its inner edge, and how high it lies above the floor. */
 const INLAY = { inner: 3.3, y: 0.004 } as const;
@@ -225,7 +228,7 @@ describe("buildShading", () => {
     });
 
     it("stops the shade under the ceiling above every door's casing", () => {
-      expect(WALL_HEIGHT - CORNERS.head.reach).toBeGreaterThan(DOOR.height + 0.12);
+      expect(WALL_HEIGHT - CORNERS.head.reach).toBeGreaterThan(CASING_TOP);
     });
 
     it("hangs nothing in a doorway", () => {
@@ -248,7 +251,7 @@ describe("buildShading", () => {
           DOOR_XS.some((x) => Math.abs(corner.at.x - x) < WALL_THICKNESS / 2 + CORNERS.floor.reach + 1e-6),
       );
       const atJamb = rooms().filter(
-        (corner) => onFloor(corner) && Math.abs(Math.abs(corner.at.z) - (DOOR.width / 2 + 0.12)) < 1e-4 && Math.abs(corner.at.x - DOOR_XS[1]) < 2,
+        (corner) => onFloor(corner) && Math.abs(Math.abs(corner.at.z) - (DOOR.width / 2 + DOOR_CASING.width)) < 1e-4 && Math.abs(corner.at.x - DOOR_XS[1]) < 2,
       );
 
       expect(onThreshold).toEqual([]);

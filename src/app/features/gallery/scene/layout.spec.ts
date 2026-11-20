@@ -1,17 +1,29 @@
 import { SceneWork } from "./gallery-view";
 import {
+  CORNICE,
+  DADO,
+  dadoHeight,
   DESK,
+  DOME,
+  DOOR,
+  DOOR_CASING,
   DOOR_XS,
   END_WALL_X,
+  END_WINDOW,
   ENFILADE,
   EYE,
   fieldOfView,
+  HALF_DEPTH,
+  HALL_DOOR_TURN,
+  HALL_FACES,
+  hallTurn,
   LECTERN,
   LETTERBOX,
   PEDESTAL_RADIUS,
   pieceSlots,
   PORTRAIT,
   portraitSlot,
+  roomSpans,
   ROTUNDA,
   SKILL_PLAQUE_HEIGHT,
   SKILL_PLAQUES,
@@ -244,5 +256,84 @@ describe("the building", () => {
     expect(LETTERBOX.y - LETTERBOX.height / 2).toBeGreaterThan(1.3);
     expect(LETTERBOX.y + LETTERBOX.height / 2).toBeLessThan(2.6);
     expect(LETTERBOX.slotRise).toBeLessThan(LETTERBOX.height / 2);
+  });
+});
+
+describe("what is built into the building", () => {
+  it("lists a room for every door, in walking order, with one wall's thickness between each two", () => {
+    const spans = roomSpans();
+
+    expect(spans.length).toBe(DOOR_XS.length);
+    spans.slice(1).forEach((span, index) => expect(span.from - spans[index].to).toBeCloseTo(WALL_THICKNESS, 6));
+    for (const span of spans) expect(span.to - span.from).toBeGreaterThan(7);
+    expect(spans[0].from - (ROTUNDA.x + ROTUNDA.radius)).toBeCloseTo(WALL_THICKNESS, 6);
+    expect(spans[spans.length - 1].to).toBeLessThan(END_WALL_X);
+  });
+
+  it("holds everything that hangs or stands in the room it is laid out for", () => {
+    const [first, second, third, fourth] = roomSpans();
+    const inside = (x: number, span: { from: number; to: number }) => x > span.from && x < span.to;
+
+    expect(inside(PORTRAIT.x, first) && inside(SKILL_PLAQUES.x, first)).toBeTrue();
+    for (const slot of pieceSlots(REAL)) expect(inside(slot.centre.x, second)).toBeTrue();
+    expect(inside(LECTERN.x, third)).toBeTrue();
+    expect(inside(DESK.x, fourth)).toBeTrue();
+  });
+
+  it("gives every room one thing of its own, and no two rooms the same", () => {
+    const features = roomSpans().map((span) => span.feature);
+
+    expect(new Set(features).size).toBe(features.length);
+    expect(features[0]).toBe("plain");
+  });
+
+  it("turns the hall's wall from one jamb of the door to Room I right round to the other", () => {
+    const at = (turn: number) => [ROTUNDA.x + Math.sin(turn) * ROTUNDA.radius, Math.cos(turn) * ROTUNDA.radius];
+    const [fromX, fromZ] = at(hallTurn(0));
+    const [toX, toZ] = at(hallTurn(HALL_FACES));
+
+    expect(fromZ).toBeCloseTo(-DOOR.width / 2, 6);
+    expect(toZ).toBeCloseTo(DOOR.width / 2, 6);
+    expect(fromX).toBeCloseTo(toX, 6);
+    expect(fromX).toBeGreaterThan(ROTUNDA.x + ROTUNDA.radius - 0.2);
+    expect(hallTurn(HALL_FACES) - hallTurn(0)).toBeCloseTo(Math.PI * 2 - HALL_DOOR_TURN * 2, 6);
+  });
+
+  it("panels the walls no higher than the lowest thing that hangs on them", () => {
+    const frames = pieceSlots(REAL).flatMap((slot) => slot.frames);
+
+    expect(DADO.height).toBeLessThan(SKILL_PLAQUES.y - SKILL_WALL.height / 2 - 0.05);
+    expect(DADO.height).toBeLessThan(PORTRAIT.y - PORTRAIT.height / 2 - 0.15);
+    for (const frame of frames) expect(frame.y - frame.height / 2 - 0.21).toBeGreaterThan(DADO.height);
+    expect(LETTERBOX.y - LETTERBOX.height / 2).toBeGreaterThan(DADO.height);
+    expect(DADO.skirting).toBeLessThan(DADO.height / 3);
+  });
+
+  it("panels Room III twice as high, where only a board of names hangs, and still below the eye", () => {
+    const [first, second, third, fourth] = roomSpans();
+
+    expect(dadoHeight(third)).toBe(DADO.tall);
+    for (const span of [first, second, fourth]) expect(dadoHeight(span)).toBe(DADO.height);
+    expect(DADO.tall).toBeGreaterThan(DADO.height * 2);
+    expect(DADO.tall).toBeLessThan(EYE - 0.4);
+  });
+
+  it("springs the hall's dome far above the statue and opens it over the statue's own width", () => {
+    expect(DOME.springing).toBeGreaterThan(ROTUNDA.plinthHeight + ROTUNDA.lionHeight + 5);
+    expect(ROTUNDA.height).toBeGreaterThan(DOME.springing + 2);
+    expect(DOME.oculus).toBeGreaterThan(PEDESTAL_RADIUS);
+    expect(DOME.oculus).toBeLessThan(ROTUNDA.radius / 3);
+  });
+
+  it("keeps a door's casing, shelf and all, well under the cornice and clear of the side walls", () => {
+    expect(DOOR.height + DOOR_CASING.width + DOOR_CASING.frieze + DOOR_CASING.shelf).toBeLessThan(WALL_HEIGHT - CORNICE.drop - 0.5);
+    expect(DOOR.width / 2 + DOOR_CASING.width).toBeLessThan(HALF_DEPTH - 2);
+    expect(CORNICE.reach).toBeLessThan(CORNICE.drop);
+  });
+
+  it("ends the enfilade in a window narrower than a door, its sill above the panelled base and below the eye", () => {
+    expect(END_WINDOW.width).toBeLessThan(DOOR.width);
+    expect(END_WINDOW.sill).toBeGreaterThan(DADO.height + 0.3);
+    expect(END_WINDOW.sill).toBeLessThan(EYE);
   });
 });

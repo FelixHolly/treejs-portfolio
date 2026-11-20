@@ -1,8 +1,8 @@
 export const DEVELOPER = {
   greeting: "Hi, I'm Felix",
   bio: [
-    "I build web applications end to end: Angular in front, Java and Spring Boot behind it, PostgreSQL underneath, and the deployment that keeps it all running.",
-    "After three years in product teams at Polypoint and Eurotours, I designed, built and now operate Küchenschelle, a recipe platform with over a thousand recipes in production. I care about software that is fast, accessible and plain to maintain.",
+    "I lead and build web applications end to end: Java and Spring Boot at the core, Angular in front, PostgreSQL underneath, and the deployment that keeps it all running.",
+    "In five years across Austria, Switzerland and the United States I built booking services at Eurotours and healthcare software at Polypoint. Today I am technical lead at United Portraits, moving a legacy PHP monolith to Java and Angular. On my own I designed, built and operate Küchenschelle, a recipe platform with over a thousand recipes in production.",
   ],
   location: "Based in the United States",
   viennaLine:
@@ -12,7 +12,7 @@ export const DEVELOPER = {
   skills: [
     { area: "Frontend", tools: ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"] },
     { area: "Backend", tools: ["Java", "Spring Boot", "Spring Security", "JPA and Hibernate", "REST APIs", "Python"] },
-    { area: "Data and operations", tools: ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "S3"] },
+    { area: "Data and operations", tools: ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "AWS"] },
     { area: "Quality", tools: ["Vitest and Jest", "Playwright and Cypress", "JUnit", "Accessibility testing", "Nx monorepos"] },
   ],
 } as const;

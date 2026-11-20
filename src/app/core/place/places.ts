@@ -22,7 +22,7 @@ export const SKILLS = { id: "developer/skills", room: "developer", name: "Skills
 const ALCOVES = [SKILLS] as const;
 
 /** The tab title wherever no room or work names it; index.html carries the same text for the first paint. */
-export const BASE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+export const BASE_TITLE = "Felix Hollndonner, Technical Lead and Full-Stack Developer";
 
 const WORK_PLACE = /^works[/-](.+)$/;
 

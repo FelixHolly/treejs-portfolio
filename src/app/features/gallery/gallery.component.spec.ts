@@ -17,7 +17,7 @@ import { GalleryComponent } from "./gallery.component";
 import { GallerySceneFactory, GalleryView, GalleryViewOptions } from "./scene/gallery-view";
 import { DOOR_XS, pieceSlots, SKILL_PLAQUES, WALL_THICKNESS } from "./scene/layout";
 
-const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+const SITE_TITLE = "Felix Hollndonner, Technical Lead and Full-Stack Developer";
 
 /** Lets the first paint, the deferred scene start and its promise all run. */
 function sceneStarted(): Promise<void> {

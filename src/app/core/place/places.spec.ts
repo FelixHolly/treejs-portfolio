@@ -2,7 +2,7 @@ import { catalogueAnchor, placeFromHash, roomOf, ROOMS, SKILLS, titleFor, workPl
 
 const SLUGS = ["kuechenschelle", "reloo"];
 const TITLES = { kuechenschelle: "Küchenschelle", reloo: "ReLoo" };
-const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+const SITE_TITLE = "Felix Hollndonner, Technical Lead and Full-Stack Developer";
 
 describe("places", () => {
   it("lists the five rooms in walking order", () => {

@@ -6,7 +6,7 @@ import { EmailService } from "../../../core/email/email.service";
 import { FakeViewEnvironment } from "../../../core/view-mode/fake-view-environment";
 import { CatalogueComponent } from "./catalogue.component";
 
-const SITE_TITLE = "Felix Hollndonner, Full-Stack Developer";
+const SITE_TITLE = "Felix Hollndonner, Technical Lead and Full-Stack Developer";
 
 describe("CatalogueComponent", () => {
   let fixture: ComponentFixture<CatalogueComponent>;

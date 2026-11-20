@@ -9,7 +9,7 @@ describe("DEVELOPER", () => {
     expect(DEVELOPER.skills.map((group) => [...group.tools])).toEqual([
       ["Angular", "TypeScript", "RxJS", "NgRx Signals", "SCSS and Tailwind", "Three.js"],
       ["Java", "Spring Boot", "Spring Security", "JPA and Hibernate", "REST APIs", "Python"],
-      ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "S3"],
+      ["PostgreSQL", "Flyway", "Docker", "GitHub Actions", "Linux servers", "AWS"],
       ["Vitest and Jest", "Playwright and Cypress", "JUnit", "Accessibility testing", "Nx monorepos"],
     ]);
   });

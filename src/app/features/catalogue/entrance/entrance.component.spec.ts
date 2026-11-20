@@ -41,7 +41,7 @@ describe("EntranceComponent", () => {
 
     it("shows the name and role on first render, before the lion has loaded", () => {
       expect(element.querySelector("h1")?.textContent?.trim()).toBe("Felix Hollndonner");
-      expect(element.querySelector(".eyebrow")?.textContent).toContain("Full-Stack Developer");
+      expect(element.querySelector(".eyebrow")?.textContent).toContain("Technical Lead, Full Stack");
       expect(element.querySelector(".lion")?.classList.contains("lion--ready")).toBeFalse();
     });
 
@@ -223,7 +223,7 @@ describe("EntranceComponent", () => {
     it("stand straight on the wall, the stack line and the outlined letter without a backing of their own", () => {
       const stack = element.querySelector<HTMLElement>(".stack")!;
 
-      expect(stack.textContent?.trim()).toBe("Angular · TypeScript · Java · Spring Boot");
+      expect(stack.textContent?.trim()).toBe("Java · Spring Boot · Angular · TypeScript");
       expect(getComputedStyle(stack).backgroundColor).toBe("rgba(0, 0, 0, 0)");
       expect(getComputedStyle(actions()[1]).backgroundColor).toBe("rgba(0, 0, 0, 0)");
     });

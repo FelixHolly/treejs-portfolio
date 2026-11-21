@@ -42,6 +42,14 @@ describe("GalleryComponent", () => {
   let scrollY: jasmine.Spy | undefined;
   let placeLeftBehind: string | undefined;
 
+  function mount(): void {
+    fixture = TestBed.createComponent(GalleryComponent);
+    element = fixture.nativeElement;
+    // First in the page, as on the site: under the test runner's report the entrance's snap point lies off the top, and Chrome scrolls to it
+    document.body.prepend(element);
+    fixture.detectChanges();
+  }
+
   async function open(sceneFails = false): Promise<void> {
     scene = jasmine.createSpyObj<GalleryView>("GalleryView", ["setProgress", "jumpTo", "setPointer", "pointAt", "pointAway", "click", "resize", "setPaused", "setFilmHeld", "post", "dispose"]);
     factory = jasmine.createSpy("factory").and.callFake((_canvas: HTMLCanvasElement, received: GalleryViewOptions) => {
@@ -60,10 +68,7 @@ describe("GalleryComponent", () => {
       ],
     });
     if (placeLeftBehind) TestBed.inject(PlaceService).current.set(placeLeftBehind);
-    fixture = TestBed.createComponent(GalleryComponent);
-    element = fixture.nativeElement;
-    document.body.appendChild(element);
-    fixture.detectChanges();
+    mount();
     await fixture.whenStable();
     await sceneStarted();
     fixture.detectChanges();
@@ -75,11 +80,18 @@ describe("GalleryComponent", () => {
     return event;
   }
 
+  // The page itself may rest a little off its top, so a faked position is counted from the document, not from the window.
+  function labelBox(index: number): { top: number; bottom: number } {
+    const box = element.querySelector(`[data-stop="${index}"] [data-label]`)!.getBoundingClientRect();
+    const scrolled = document.documentElement.scrollTop;
+    return { top: box.top + scrolled, bottom: box.bottom + scrolled };
+  }
+
   /** `window.scrollTo` is stubbed, so a walk never moves the page: this reports the position it would have reached. */
   function arriveAt(index: number): void {
-    const label = element.querySelector(`[data-stop="${index}"] [data-label]`)!.getBoundingClientRect();
+    const label = labelBox(index);
     scrollY ??= spyOnProperty(window, "scrollY");
-    scrollY.and.returnValue(label.top + label.height / 2 - window.innerHeight / 2);
+    scrollY.and.returnValue((label.top + label.bottom) / 2 - window.innerHeight / 2);
     window.dispatchEvent(new Event("scroll"));
     fixture.detectChanges();
   }
@@ -99,6 +111,9 @@ describe("GalleryComponent", () => {
     fixture.destroy();
     element.remove();
     clearHash();
+    // The runner's report alone can be taller than the window, and other specs take the page to be at its top
+    scrollTo.and.callThrough();
+    window.scrollTo({ top: 0, behavior: "instant" });
   });
 
   describe("what is on the page", () => {
@@ -400,10 +415,7 @@ describe("GalleryComponent", () => {
       element.remove();
       scene.dispose.calls.reset();
 
-      fixture = TestBed.createComponent(GalleryComponent);
-      element = fixture.nativeElement;
-      document.body.appendChild(element);
-      fixture.detectChanges();
+      mount();
       await sceneStarted();
       fixture.destroy();
       deliver(scene);
@@ -1079,10 +1091,7 @@ describe("GalleryComponent", () => {
       fixture.destroy();
       element.remove();
 
-      fixture = TestBed.createComponent(GalleryComponent);
-      element = fixture.nativeElement;
-      document.body.appendChild(element);
-      fixture.detectChanges();
+      mount();
       await fixture.whenStable();
       await sceneStarted();
       control()!.click();
@@ -1102,10 +1111,7 @@ describe("GalleryComponent", () => {
       fixture.destroy();
       element.remove();
 
-      fixture = TestBed.createComponent(GalleryComponent);
-      element = fixture.nativeElement;
-      document.body.appendChild(element);
-      fixture.detectChanges();
+      mount();
       await fixture.whenStable();
       await sceneStarted();
       element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
@@ -1479,9 +1485,8 @@ describe("GalleryComponent", () => {
 
     /** Reports the scroll position `share` of the way from one stop's label to the next one's, as `arriveAt` does for a stop. */
     function stride(from: number, share: number): void {
-      const box = (index: number) => element.querySelector(`[data-stop="${index}"] [data-label]`)!.getBoundingClientRect();
-      const left = from === 0 ? 0 : box(from).bottom - 0.4 * window.innerHeight;
-      const reached = box(from + 1).top - 0.6 * window.innerHeight;
+      const left = from === 0 ? 0 : labelBox(from).bottom - 0.4 * window.innerHeight;
+      const reached = labelBox(from + 1).top - 0.6 * window.innerHeight;
       scrollY ??= spyOnProperty(window, "scrollY");
       scrollY.and.returnValue(left + (reached - left) * share);
       window.dispatchEvent(new Event("scroll"));
@@ -1608,27 +1613,32 @@ describe("GalleryComponent", () => {
       expect(labelsShowing()).toBe(1);
     });
 
-    it("is left out for a visitor who asked for less motion: the page cuts straight to the stop and its label", async () => {
-      environment.reducedMotion = true;
-      await open();
-      jasmine.clock().install();
+    describe("for a visitor who asked for less motion", () => {
+      beforeEach(async () => {
+        environment.reducedMotion = true;
+        await open();
+        jasmine.clock().install();
+      });
 
-      arriveAt(2);
-      stride(2, 0.45);
-      expect(shown()).toBeFalse();
-      stride(2, 0.6);
-      expect(shown()).toBeFalse();
-      expect(labelsShowing()).toBe(1);
+      afterEach(() => jasmine.clock().uninstall());
 
-      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
-      fixture.detectChanges();
-      expect(labelsShowing()).toBe(1);
-      arriveAt(fixture.componentInstance.last);
-      wait(2000);
-      jasmine.clock().uninstall();
+      it("is left out: the page cuts straight to the stop and its label", () => {
+        arriveAt(2);
+        stride(2, 0.45);
+        expect(shown()).toBeFalse();
+        stride(2, 0.6);
+        expect(shown()).toBeFalse();
+        expect(labelsShowing()).toBe(1);
 
-      expect(shown()).toBeFalse();
-      expect(card().textContent?.trim()).toBe("");
+        element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+        fixture.detectChanges();
+        expect(labelsShowing()).toBe(1);
+        arriveAt(fixture.componentInstance.last);
+        wait(2000);
+
+        expect(shown()).toBeFalse();
+        expect(card().textContent?.trim()).toBe("");
+      });
     });
   });
 

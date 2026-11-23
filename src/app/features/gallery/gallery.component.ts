@@ -26,6 +26,7 @@ import { ViewModeService } from "../../core/view-mode/view-mode.service";
 import { ArrowDownIconComponent } from "../../shared/icons/arrow-down.icon";
 import { LetterComponent } from "../../shared/letter/letter.component";
 import { RoomLabelComponent } from "../../shared/room-label/room-label.component";
+import { ScrollGlide } from "../../shared/scroll/scroll-glide";
 import { ViewSwitchComponent } from "../../shared/view-switch/view-switch.component";
 import { WallLabelComponent } from "../../shared/wall-label/wall-label.component";
 import { FloorPlanComponent } from "./floor-plan/floor-plan.component";
@@ -97,6 +98,7 @@ export class GalleryComponent {
   private readonly viewMode = inject(ViewModeService);
   private readonly createScene = inject(GALLERY_SCENE_FACTORY);
   private readonly environment = inject(ViewEnvironment);
+  private readonly glide = inject(ScrollGlide);
   private readonly reducedMotion = this.environment.prefersReducedMotion();
   private readonly works = inject(WorksService).works();
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>("canvas");
@@ -146,6 +148,8 @@ export class GalleryComponent {
   private mouseAt?: readonly [x: number, y: number];
   /** The stop an address opened the gallery at, held there until the visitor first acts, and the layout it was last sent to. */
   private opened?: { stop: number; top?: number; reach?: number };
+  /** The stop the last walk set off for; it says where the page is going only while the glide is under way. */
+  private walkingTo?: number;
 
   constructor() {
     this.viewMode.active.set("gallery");
@@ -219,9 +223,14 @@ export class GalleryComponent {
       if (!sameFraming(before, this.framing)) this.scene?.resize(this.framing);
       this.keepOpening();
     };
-    const onScroll = () => this.syncFromScroll();
+    // A walk moves the scene with every step it takes; the browser reports those steps late, and Chrome the end of each
+    const onScroll = () => {
+      if (!this.glide.active) this.syncFromScroll();
+    };
     const onIntent = () => (this.opened = undefined);
-    const onScrollEnd = () => this.title.settle();
+    const onScrollEnd = () => {
+      if (!this.glide.active) this.title.settle();
+    };
     const onResize = () => {
       this.measure();
       this.scene?.resize(this.framing);
@@ -316,6 +325,7 @@ export class GalleryComponent {
       window.removeEventListener("popstate", onBack);
       this.document.removeEventListener("visibilitychange", onVisibility);
       window.clearTimeout(this.fadeTimer);
+      this.glide.cancel();
       this.title.dispose();
       window.clearTimeout(sceneTimer);
       window.cancelAnimationFrame(sceneFrame);
@@ -411,11 +421,12 @@ export class GalleryComponent {
     return [(head.bottom - origin + STATUE_CLEARANCE.above) / height, (floor - origin - STATUE_CLEARANCE.below) / height];
   }
 
-  private syncFromScroll(): void {
+  /** `top` is the position a walk has just set, which the window may not report yet. */
+  private syncFromScroll(top?: number): void {
     const window = this.document.defaultView;
     if (!window) return;
 
-    this.progress = progressFromScroll(window.scrollY, this.spans, window.innerHeight);
+    this.progress = progressFromScroll(top ?? window.scrollY, this.spans, window.innerHeight);
     const index = Math.round(this.progress);
     this.setOff.set(this.progress > SET_OFF);
     if (this.reducedMotion) {
@@ -484,9 +495,24 @@ export class GalleryComponent {
     const top = this.restingTop(index);
     if (!window || top === undefined) return;
 
-    const walked = behavior === "smooth" && !this.reducedMotion;
-    if (walked) this.title.walkTo(index);
-    window.scrollTo({ top, behavior: walked ? "smooth" : "instant" });
+    if (behavior !== "smooth" || this.reducedMotion) {
+      window.scrollTo({ top, behavior: "instant" });
+      return;
+    }
+    // A held key, and the focus a walk hands to its heading, ask again for the stop already being walked to
+    if (this.glide.active && index === this.walkingTo) return;
+
+    this.walkingTo = index;
+    this.title.walkTo(index);
+    void this.glide
+      .to(
+        () => this.restingTop(index) ?? top,
+        (at) => this.syncFromScroll(at),
+      )
+      // Safari never says that scrolling ended, and a page too short for the stop never reaches it
+      .then((outcome) => {
+        if (outcome === "arrived") this.title.settle();
+      });
   }
 
   private restingTop(index: number): number | undefined {
@@ -525,7 +551,12 @@ export class GalleryComponent {
 
     const direction = this.direction(event);
     const index = this.activeIndex();
-    if (direction === 0 || this.labelRunsOffScreen(index, direction)) return;
+    if (direction === 0) return;
+    if (this.labelRunsOffScreen(index, direction)) {
+      // On the last steps of a walk the label is not yet where it is read from, and the browser's own step would end the walk short of it
+      if (this.glide.active && index === this.walkingTo) event.preventDefault();
+      return;
+    }
 
     const next = neighbourStop(this.progress, index, direction);
     // Past either end the browser scrolls as usual, which reaches the exit plaque.

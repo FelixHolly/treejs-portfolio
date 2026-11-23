@@ -11,6 +11,8 @@ import { ViewEnvironment } from "../../core/view-mode/view-environment";
 import { ViewModeService } from "../../core/view-mode/view-mode.service";
 import { EmailService } from "../../core/email/email.service";
 import { LetterComponent } from "../../shared/letter/letter.component";
+import { FakeScrollGlide } from "../../shared/scroll/fake-scroll-glide";
+import { ScrollGlide } from "../../shared/scroll/scroll-glide";
 import { FakeViewEnvironment } from "../../core/view-mode/fake-view-environment";
 import { GALLERY_SCENE_FACTORY } from "./gallery-scene.factory";
 import { GalleryComponent } from "./gallery.component";
@@ -40,6 +42,9 @@ describe("GalleryComponent", () => {
   let collection: Work[] | undefined;
   let scrollTo: jasmine.Spy;
   let scrollY: jasmine.Spy | undefined;
+  let glide: FakeScrollGlide;
+  /** Every walk the page sets off on: a glide it asks for, as against a jump made with `scrollTo`. */
+  let walk: jasmine.Spy<FakeScrollGlide["to"]>;
   let placeLeftBehind: string | undefined;
 
   function mount(): void {
@@ -63,6 +68,7 @@ describe("GalleryComponent", () => {
         provideLocationMocks(),
         { provide: ViewEnvironment, useValue: environment },
         { provide: GALLERY_SCENE_FACTORY, useValue: factory },
+        { provide: ScrollGlide, useValue: glide },
         { provide: EmailService, useValue: jasmine.createSpyObj<EmailService>("EmailService", ["sendContactEmail"]) },
         ...(collection ? [{ provide: WorksService, useValue: { works: () => collection } }] : []),
       ],
@@ -87,13 +93,37 @@ describe("GalleryComponent", () => {
     return { top: box.top + scrolled, bottom: box.bottom + scrolled };
   }
 
-  /** `window.scrollTo` is stubbed, so a walk never moves the page: this reports the position it would have reached. */
-  function arriveAt(index: number): void {
-    const label = labelBox(index);
+  /**
+   * `window.scrollTo` is stubbed and the glide is a fake, so nothing moves the page. This reports a position the way
+   * the page learns of it: from the step of its own walk while one is under way, from the browser otherwise.
+   */
+  function standAt(top: number): void {
     scrollY ??= spyOnProperty(window, "scrollY");
-    scrollY.and.returnValue((label.top + label.bottom) / 2 - window.innerHeight / 2);
-    window.dispatchEvent(new Event("scroll"));
+    scrollY.and.returnValue(top);
+    if (glide.active) glide.step(top);
+    else window.dispatchEvent(new Event("scroll"));
     fixture.detectChanges();
+  }
+
+  /** The position that centres a stop's label on the screen. */
+  function centreOf(index: number): number {
+    const label = labelBox(index);
+    return (label.top + label.bottom) / 2 - window.innerHeight / 2;
+  }
+
+  function arriveAt(index: number): void {
+    standAt(centreOf(index));
+  }
+
+  /** Neither a walk nor a jump: the page was not moved. */
+  function expectStill(context = ""): void {
+    expect(walk).withContext(context).not.toHaveBeenCalled();
+    expect(scrollTo).withContext(context).not.toHaveBeenCalled();
+  }
+
+  function forgetMoves(): void {
+    walk.calls.reset();
+    scrollTo.calls.reset();
   }
 
   beforeEach(() => {
@@ -105,6 +135,8 @@ describe("GalleryComponent", () => {
     clearHash();
     window.scrollTo({ top: 0, behavior: "instant" });
     scrollTo = spyOn(window, "scrollTo");
+    glide = new FakeScrollGlide();
+    walk = spyOn(glide, "to").and.callThrough();
   });
 
   afterEach(() => {
@@ -412,7 +444,17 @@ describe("GalleryComponent", () => {
       expect(scene.dispose).toHaveBeenCalledTimes(1);
       expect(document.documentElement.classList.contains("gallery-active")).toBeFalse();
       press("ArrowDown");
-      expect(scrollTo.calls.count()).toBe(0);
+      expectStill();
+    });
+
+    it("ends a walk still under way when the visitor leaves, so it cannot scroll the page that comes next", async () => {
+      await open();
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      expect(glide.active).toBeTrue();
+
+      fixture.destroy();
+
+      expect(glide.active).toBeFalse();
     });
 
     it("is disposed at once if it arrives after the visitor already left", async () => {
@@ -450,8 +492,48 @@ describe("GalleryComponent", () => {
       arriveAt(3);
       expect(scene.setProgress.calls.mostRecent().args).toEqual([3, last]);
 
-      arriveAt(last);
+      await glide.arrive();
       expect(scene.setProgress.calls.mostRecent().args).toEqual([last, undefined]);
+    });
+
+    it("is moved by every step of a walk, from the position the step set and not from what the window reports", async () => {
+      await open();
+      const last = fixture.componentInstance.last;
+      scrollY = spyOnProperty(window, "scrollY").and.returnValue(0);
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      scene.setProgress.calls.reset();
+
+      glide.step(centreOf(2));
+      expect(scene.setProgress.calls.allArgs()).toEqual([[2, last]]);
+
+      glide.step(centreOf(5));
+      expect(scene.setProgress.calls.allArgs()).toEqual([
+        [2, last],
+        [5, last],
+      ]);
+      expect(fixture.componentInstance.activeIndex()).toBe(5);
+      expect(location.hash).toBe("#works/wheelwallet");
+    });
+
+    it("is not moved by the browser's own reports while a walk is under way: they can name a step already left behind", async () => {
+      await open();
+      const last = fixture.componentInstance.last;
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      glide.step(centreOf(5));
+      scene.setProgress.calls.reset();
+
+      scrollY = spyOnProperty(window, "scrollY").and.returnValue(centreOf(4));
+      window.dispatchEvent(new Event("scroll"));
+
+      expect(scene.setProgress).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.activeIndex()).toBe(5);
+
+      await glide.interrupt();
+      scrollY.and.returnValue(centreOf(6));
+      window.dispatchEvent(new Event("scroll"));
+
+      expect(scene.setProgress.calls.allArgs()).withContext("once the visitor has taken over").toEqual([[6, last]]);
+      expect(fixture.componentInstance.activeIndex()).toBe(6);
     });
   });
 
@@ -463,18 +545,82 @@ describe("GalleryComponent", () => {
         const event = press(key);
 
         expect(event.defaultPrevented).toBeTrue();
-        expect(scrollTo).toHaveBeenCalledTimes(1);
-        expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
-        expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+        expect(walk).toHaveBeenCalledTimes(1);
+        expect(glide.target).toBeGreaterThan(0);
+        expect(scrollTo).withContext("a glide, not a jump").not.toHaveBeenCalled();
         expect(document.activeElement?.textContent?.trim()).toBe("The Developer");
       });
     }
+
+    it("walks on through the repeats of a held key: the walk under way is left alone, and the next begins where it ends", async () => {
+      // At the foot of the portrait's label, read to its end: the keys walk on from there even where it is taller than the screen
+      standAt(labelBox(1).bottom - window.innerHeight + 20);
+      press("ArrowDown");
+      const skills = glide.target!;
+
+      expect(press("ArrowDown", { repeat: true }).defaultPrevented).toBeTrue();
+      press("ArrowDown", { repeat: true });
+      expect(walk).withContext("while still walking to the skills").toHaveBeenCalledTimes(1);
+      expect(glide.target).toBe(skills);
+
+      scrollY!.and.returnValue(skills);
+      await glide.arrive();
+      const repeat = press("ArrowDown", { repeat: true });
+
+      expect(repeat.defaultPrevented).toBeTrue();
+      expect(walk).toHaveBeenCalledTimes(2);
+      expect(glide.target).toBeGreaterThan(skills);
+      expect(document.activeElement?.textContent?.trim()).toBe("The Works");
+    });
+
+    it("holds a walking key back on the last steps of a walk to a label taller than the screen, then leaves it to the browser to read on", async () => {
+      spyOnProperty(window, "innerHeight").and.returnValue(150);
+      press("ArrowDown");
+      const rest = glide.target!;
+      // The camera has arrived, the page has a few pixels to go: left to the browser now, the key would scroll and end the walk here
+      standAt(labelBox(1).top - 0.6 * 150 + 1);
+      expect(fixture.componentInstance.activeIndex()).toBe(1);
+
+      const onTheWay = press("ArrowDown", { repeat: true });
+
+      expect(onTheWay.defaultPrevented).toBeTrue();
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.active).toBeTrue();
+
+      scrollY!.and.returnValue(rest);
+      await glide.arrive();
+      expect(press("ArrowDown", { repeat: true }).defaultPrevented).withContext("standing at the label").toBeFalse();
+      expect(walk).toHaveBeenCalledTimes(1);
+    });
+
+    it("sets off again for the same stop once the visitor has broken the walk off", async () => {
+      press("ArrowDown");
+      const developer = glide.target;
+      standAt(developer! / 2);
+
+      await glide.interrupt();
+      press("ArrowDown");
+
+      expect(walk).toHaveBeenCalledTimes(2);
+      expect(glide.target).toBe(developer);
+    });
+
+    it("turns back to the stop left behind when the other key is pressed on the way", () => {
+      press("ArrowDown");
+      standAt(glide.target! / 2);
+
+      press("ArrowUp");
+
+      expect(walk).toHaveBeenCalledTimes(2);
+      expect(glide.target).toBe(0);
+      expect(document.activeElement?.textContent?.trim()).toBe("Felix Hollndonner");
+    });
 
     it("leaves the keys alone at the first stop when walking backwards", () => {
       for (const init of [{ key: "ArrowUp" }, { key: "PageUp" }, { key: " ", shiftKey: true }]) {
         expect(press(init.key, init).defaultPrevented).toBeFalse();
       }
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
 
     it("jumps to the last and first stop on End and Home", () => {
@@ -482,14 +628,14 @@ describe("GalleryComponent", () => {
       expect(document.activeElement?.textContent?.trim()).toBe("Write to me");
 
       press("Home");
-      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
+      expect(glide.target).toBe(0);
       expect(document.activeElement?.textContent?.trim()).toBe("Felix Hollndonner");
     });
 
     for (const init of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { shiftKey: true }]) {
       it(`ignores ArrowDown with ${Object.keys(init)[0]}`, () => {
         expect(press("ArrowDown", init).defaultPrevented).toBeFalse();
-        expect(scrollTo).not.toHaveBeenCalled();
+        expectStill();
       });
     }
 
@@ -499,7 +645,7 @@ describe("GalleryComponent", () => {
 
         expect(press(" ", {}, target).defaultPrevented).toBeFalse();
         expect(press("ArrowDown", {}, target).defaultPrevented).toBeFalse();
-        expect(scrollTo).not.toHaveBeenCalled();
+        expectStill();
       });
     }
 
@@ -507,10 +653,10 @@ describe("GalleryComponent", () => {
       element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
       fixture.detectChanges();
       await fixture.whenStable();
-      scrollTo.calls.reset();
+      forgetMoves();
 
       expect(press("ArrowDown").defaultPrevented).toBeFalse();
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
 
       element.querySelector("dialog")!.close();
     });
@@ -518,7 +664,7 @@ describe("GalleryComponent", () => {
     it("ignores unrelated keys", () => {
       expect(press("a").defaultPrevented).toBeFalse();
       expect(press("Enter").defaultPrevented).toBeFalse();
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
   });
 
@@ -528,7 +674,7 @@ describe("GalleryComponent", () => {
     it("walks to a room from the floor plan and focuses its heading", () => {
       element.querySelectorAll<HTMLButtonElement>("app-floor-plan button")[3].click();
 
-      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(walk).toHaveBeenCalledTimes(1);
       expect(document.activeElement?.textContent?.trim()).toBe("Visitors' Book");
     });
 
@@ -541,8 +687,9 @@ describe("GalleryComponent", () => {
     it("walks on from a label's foot to the next stop, focuses its heading and leaves a history entry", () => {
       element.querySelector<HTMLButtonElement>('[data-stop="1"] .onward')!.click();
 
-      expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
-      expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.target).toBeGreaterThan(0);
+      expect(scrollTo).withContext("a glide, not a jump").not.toHaveBeenCalled();
       expect(document.activeElement?.textContent?.trim()).toBe("Skills");
       expect(location.hash).toBe("#developer/skills");
     });
@@ -557,12 +704,12 @@ describe("GalleryComponent", () => {
     it("walks to the skills when their address is typed, and to the portrait from the floor plan's Room I", () => {
       history.replaceState(null, "", "#developer/skills");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
-      const skills = scrollTo.calls.mostRecent().args[0].top;
+      const skills = glide.target!;
 
       element.querySelectorAll<HTMLButtonElement>("app-floor-plan button")[1].click();
 
       expect(skills).toBeGreaterThan(0);
-      expect(scrollTo.calls.mostRecent().args[0].top).toBeLessThan(skills);
+      expect(glide.target).toBeLessThan(skills);
       expect(document.activeElement?.textContent?.trim()).toBe("The Developer");
     });
 
@@ -586,7 +733,7 @@ describe("GalleryComponent", () => {
     it("walks to the letter from the header and focuses its heading", () => {
       element.querySelector<HTMLButtonElement>(".hud .to-letter")!.click();
 
-      expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
+      expect(glide.target).toBeGreaterThan(0);
       expect(document.activeElement?.textContent?.trim()).toBe("Write to me");
       expect(location.hash).toBe("#correspondence");
     });
@@ -607,7 +754,7 @@ describe("GalleryComponent", () => {
       expect(document.activeElement?.textContent?.trim()).toBe("The Developer");
 
       element.querySelector<HTMLButtonElement>(".exit .plaque")!.click();
-      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
+      expect(glide.target).toBe(0);
 
       element.querySelector<HTMLButtonElement>(".wordmark")!.click();
       expect(document.activeElement?.textContent?.trim()).toBe("Felix Hollndonner");
@@ -627,31 +774,31 @@ describe("GalleryComponent", () => {
       spyOnProperty(window, "innerHeight").and.returnValue(4000);
       element.querySelector<HTMLElement>('[data-stop="1"]')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
 
-      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(walk).toHaveBeenCalledTimes(1);
     });
 
     it("leaves the browser's own focus scrolling alone in a label taller than the screen", () => {
       spyOnProperty(window, "innerHeight").and.returnValue(150);
       element.querySelector<HTMLElement>('[data-stop="8"]')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
 
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
 
     it("does not re-walk when focus moves within the stop the visitor is at", () => {
       element.querySelector<HTMLElement>('[data-stop="0"] .plaque')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
 
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
 
     it("walks to the stop named by a hash typed into the address bar, and ignores unknown ones", () => {
       history.replaceState(null, "", "#works/reloo");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
-      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(walk).toHaveBeenCalledTimes(1);
 
-      scrollTo.calls.reset();
+      forgetMoves();
       history.replaceState(null, "", "#attic");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
 
     it("leaves a history entry on a deliberate jump, so Back returns to the stop before", () => {
@@ -674,14 +821,14 @@ describe("GalleryComponent", () => {
     it("walks back to the entrance when Back returns to the address without a hash", () => {
       history.replaceState(null, "", "#works");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
-      scrollTo.calls.reset();
+      forgetMoves();
       fixture.componentInstance.activeIndex.set(2);
 
       history.replaceState(null, "", location.pathname);
       window.dispatchEvent(new PopStateEvent("popstate"));
 
-      expect(scrollTo).toHaveBeenCalledTimes(1);
-      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.target).toBe(0);
     });
 
     it("pauses the scene while the tab is hidden", () => {
@@ -724,21 +871,23 @@ describe("GalleryComponent", () => {
     it("is walked to from the Room II list, which leaves its own address behind for Back", () => {
       element.querySelectorAll<HTMLButtonElement>('[data-stop="3"] button')[3].click();
 
-      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(walk).toHaveBeenCalledTimes(1);
       expect(document.activeElement?.textContent?.trim()).toBe("This Gallery");
       expect(location.hash).toBe("#works/this-gallery");
     });
 
-    it("is walked to when its address is typed, in the gallery's form or the catalogue's", () => {
-      for (const hash of ["#works/this-gallery", "#works-this-gallery"]) {
-        scrollTo.calls.reset();
+    for (const [form, hash] of [
+      ["the gallery's", "#works/this-gallery"],
+      ["the catalogue's", "#works-this-gallery"],
+    ]) {
+      it(`is walked to when its address is typed in ${form} form`, () => {
         history.replaceState(null, "", hash);
         window.dispatchEvent(new HashChangeEvent("hashchange"));
 
-        expect(scrollTo).withContext(hash).toHaveBeenCalledTimes(1);
-        expect(scrollTo.calls.mostRecent().args[0].top).withContext(hash).toBeGreaterThan(0);
-      }
-    });
+        expect(walk).toHaveBeenCalledTimes(1);
+        expect(glide.target).toBeGreaterThan(0);
+      });
+    }
 
     it("keeps the floor plan and the live region in Room II while the visitor stands at it", () => {
       fixture.componentInstance.activeIndex.set(7);
@@ -867,6 +1016,7 @@ describe("GalleryComponent", () => {
 
       expect(scrollTo.calls.first().args[0].behavior).toBe("instant");
       expect(scrollTo.calls.first().args[0].top).toBeGreaterThan(0);
+      expect(walk).not.toHaveBeenCalled();
     });
 
     it("opens at the skills when their address is the one shared", async () => {
@@ -977,11 +1127,9 @@ describe("GalleryComponent", () => {
 
       it("lets go when the visitor walks on, here by tabbing into another stop's label", async () => {
         await openAt("#visitors-book");
-        scrollTo.and.stub();
 
         element.querySelector('[data-stop="2"] .onward')!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
-        expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
-        scrollTo.calls.reset();
+        expect(walk).toHaveBeenCalledTimes(1);
         await labelsMove(60);
 
         expect(scrollTo).not.toHaveBeenCalled();
@@ -1058,7 +1206,7 @@ describe("GalleryComponent", () => {
       it("never steals the walking keys", () => {
         expect(press(" ", {}, control()!).defaultPrevented).toBeFalse();
         expect(press("ArrowDown", {}, control()!).defaultPrevented).toBeFalse();
-        expect(scrollTo).not.toHaveBeenCalled();
+        expectStill();
       });
 
       it("holds the film while the closer look is open and lets it go when that closes", async () => {
@@ -1373,12 +1521,13 @@ describe("GalleryComponent", () => {
 
     it("walks to a chosen piece exactly as the controls do: the scroll, the heading's focus and a history entry", async () => {
       arriveAt(3);
-      scrollTo.calls.reset();
+      forgetMoves();
 
       await chosen(6);
 
-      expect(scrollTo).toHaveBeenCalled();
-      expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("smooth");
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.target).toBeGreaterThan(0);
+      expect(scrollTo).withContext("a glide, not a jump").not.toHaveBeenCalled();
       expect(document.activeElement).toBe(element.querySelector('[data-stop="6"] h3'));
       expect(location.hash).toBe("#works/reloo");
       expect(dialog().open).toBeFalse();
@@ -1386,17 +1535,17 @@ describe("GalleryComponent", () => {
 
     it("walks to the skills when their plaques are chosen from the portrait", async () => {
       arriveAt(1);
-      scrollTo.calls.reset();
+      forgetMoves();
 
       await chosen(2);
 
-      expect(scrollTo).toHaveBeenCalled();
+      expect(walk).toHaveBeenCalledTimes(1);
       expect(document.activeElement).toBe(element.querySelector('[data-stop="2"] h3'));
     });
 
     it("opens the closer look when the visitor already stands at the chosen work, with focus on its close button", async () => {
       arriveAt(4);
-      scrollTo.calls.reset();
+      forgetMoves();
 
       await chosen(4);
 
@@ -1404,7 +1553,7 @@ describe("GalleryComponent", () => {
       expect(dialog().querySelector("h2")?.textContent?.trim()).toBe("Küchenschelle");
       expect(document.activeElement?.closest("dialog")).toBe(dialog());
       expect(document.activeElement?.tagName).toBe("BUTTON");
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
       expect(scene.pointAway).toHaveBeenCalled();
 
       dialog().close();
@@ -1421,11 +1570,11 @@ describe("GalleryComponent", () => {
 
     it("does nothing when a piece without a closer look is chosen from its own stop", async () => {
       arriveAt(2);
-      scrollTo.calls.reset();
+      forgetMoves();
 
       await chosen(2);
 
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
       expect(dialog().open).toBeFalse();
     });
 
@@ -1433,18 +1582,19 @@ describe("GalleryComponent", () => {
       await chosen(0);
       expect(document.activeElement).toBe(element.querySelector('[data-stop="1"] h2'));
 
-      arriveAt(1);
-      scrollTo.calls.reset();
+      await glide.arrive();
+      forgetMoves();
       await chosen(0);
 
-      expect(scrollTo.calls.mostRecent().args[0].top).toBe(0);
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.target).toBe(0);
       expect(document.activeElement).toBe(element.querySelector('[data-stop="0"] h1'));
     });
 
     it("ignores a stop the route does not have", async () => {
       await chosen(99);
 
-      expect(scrollTo).not.toHaveBeenCalled();
+      expectStill();
     });
 
     describe("while the closer look is open", () => {
@@ -1453,7 +1603,7 @@ describe("GalleryComponent", () => {
         element.querySelector<HTMLButtonElement>('[data-stop="4"] .view-switch')!.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        scrollTo.calls.reset();
+        forgetMoves();
         scene.pointAway.calls.reset();
       });
 
@@ -1472,7 +1622,7 @@ describe("GalleryComponent", () => {
         await chosen(6);
         await chosen(4);
 
-        expect(scrollTo).not.toHaveBeenCalled();
+        expectStill();
         expect(dialog().querySelector("h2")?.textContent?.trim()).toBe("Küchenschelle");
       });
 
@@ -1491,14 +1641,15 @@ describe("GalleryComponent", () => {
     const shown = () => card().classList.contains("shown");
     const labelsShowing = () => element.querySelectorAll(".stop--active").length;
 
-    /** Reports the scroll position `share` of the way from one stop's label to the next one's, as `arriveAt` does for a stop. */
-    function stride(from: number, share: number): void {
+    /** The scroll position `share` of the way from one stop's label to the next one's. */
+    function strideAt(from: number, share: number): number {
       const left = from === 0 ? 0 : labelBox(from).bottom - 0.4 * window.innerHeight;
       const reached = labelBox(from + 1).top - 0.6 * window.innerHeight;
-      scrollY ??= spyOnProperty(window, "scrollY");
-      scrollY.and.returnValue(left + (reached - left) * share);
-      window.dispatchEvent(new Event("scroll"));
-      fixture.detectChanges();
+      return left + (reached - left) * share;
+    }
+
+    function stride(from: number, share: number): void {
+      standAt(strideAt(from, share));
     }
 
     function wait(ms: number): void {
@@ -1561,7 +1712,7 @@ describe("GalleryComponent", () => {
         expect(shown()).toBeFalse();
       });
 
-      it("on a jump across the rooms holds every label from the start, and titles only the room the jump ends in", () => {
+      it("on a jump across the rooms holds every label from the start, and titles only the room the jump ends in", async () => {
         const last = fixture.componentInstance.last;
         element.querySelector<HTMLButtonElement>(".to-letter")!.click();
         fixture.detectChanges();
@@ -1581,7 +1732,8 @@ describe("GalleryComponent", () => {
         expect(lettering()).toEqual(["IV", "Correspondence"]);
         expect(shown()).toBeTrue();
 
-        arriveAt(last);
+        await glide.arrive();
+        fixture.detectChanges();
         expect(shown()).toBeTrue();
         expect(labelsShowing()).toBe(0);
 
@@ -1597,15 +1749,49 @@ describe("GalleryComponent", () => {
         expect(letter.contains(document.activeElement)).toBeTrue();
       });
 
-      it("lets the labels show again when a jump is broken off on the way", () => {
+      it("lets the labels show again when a jump is broken off on the way, once the page has come to rest", async () => {
         element.querySelector<HTMLButtonElement>(".to-letter")!.click();
         arriveAt(4);
         expect(labelsShowing()).toBe(0);
+
+        await glide.interrupt();
+        fixture.detectChanges();
+        expect(labelsShowing()).withContext("while the visitor may still be scrolling on").toBe(0);
 
         window.dispatchEvent(new Event("scrollend"));
         fixture.detectChanges();
         expect(shown()).toBeFalse();
         expect(element.querySelector(".stop--active")?.getAttribute("data-stop")).toBe("4");
+      });
+
+      it("does not take the end of one step for the end of the walk: Chrome reports every step of a glide as a scroll that ended", () => {
+        const last = fixture.componentInstance.last;
+        element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+        arriveAt(4);
+
+        window.dispatchEvent(new Event("scrollend"));
+        fixture.detectChanges();
+
+        expect(labelsShowing()).toBe(0);
+        stride(4, 0.5);
+        expect(scene.setProgress.calls.mostRecent().args[1]).withContext("still bound for the letter").toBe(last);
+        expect(shown()).withContext("and no room passed on the way is titled").toBeFalse();
+      });
+
+      it("ends the walk when its glide arrives, without the browser saying so and even short of the stop on a page too short for it", async () => {
+        const last = fixture.componentInstance.last;
+        element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+        stride(last - 1, 0.3);
+        expect(labelsShowing()).toBe(0);
+        expect(scene.setProgress.calls.mostRecent().args[1]).toBe(last);
+
+        await glide.arrive(strideAt(last - 1, 0.3));
+        fixture.detectChanges();
+
+        expect(labelsShowing()).toBe(1);
+        expect(element.querySelector(".stop--active")?.getAttribute("data-stop")).toBe(String(last - 1));
+        stride(last - 1, 0.31);
+        expect(scene.setProgress.calls.mostRecent().args[1]).withContext("bound nowhere further").toBeUndefined();
       });
     });
 
@@ -1661,7 +1847,10 @@ describe("GalleryComponent", () => {
 
       press("ArrowDown");
 
+      expect(scrollTo).toHaveBeenCalledTimes(1);
       expect(scrollTo.calls.mostRecent().args[0].behavior).toBe("instant");
+      expect(scrollTo.calls.mostRecent().args[0].top).toBeGreaterThan(0);
+      expect(walk).withContext("nothing glides").not.toHaveBeenCalled();
     });
 
     it("never glides the camera from scrolling", () => {

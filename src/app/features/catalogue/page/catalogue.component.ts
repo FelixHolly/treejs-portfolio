@@ -2,11 +2,13 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, effect
 
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Title } from "@angular/platform-browser";
-import { NavigationEnd, Router } from "@angular/router";
+import { NavigationEnd, Router, Scroll } from "@angular/router";
 import { WorksService } from "../../../core/content/works.service";
 import { BASE_TITLE, catalogueAnchor, placeFromHash, ROOMS, titleFor } from "../../../core/place/places";
 import { PlaceService } from "../../../core/place/place.service";
+import { ViewEnvironment } from "../../../core/view-mode/view-environment";
 import { ViewModeService } from "../../../core/view-mode/view-mode.service";
+import { ScrollGlide } from "../../../shared/scroll/scroll-glide";
 import { CorrespondenceComponent } from "../correspondence/correspondence.component";
 import { DeveloperComponent } from "../developer/developer.component";
 import { EntranceComponent } from "../entrance/entrance.component";
@@ -36,6 +38,8 @@ export class CatalogueComponent {
     const destroyRef = inject(DestroyRef);
     const router = inject(Router);
     const title = inject(Title);
+    const glide = inject(ScrollGlide);
+    const environment = inject(ViewEnvironment);
     const works = inject(WorksService).works();
     const slugs = works.map((work) => work.slug);
     const workTitles = Object.fromEntries(works.map((work) => [work.slug, work.title]));
@@ -55,10 +59,32 @@ export class CatalogueComponent {
       }
     };
 
+    let glidingTo: string | undefined;
+
+    // The anchor rests under its own CSS scroll margin, which is what clears the fixed navbar.
+    const showAnchor = (id: string) => {
+      const window = document.defaultView;
+      const anchor = document.getElementById(id);
+      // A link followed a second time on the way asks for the glide already under way
+      if (!window || !anchor || (glide.active && id === glidingTo)) return;
+
+      const margin = parseFloat(window.getComputedStyle(anchor).scrollMarginTop) || 0;
+      const top = () => anchor.getBoundingClientRect().top + window.scrollY - margin;
+      if (environment.prefersReducedMotion()) {
+        window.scrollTo({ top: top(), behavior: "instant" });
+        return;
+      }
+      glidingTo = id;
+      void glide.to(top);
+    };
+
     // The router settles a typed-in hash first; adopting it earlier would be cancelled by that navigation.
     router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) adoptHash();
+      // Back and Forward carry a position instead, which the browser restores by itself
+      if (event instanceof Scroll && event.anchor && !event.position) showAnchor(event.anchor);
     });
+    destroyRef.onDestroy(() => glide.cancel());
 
     afterNextRender(() => {
       document.getElementById("shell")?.remove();

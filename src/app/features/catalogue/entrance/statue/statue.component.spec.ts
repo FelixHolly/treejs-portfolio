@@ -166,6 +166,7 @@ describe("StatueComponent", () => {
       ["in a browser without WebGL", () => (environment.webgl = false)],
       ["for a visitor who asked for less motion", () => (environment.reducedMotion = true)],
       ["for a visitor who is saving data", () => (environment.dataSaver = true)],
+      ["on a device without a mouse, where a download cannot be told from a metered one", () => (environment.finePointer = false)],
     ];
 
     for (const [where, arrange] of stills) {

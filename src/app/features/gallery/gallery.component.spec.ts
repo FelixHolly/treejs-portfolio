@@ -115,7 +115,6 @@ describe("GalleryComponent", () => {
     standAt(centreOf(index));
   }
 
-  /** Neither a walk nor a jump: the page was not moved. */
   function expectStill(context = ""): void {
     expect(walk).withContext(context).not.toHaveBeenCalled();
     expect(scrollTo).withContext(context).not.toHaveBeenCalled();
@@ -515,6 +514,18 @@ describe("GalleryComponent", () => {
       expect(location.hash).toBe("#works/wheelwallet");
     });
 
+    it("keeps a walk aimed at its stop while the labels still move, as late styles and fonts move them", async () => {
+      await open();
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      const before = glide.target!;
+
+      const main = element.querySelector("main")!;
+      main.insertBefore(document.createElement("div"), main.firstChild).style.height = "240px";
+      window.dispatchEvent(new Event("resize"));
+
+      expect(glide.target).toBeCloseTo(before + 240, 3);
+    });
+
     it("is not moved by the browser's own reports while a walk is under way: they can name a step already left behind", async () => {
       await open();
       const last = fixture.componentInstance.last;
@@ -590,6 +601,19 @@ describe("GalleryComponent", () => {
       scrollY!.and.returnValue(rest);
       await glide.arrive();
       expect(press("ArrowDown", { repeat: true }).defaultPrevented).withContext("standing at the label").toBeFalse();
+      expect(walk).toHaveBeenCalledTimes(1);
+    });
+
+    it("holds back only a key that points the walk's own way: one pointing back on those last steps is the browser's, as at rest", () => {
+      spyOnProperty(window, "innerHeight").and.returnValue(150);
+      standAt(labelBox(2).top - 84);
+      press("ArrowUp");
+      // Walking up, the portrait's label has reached the top of the screen and is 84 pixels short of where it rests
+      standAt(labelBox(1).top);
+      expect(fixture.componentInstance.activeIndex()).toBe(1);
+
+      expect(press("ArrowUp", { repeat: true }).defaultPrevented).toBeTrue();
+      expect(press("ArrowDown").defaultPrevented).toBeFalse();
       expect(walk).toHaveBeenCalledTimes(1);
     });
 
@@ -824,6 +848,20 @@ describe("GalleryComponent", () => {
       forgetMoves();
       fixture.componentInstance.activeIndex.set(2);
 
+      history.replaceState(null, "", location.pathname);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+
+      expect(walk).toHaveBeenCalledTimes(1);
+      expect(glide.target).toBe(0);
+    });
+
+    it("walks back when Back returns to the stop a walk has only just left, where the visitor is still counted", () => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      expectStill("standing at the entrance, with no walk under way");
+
+      element.querySelector<HTMLButtonElement>(".to-letter")!.click();
+      expect(fixture.componentInstance.activeIndex()).toBe(0);
+      forgetMoves();
       history.replaceState(null, "", location.pathname);
       window.dispatchEvent(new PopStateEvent("popstate"));
 

@@ -9,7 +9,7 @@ const SHORTEST_MS = 250;
 const LONGEST_MS = 1500;
 /** Chrome's curve as a CSS cubic-bezier, fitted to within 2% of what it was measured to do: a short run-up, a long settling. */
 const PACE = [0.4, 0, 0, 1] as const;
-/** The visitor scrolling, or setting a hand to the page: any of these takes it back from a glide at once. */
+/** Where a visitor's own scroll begins: each takes the page back from a glide at once, but for a mouse pressed on a control. */
 const TAKEOVER = ["wheel", "touchstart", "touchmove", "pointerdown"] as const;
 
 export function glideDuration(pixels: number): number {
@@ -50,8 +50,8 @@ export class ScrollGlide {
   }
 
   /**
-   * Glides to wherever `target` points, asked again every frame, and replaces a glide still under way.
-   * `onStep` is told each position as it is set, before the browser reports it in a scroll event.
+   * Glides to wherever `target` points, asked again every frame; replaces a glide under way. `onStep` is told each position as
+   * it is set. A key handler that begins a glide must prevent the key's default, or that key counts as a takeover and ends it.
    */
   to(target: () => number, onStep?: (top: number) => void): Promise<GlideOutcome> {
     const window = this.window;
@@ -71,8 +71,8 @@ export class ScrollGlide {
         const reach = root.scrollHeight - Math.min(window.innerHeight, root.clientHeight);
         return Math.max(Math.min(target(), reach), 0);
       };
-      const duration = glideDuration(aim() - from);
       let began: number | undefined;
+      let duration = 0;
       let frame = 0;
 
       const end = (outcome: GlideOutcome) => {
@@ -93,13 +93,23 @@ export class ScrollGlide {
         if (!event.defaultPrevented) end("interrupted");
       };
       const step = (now: number) => {
-        began ??= now;
-        const share = Math.min((now - began) / duration, 1);
-        const to = aim();
-        const top = share < 1 ? from + (to - from) * glideEase(share) : to;
-        // Said outright: where a stylesheet makes scrolling smooth, the default would animate every step again
-        window.scrollTo({ top, behavior: "instant" });
-        onStep?.(top);
+        let share = 1;
+        try {
+          const to = aim();
+          began ??= now;
+          duration ||= glideDuration(to - from);
+          share = Math.min((now - began) / duration, 1);
+          const way = from + (to - from) * glideEase(share);
+          // Whole pixels on the way, never past either end: a fraction the window rounds off in its report could read as a step back
+          const top = share === 1 ? to : to > from ? Math.max(Math.floor(way), from) : Math.min(Math.ceil(way), from);
+          // Said outright: where a stylesheet makes scrolling smooth, the default would animate every step again
+          window.scrollTo({ top, behavior: "instant" });
+          onStep?.(top);
+        } catch (error) {
+          // A caller whose step fails must not be left with a page held by a glide that will never end
+          if (this.end === end) end("interrupted");
+          throw error;
+        }
         if (this.end !== end) return;
         if (share < 1) frame = window.requestAnimationFrame(step);
         else end("arrived");

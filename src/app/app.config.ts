@@ -10,7 +10,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
-      // Kept for its Scroll event, which names the anchor a link or an old deep link (/#projects) leads to:
+      // Here for its Scroll event, which names the anchor a link or an old deep link (/#projects) leads to:
       // the catalogue glides there itself, because Mobile Safari rushes a scroll left to the browser
       withInMemoryScrolling({ anchorScrolling: "disabled" }),
       // Clicking the room you already scrolled away from must scroll back to it

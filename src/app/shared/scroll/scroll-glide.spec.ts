@@ -10,27 +10,35 @@ describe("ScrollGlide", () => {
   let position: number;
   let scrollTo: jasmine.Spy;
   let pending: Map<number, FrameRequestCallback>;
-  let cancelFrame: jasmine.Spy;
+  /** True while the glide's own code runs: a frame asked for at any other time is another spec's leftover, and goes to the browser. */
+  let gliding: boolean;
   let listen: jasmine.Spy;
   let unlisten: jasmine.Spy;
 
   beforeEach(() => {
     position = 0;
     pending = new Map();
+    gliding = false;
+    // Counted down from zero: the browser's own handles are all above it
     let handle = 0;
+    const browserFrame = window.requestAnimationFrame.bind(window);
+    const browserCancel = window.cancelAnimationFrame.bind(window);
     spyOnProperty(window, "scrollY").and.callFake(() => position);
     spyOnProperty(root, "scrollHeight").and.returnValue(100_000);
     scrollTo = spyOn(window, "scrollTo").and.callFake(((options: ScrollToOptions) => {
       position = options.top ?? position;
     }) as typeof window.scrollTo);
     spyOn(window, "requestAnimationFrame").and.callFake((callback) => {
-      pending.set(++handle, callback);
+      if (!gliding) return browserFrame(callback);
+      pending.set(--handle, callback);
       return handle;
     });
-    cancelFrame = spyOn(window, "cancelAnimationFrame").and.callFake((id) => void pending.delete(id));
+    spyOn(window, "cancelAnimationFrame").and.callFake((id) => (id < 0 ? void pending.delete(id) : browserCancel(id)));
     listen = spyOn(window, "addEventListener").and.callThrough();
     unlisten = spyOn(window, "removeEventListener").and.callThrough();
     glide = TestBed.inject(ScrollGlide);
+    const to = glide.to.bind(glide);
+    spyOn(glide, "to").and.callFake((...asked) => own(() => to(...asked)));
   });
 
   afterEach(() => {
@@ -38,12 +46,21 @@ describe("ScrollGlide", () => {
     root.style.removeProperty("scroll-snap-type");
   });
 
+  function own<T>(run: () => T): T {
+    gliding = true;
+    try {
+      return run();
+    } finally {
+      gliding = false;
+    }
+  }
+
   /** Runs the one frame the glide has asked for, at `at` milliseconds on the frame clock. */
   function frame(at: number): void {
     expect(pending.size).withContext("frames asked for").toBe(1);
     const [[id, callback]] = pending;
     pending.delete(id);
-    callback(at);
+    own(() => callback(at));
   }
 
   const tops = () => scrollTo.calls.allArgs().map(([options]) => (options as ScrollToOptions).top!);
@@ -51,12 +68,16 @@ describe("ScrollGlide", () => {
     on.dispatchEvent(Object.assign(new Event(type, { bubbles: true }), init));
   const key = (init: KeyboardEventInit = {}) =>
     document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true, ...init }));
-  /** What is still listened for on the window: every listener added for one of the five and not taken off again. */
+  const captures = (options: unknown) => options === true || (options as AddEventListenerOptions | undefined)?.capture === true;
+  /** What is still listened for on the window: every listener added for one of the five and not taken off again from the same phase. */
   const listening = () =>
     listen.calls
       .allArgs()
       .filter(([type]) => INTENT.includes(type))
-      .filter(([type, listener]) => !unlisten.calls.allArgs().some(([gone, same]) => gone === type && same === listener))
+      .filter(
+        ([type, listener, options]) =>
+          !unlisten.calls.allArgs().some(([gone, same, from]) => gone === type && same === listener && captures(from) === captures(options)),
+      )
       .map(([type]) => type as string);
 
   describe("how long it takes", () => {
@@ -193,6 +214,26 @@ describe("ScrollGlide", () => {
       expect(scrollTo.calls.mostRecent().args[0]).toEqual({ top: 1289.37, behavior: "instant" });
     });
 
+    it("keeps to whole pixels on the way, which the window reports as they were set, and never steps past either end", async () => {
+      for (const [from, to] of [
+        [0.4, 1289.37],
+        [1289.37, 0.4],
+      ]) {
+        position = from;
+        scrollTo.calls.reset();
+        const outcome = glide.to(() => to);
+        for (let at = 0; at <= 600; at += 8) frame(at);
+        expect(await outcome).toBe("arrived");
+
+        const [low, high] = [Math.min(from, to), Math.max(from, to)];
+        const onTheWay = tops().slice(0, -1);
+        expect(onTheWay.every((top) => top === from || Number.isInteger(top))).withContext(`from ${from}`).toBeTrue();
+        expect(onTheWay.every((top) => top >= low && top <= high)).withContext(`from ${from}`).toBeTrue();
+        expect(tops().every((top, index, all) => index === 0 || (to > from ? top >= all[index - 1] : top <= all[index - 1]))).toBeTrue();
+        expect(position).toBe(to);
+      }
+    });
+
     it("tells the caller the position it has just set, in the same frame", () => {
       const seen: [told: number, standing: number][] = [];
       void glide.to(
@@ -215,12 +256,11 @@ describe("ScrollGlide", () => {
 
       frame(0);
       frame(duration / 2);
-      const halfway = position;
-      expect(halfway).toBeCloseTo(1000 * glideEase(0.5), 6);
+      expect(position).toBe(Math.floor(1000 * glideEase(0.5)));
 
       target = 1400;
       frame(duration / 2);
-      expect(position).toBeCloseTo(1400 * glideEase(0.5), 6);
+      expect(position).toBe(Math.floor(1400 * glideEase(0.5)));
 
       frame(duration);
       expect(position).toBe(1400);
@@ -234,7 +274,7 @@ describe("ScrollGlide", () => {
 
       frame(0);
       frame(750);
-      expect(position).toBeCloseTo(99_400 * glideEase(0.5), 6);
+      expect(position).toBe(Math.floor(99_400 * glideEase(0.5)));
       frame(1500);
 
       expect(position).toBe(99_400);
@@ -264,6 +304,43 @@ describe("ScrollGlide", () => {
       expect(pending.size).toBe(0);
       expect(scrollTo).toHaveBeenCalledTimes(1);
     });
+
+    it("hands over cleanly when its caller begins another glide from a step", async () => {
+      let second: Promise<GlideOutcome> | undefined;
+      const first = glide.to(
+        () => 900,
+        () => (second ??= glide.to(() => 300)),
+      );
+
+      frame(0);
+
+      expect(await first).toBe("interrupted");
+      expect(pending.size).withContext("one glide, one frame").toBe(1);
+      expect(listening()).toEqual(INTENT);
+      frame(100);
+      frame(500);
+      expect(position).toBe(300);
+      expect(await second).toBe("arrived");
+      expect(listening()).toEqual([]);
+    });
+
+    for (const [what, failing] of [
+      ["step", () => glide.to(() => 900, () => { throw new Error("the scene broke"); })],
+      ["target", () => glide.to(() => { throw new Error("the scene broke"); })],
+    ] as const) {
+      it(`lets go of the page when its caller's ${what} throws, instead of holding it for a glide that will never end`, async () => {
+        const outcome = failing();
+        expect(glide.active).toBeTrue();
+
+        expect(() => frame(0)).toThrowError("the scene broke");
+
+        expect(await outcome).toBe("interrupted");
+        expect(glide.active).toBeFalse();
+        expect(pending.size).toBe(0);
+        expect(listening()).toEqual([]);
+        expect(root.style.scrollSnapType).toBe("");
+      });
+    }
   });
 
   describe("when the visitor takes over", () => {
@@ -279,7 +356,6 @@ describe("ScrollGlide", () => {
         expect(glide.active).toBeFalse();
         expect(await outcome).toBe("interrupted");
         expect(pending.size).withContext("frames still asked for").toBe(0);
-        expect(cancelFrame).toHaveBeenCalledTimes(1);
         expect(position).toBe(stoodAt);
         expect(listening()).toEqual([]);
       });
@@ -357,6 +433,25 @@ describe("ScrollGlide", () => {
         frame(2500);
         expect(position).toBe(4000);
         expect(await outcomes[1]).toBe("arrived");
+      });
+
+      it("ends a glide begun from a key handler below the window that left the key to the browser, and keeps one whose handler prevented it", () => {
+        const control = document.createElement("div");
+        document.body.append(control);
+        let prevent = false;
+        control.addEventListener("keydown", (event) => {
+          if (prevent) event.preventDefault();
+          void glide.to(() => 2000);
+        });
+        const pressed = () => control.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+
+        pressed();
+        expect(glide.active).withContext("the key counts as a takeover").toBeFalse();
+
+        prevent = true;
+        pressed();
+        expect(glide.active).toBeTrue();
+        control.remove();
       });
 
       it("lets the press begin the next glide where the page only starts listening once a glide is under way", async () => {
@@ -491,7 +586,6 @@ describe("ScrollGlide", () => {
 
     expect(await outcome).toBe("interrupted");
     expect(pending.size).toBe(0);
-    expect(cancelFrame).toHaveBeenCalledTimes(1);
     expect(listening()).toEqual([]);
     expect(root.style.scrollSnapType).toBe("");
   });

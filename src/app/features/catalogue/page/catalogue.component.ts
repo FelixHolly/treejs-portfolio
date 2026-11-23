@@ -30,15 +30,19 @@ import { WorksComponent } from "../works/works.component";
     FooterComponent,
   ],
   templateUrl: "./catalogue.component.html",
+  // Where Back and Forward put the page, a glide still under way would carry it off again
+  host: { "(window:popstate)": "glide.cancel()" },
 })
 export class CatalogueComponent {
+  protected readonly glide = inject(ScrollGlide);
+
   constructor() {
     const place = inject(PlaceService);
     const document = inject(DOCUMENT);
     const destroyRef = inject(DestroyRef);
     const router = inject(Router);
     const title = inject(Title);
-    const glide = inject(ScrollGlide);
+    const glide = this.glide;
     const environment = inject(ViewEnvironment);
     const works = inject(WorksService).works();
     const slugs = works.map((work) => work.slug);
@@ -61,7 +65,7 @@ export class CatalogueComponent {
 
     let glidingTo: string | undefined;
 
-    // The anchor rests under its own CSS scroll margin, which is what clears the fixed navbar.
+    // Each anchor's own CSS scroll margin is what clears the fixed navbar
     const showAnchor = (id: string) => {
       const window = document.defaultView;
       const anchor = document.getElementById(id);
@@ -82,7 +86,7 @@ export class CatalogueComponent {
     router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) adoptHash();
       // Back and Forward carry a position instead, which the browser restores by itself
-      if (event instanceof Scroll && event.anchor && !event.position) showAnchor(event.anchor);
+      if (event instanceof Scroll && event.scrollBehavior !== "manual" && event.anchor && !event.position) showAnchor(event.anchor);
     });
     destroyRef.onDestroy(() => glide.cancel());
 

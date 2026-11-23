@@ -223,11 +223,12 @@ export class GalleryComponent {
       if (!sameFraming(before, this.framing)) this.scene?.resize(this.framing);
       this.keepOpening();
     };
-    // A walk moves the scene with every step it takes; the browser reports those steps late, and Chrome the end of each
+    // A walk moves the scene with every step it takes; the browser's own report of a step comes a frame late
     const onScroll = () => {
       if (!this.glide.active) this.syncFromScroll();
     };
     const onIntent = () => (this.opened = undefined);
+    // Chrome reports every step of a glide as a scroll that ended; the walk is over when the glide is
     const onScrollEnd = () => {
       if (!this.glide.active) this.title.settle();
     };
@@ -482,7 +483,8 @@ export class GalleryComponent {
     );
     // No hash is the entrance, which is where Back lands after the first jump
     const index = window.location.hash.length > 1 ? this.stops.findIndex((stop) => stop.place === place) : 0;
-    if (index < 0 || index === this.activeIndex()) return;
+    // Back to the stop a walk has only just left finds the visitor still counted there, and must call that walk back
+    if (index < 0 || (index === this.activeIndex() && !this.glide.active)) return;
 
     // Only the address the gallery opens at arrives before the page has its final layout
     this.opened = behavior === "instant" ? { stop: index } : undefined;
@@ -509,7 +511,7 @@ export class GalleryComponent {
         () => this.restingTop(index) ?? top,
         (at) => this.syncFromScroll(at),
       )
-      // Safari never says that scrolling ended, and a page too short for the stop never reaches it
+      // Not every Safari says that scrolling ended, and a page too short for the stop never reaches it
       .then((outcome) => {
         if (outcome === "arrived") this.title.settle();
       });
@@ -553,8 +555,10 @@ export class GalleryComponent {
     const index = this.activeIndex();
     if (direction === 0) return;
     if (this.labelRunsOffScreen(index, direction)) {
-      // On the last steps of a walk the label is not yet where it is read from, and the browser's own step would end the walk short of it
-      if (this.glide.active && index === this.walkingTo) event.preventDefault();
+      // On the last steps of a walk the label is not yet where it is read from: a key pointing the walk's own way waits for it,
+      // since the browser's step would end the walk short. One pointing back is the browser's, as it is at rest
+      const ahead = (this.restingTop(index) ?? 0) - (this.document.defaultView?.scrollY ?? 0);
+      if (this.glide.active && index === this.walkingTo && ahead * direction > 0) event.preventDefault();
       return;
     }
 

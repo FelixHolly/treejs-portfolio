@@ -102,8 +102,8 @@ describe("CatalogueComponent", () => {
     });
 
     /** As the router does after a navigation; `position` is only set for Back and Forward. */
-    function led(anchor: string | null, position: [number, number] | null = null): void {
-      routerEvents.next(new Scroll(new NavigationEnd(1, "/", "/"), position, anchor));
+    function led(anchor: string | null, position: [number, number] | null = null, scroll?: "manual"): void {
+      routerEvents.next(new Scroll(new NavigationEnd(1, "/", "/"), position, anchor, scroll));
     }
 
     const anchored = (id: string) => document.getElementById(id)!;
@@ -158,9 +158,18 @@ describe("CatalogueComponent", () => {
       expect(scrollTo).not.toHaveBeenCalled();
     });
 
-    it("stays put when a navigation names no anchor, or one this page does not have", () => {
+    it("gives a glide still under way up when the reader goes Back or Forward, or it would carry the page off again", () => {
+      led("contact");
+
+      window.dispatchEvent(new PopStateEvent("popstate"));
+
+      expect(glide.active).toBeFalse();
+    });
+
+    it("stays put when a navigation names no anchor, one this page does not have, or asks the router not to scroll", () => {
       led(null);
       led("attic");
+      led("contact", null, "manual");
       routerEvents.next(new NavigationEnd(2, "/#contact", "/#contact"));
 
       expect(walk).not.toHaveBeenCalled();

@@ -255,6 +255,21 @@ html.gallery-active {
   scroll-padding-top: 5.25rem;
 }
 
+/* The bar index.html keeps for Safari's status bar: taller than the 10px Safari ignores, lower than anything a header paints, and over every header so it is the one found */
+.top-edge {
+  display: none;
+
+  @media (pointer: coarse) {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 90;
+    display: block;
+    height: 11px;
+    background-color: #141417;
+    pointer-events: none;
+  }
+}
+
 /* The static entrance in index.html: same place and type as the real one, so the swap is invisible */
 .shell {
   position: absolute;

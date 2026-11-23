@@ -151,3 +151,11 @@
     transform: translateY(-0.5rem);
   }
 }
+
+/* Under a finger the bar is solid, like the strip Safari reads above it: a see-through bar would show that strip as a darker band */
+@media (pointer: coarse) {
+  header {
+    background-color: #141417;
+    backdrop-filter: none;
+  }
+}

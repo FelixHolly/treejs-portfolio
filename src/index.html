@@ -40,6 +40,8 @@
   </style>
 </head>
 <body>
+  <!-- iOS Safari colours the status bar from the fixed bar it finds at the top edge on load, and only while that element lives; a view switch replaces each view's own header -->
+  <div class="top-edge" aria-hidden="true"></div>
   <!-- Painted before any script runs; the app removes it once its own entrance is on screen -->
   <div id="shell" class="shell" aria-hidden="true">
     <p class="eyebrow eyebrow-entrance">Technical Lead, Full Stack</p>

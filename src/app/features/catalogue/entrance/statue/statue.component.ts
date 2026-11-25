@@ -39,8 +39,10 @@ export class StatueComponent {
   private readonly canvas = viewChild<ElementRef<HTMLCanvasElement>>("canvas");
 
   readonly still = signal<StillState>("loading");
-  /** Turns false for good when a scene that was tried gives up. */
-  readonly animated = signal(this.view.hasWebGL() && !this.view.prefersReducedMotion() && !this.view.savesData());
+  /** Turns false for good when a scene that was tried gives up. A phone keeps the picture: iOS never says it is saving data. */
+  readonly animated = signal(
+    this.view.hasWebGL() && this.view.hasFinePointer() && !this.view.prefersReducedMotion() && !this.view.savesData(),
+  );
   /** True from the scene's first frame with the statue in it, when it takes the picture's place. */
   readonly live = signal(false);
 

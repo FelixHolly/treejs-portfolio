@@ -10,13 +10,14 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Felix Hollndonner, Technical Lead and Full-Stack Developer">
   <meta property="og:description" content="Technical lead and full-stack developer. Web applications built end to end with Java, Spring Boot and Angular, from architecture to deployment.">
-  <meta property="og:image" content="https://www.felixhollndonner.com/assets/og.png">
+  <meta property="og:image" content="https://www.felixhollndonner.com/assets/og.jpg">
+  <meta property="og:image:alt" content="A stone lion on a plinth in a dim museum hall, under the name Felix Hollndonner">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="https://www.felixhollndonner.com">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Felix Hollndonner, Technical Lead and Full-Stack Developer">
-  <meta name="twitter:image" content="https://www.felixhollndonner.com/assets/og.png">
+  <meta name="twitter:image" content="https://www.felixhollndonner.com/assets/og.jpg">
 
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -40,6 +41,8 @@
   </style>
 </head>
 <body>
+  <!-- iOS Safari colours the status bar from the fixed bar it finds at the top edge on load, and only while that element lives; a view switch replaces each view's own header -->
+  <div class="top-edge" aria-hidden="true"></div>
   <!-- Painted before any script runs; the app removes it once its own entrance is on screen -->
   <div id="shell" class="shell" aria-hidden="true">
     <p class="eyebrow eyebrow-entrance">Technical Lead, Full Stack</p>

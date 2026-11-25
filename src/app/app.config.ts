@@ -8,10 +8,11 @@ import { GlobalErrorHandler } from "./core/error-handler/global-error-handler.se
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    // Old deep links (/#projects) must land on their room once the lazy page has rendered
     provideRouter(
       routes,
-      withInMemoryScrolling({ anchorScrolling: "enabled" }),
+      // Here for its Scroll event, which names the anchor a link or an old deep link (/#projects) leads to:
+      // the catalogue glides there itself, because Mobile Safari rushes a scroll left to the browser
+      withInMemoryScrolling({ anchorScrolling: "disabled" }),
       // Clicking the room you already scrolled away from must scroll back to it
       withRouterConfig({ onSameUrlNavigation: "reload" }),
     ),

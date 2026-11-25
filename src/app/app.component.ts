@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
-import { ViewportScroller } from "@angular/common";
 import { RouterOutlet } from "@angular/router";
 import { NotificationToastComponent } from "./core/notification/notification-toast.component";
 import { TorchComponent } from "./shared/torch/torch.component";
@@ -14,9 +13,4 @@ import { ViewModeService } from "./core/view-mode/view-mode.service";
 })
 export class AppComponent {
   protected readonly viewMode = inject(ViewModeService);
-
-  constructor() {
-    // Router anchor scrolling ignores CSS scroll-margin; clear the 5.5rem fixed navbar.
-    inject(ViewportScroller).setOffset([0, 88]);
-  }
 }

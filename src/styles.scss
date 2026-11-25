@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
+/* For what the browser scrolls by itself, to a focused control or a fragment. The page's own glides set every step outright. */
+html {
   scroll-behavior: smooth;
 }
 

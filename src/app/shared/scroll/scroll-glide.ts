@@ -50,8 +50,8 @@ export class ScrollGlide {
   }
 
   /**
-   * Glides to wherever `target` points, asked again every frame; replaces a glide under way. `onStep` is told each position as
-   * it is set. A key handler that begins a glide must prevent the key's default, or that key counts as a takeover and ends it.
+   * Glides to wherever `target` points, asked again every frame; replaces a glide under way. `onStep` is told each position as it
+   * is set. A key handler below the window that begins a glide must prevent the key's default, or that key ends it as a takeover.
    */
   to(target: () => number, onStep?: (top: number) => void): Promise<GlideOutcome> {
     const window = this.window;
@@ -100,7 +100,7 @@ export class ScrollGlide {
           duration ||= glideDuration(to - from);
           share = Math.min((now - began) / duration, 1);
           const way = from + (to - from) * glideEase(share);
-          // Whole pixels on the way, never past either end: a fraction the window rounds off in its report could read as a step back
+          // A fraction the window rounds off in its report could read as a step back; rounding towards the start never oversteps
           const top = share === 1 ? to : to > from ? Math.max(Math.floor(way), from) : Math.min(Math.ceil(way), from);
           // Said outright: where a stylesheet makes scrolling smooth, the default would animate every step again
           window.scrollTo({ top, behavior: "instant" });

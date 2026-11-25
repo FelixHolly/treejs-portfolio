@@ -13,7 +13,7 @@ import { HERO_SCENE_FACTORY } from "./features/catalogue/entrance/statue/hero-sc
 import { FakeScrollGlide } from "./shared/scroll/fake-scroll-glide";
 import { ScrollGlide } from "./shared/scroll/scroll-glide";
 
-// The app with the router it really has: the catalogue's links scroll only because that router still says where each one led.
+// The app with the router it really has: the catalogue's links scroll only because that router says where each one led.
 describe("the app as configured", () => {
   let glide: FakeScrollGlide;
   let walk: jasmine.Spy<FakeScrollGlide["to"]>;

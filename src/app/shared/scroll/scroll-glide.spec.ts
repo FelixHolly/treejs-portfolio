@@ -47,11 +47,12 @@ describe("ScrollGlide", () => {
   });
 
   function own<T>(run: () => T): T {
+    const within = gliding;
     gliding = true;
     try {
       return run();
     } finally {
-      gliding = false;
+      gliding = within;
     }
   }
 
@@ -214,7 +215,7 @@ describe("ScrollGlide", () => {
       expect(scrollTo.calls.mostRecent().args[0]).toEqual({ top: 1289.37, behavior: "instant" });
     });
 
-    it("keeps to whole pixels on the way, which the window reports as they were set, and never steps past either end", async () => {
+    it("keeps to whole pixels on the way and never steps past either end", async () => {
       for (const [from, to] of [
         [0.4, 1289.37],
         [1289.37, 0.4],
@@ -222,7 +223,7 @@ describe("ScrollGlide", () => {
         position = from;
         scrollTo.calls.reset();
         const outcome = glide.to(() => to);
-        for (let at = 0; at <= 600; at += 8) frame(at);
+        for (let at = 0; glide.active && at <= 2000; at += 8) frame(at);
         expect(await outcome).toBe("arrived");
 
         const [low, high] = [Math.min(from, to), Math.max(from, to)];

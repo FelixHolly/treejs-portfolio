@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1795214325041,
+  "timestamp": 1795619543140,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -15,8 +15,8 @@
         "/chunk-2NFLSA4Y.js",
         "/chunk-2WIYLPF3.js",
         "/chunk-6R4S3AYE.js",
+        "/chunk-GYFSAQSZ.js",
         "/chunk-HPECGZFJ.js",
-        "/chunk-IHNRNVVJ.js",
         "/chunk-JZFBXTGF.js",
         "/chunk-P6KTKDIN.js",
         "/chunk-PONX32QE.js",
@@ -24,9 +24,9 @@
         "/chunk-XDBOLKDF.js",
         "/chunk-YPS6AZON.js",
         "/index.html",
-        "/main-7GJ6WQQ7.js",
+        "/main-FNFY2KJC.js",
         "/manifest.webmanifest",
-        "/styles-R3D5TVWD.css"
+        "/styles-QLZG4OAY.css"
       ],
       "patterns": []
     },
@@ -60,7 +60,7 @@
         "/assets/lion-hall-tall-800.webp",
         "/assets/lion-stamp.webp",
         "/assets/models/vienna-lowe.glb",
-        "/assets/og.png",
+        "/assets/og.jpg",
         "/assets/portrait.webp",
         "/assets/works/kuechenschelle-home.webp",
         "/assets/works/kuechenschelle-phone.webp",
@@ -107,7 +107,7 @@
     "/assets/lion-hall-tall-800.webp": "d5a443d35cc6cb45dcd2be1762ebed08ed4f3999",
     "/assets/lion-stamp.webp": "12d1c6e0570cac0692957569767ea79eb704d31e",
     "/assets/models/vienna-lowe.glb": "f100f91430d724dcf82349aca8530e883a4a1957",
-    "/assets/og.png": "1a41356e6acfa355b430d71df241ac99c5e6e088",
+    "/assets/og.jpg": "82cb68e2a637badc4cb98dd29283fa809fd4c9d0",
     "/assets/portrait.webp": "2ee8513e5301942edbc79d600e33f6b30253b168",
     "/assets/works/kuechenschelle-home.webp": "787e7bde6372a6a0c703c9bd85d0e3af75138acd",
     "/assets/works/kuechenschelle-phone.webp": "602b8c304e5b24c4bfeacfa01f834ca6e77e099f",
@@ -122,8 +122,8 @@
     "/chunk-2NFLSA4Y.js": "a26cd3e959939fe26b8cfc160ad681ba7b6b4468",
     "/chunk-2WIYLPF3.js": "df09bdf4f5f1744d9ec1fa01712874a55e7b5966",
     "/chunk-6R4S3AYE.js": "13bcf824b99c84c58a3f086d64a73201437e1848",
+    "/chunk-GYFSAQSZ.js": "f75e8964be4f91858714139bc115bcc9253adbb6",
     "/chunk-HPECGZFJ.js": "3a5750aa7ccbf669377ee385eaccd20aa33f405b",
-    "/chunk-IHNRNVVJ.js": "d1833072805ddcf3616e64ebdbac5a4f88b233fd",
     "/chunk-JZFBXTGF.js": "c9954284ef59747a7135eba3d623f886602e52b0",
     "/chunk-P6KTKDIN.js": "51c2fdec3af7662d9aaaaf42adf1464f25150a0b",
     "/chunk-PONX32QE.js": "d53adfa0ed6aad7c042a0c1192c7f04e02eaad09",
@@ -138,10 +138,10 @@
     "/icons/icon-512x512.png": "d416a2c11ee5c33a6d547aab27f567b68e849520",
     "/icons/icon-72x72.png": "6f328632a1fbe188c26201d49bc023de2209ecad",
     "/icons/icon-96x96.png": "6cce8dd7aa4a97d89b547ee4e4d07cc510792821",
-    "/index.html": "d6e33cbdc5ae4833224ba5197dbab7cbe028c821",
-    "/main-7GJ6WQQ7.js": "b017d7263a8ac88409faa4b687d7bb9effe3b402",
+    "/index.html": "9c256401697cbcc97ff8935a32466916402a513a",
+    "/main-FNFY2KJC.js": "9311a9e4de92744236f310485687c60744b35f45",
     "/manifest.webmanifest": "a82d1c824debbbe9f4ab466ef5bf1404fa8668b3",
-    "/styles-R3D5TVWD.css": "7b64b32abbeeba00a94c5ff7006d4598d1c429f0"
+    "/styles-QLZG4OAY.css": "a6b4e027d1cbeb9dba108c22c6cc1440dd53bb91"
   },
   "navigationUrls": [
     {
